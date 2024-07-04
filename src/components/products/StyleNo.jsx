@@ -11,28 +11,15 @@ import excelIcon from "../../assets/excel-icon.svg";
 import apiService from "../../apiService";
 
 const StyleNo = ({ searchQuery, isModalOpen, onClose }) => {
-  // const [data, setData] = useState([
-  //   { id: 1, styleNo: "1234", status: "active" },
-  //   { id: 2, styleNo: "5678", status: "inactive" },
-  //   { id: 3, styleNo: "1234", status: "active" },
-  //   { id: 4, styleNo: "5678", status: "inactive" },
-  //   { id: 5, styleNo: "1234", status: "active" },
-  //   { id: 6, styleNo: "5678", status: "inactive" },
-  //   { id: 7, styleNo: "1234", status: "active" },
-  //   { id: 8, styleNo: "5678", status: "inactive" },
-  //   { id: 9, styleNo: "1234", status: "active" },
-  //   { id: 10, styleNo: "5678", status: "inactive" },
-  //   { id: 11, styleNo: "1234", status: "active" },
-  //   { id: 12, styleNo: "5678", status: "inactive" },
-  // ]);
-
   const [data, setData] = useState([]);
+  const [style, setStyle] = useState([]);
   const [editIndex, setEditIndex] = useState(null);
-  const [checkedIds, setCheckedIds] = useState([]);
+  const [checkedIds, setCheckedIds] = useState([]);   
   const [currentPage, setCurrentPage] = useState(1);
   const [recordsPerPage, setRecordsPerPage] = useState(5);
   const [inputValue, setInputValue] = useState("");
   const [addedStyles, setAddedStyles] = useState([]);
+  const [singleStyles, setSingleStyles] = useState("");
 
   useEffect(() => {
     // Fetch data when component mounts
@@ -44,33 +31,32 @@ const StyleNo = ({ searchQuery, isModalOpen, onClose }) => {
       const response = await apiService.get("/styles/getall");
       setData(response.data);
     } catch (error) {
-      console.error('Error fetching styles:', error);
-      setData([]); // Handle error as needed
+      console.error("Error fetching styles:", error);
+      setStyle([]); // Handle error as needed
     }
   };
 
-  const handleStatusToggle = async (id) => {
+  const handleStatusToggle = async (id, isActive) => {
     try {
-      const style = data.find(style => style.id === id);
-      const updatedStatus = style.status === 'active' ? 'inactive' : 'active';
-      await apiService.put(`/styles/${id}`, { status: updatedStatus });
-      
-      // Update data locally
-      setData(data.map(style => (style.id === id ? { ...style, status: updatedStatus } : style)));
+      const response = await apiService.put(`/styles/${id}`, {
+        isActive: !isActive,
+      });
+      if (response.status === 200) {
+        fetchAllStyles();
+      }
     } catch (error) {
       console.error(`Error toggling status for style with ID ${id}:`, error);
       // Handle error as needed
     }
   };
-  const filteredData = data.filter((item) =>
-    item.styleNo.toLowerCase().includes(searchQuery.toLowerCase())
-  );
 
   const handleEditClick = async (id) => {
     try {
       const response = await apiService.get(`/styles/${id}`);
       const styleToUpdate = response.data;
-      const updatedData = data.map(style => (style.id === id ? styleToUpdate : style));
+      const updatedData = data.map((style) =>
+        style.id === id ? styleToUpdate : style
+      );
       setData(updatedData);
       setEditIndex(id);
     } catch (error) {
@@ -79,14 +65,13 @@ const StyleNo = ({ searchQuery, isModalOpen, onClose }) => {
     }
   };
 
- 
   const handleSaveClick = async (index, id) => {
     try {
-      const style = data.find(style => style.id === id);
-      await apiService.put(`/styles/${id}`, { styleNo: style.styleNo });
-      
+      const style = data.find((style) => style.id === id);
+      await apiService.put(`/styles/${id}`, { StyleNo: style.StyleNo });
+
       // Update data locally
-      setData(data.map(style => (style.id === id ? { ...style } : style)));
+      setData(data.map((style) => (style.id === id ? { ...style } : style)));
       setEditIndex(null);
     } catch (error) {
       console.error(`Error saving style with ID ${id}:`, error);
@@ -96,7 +81,7 @@ const StyleNo = ({ searchQuery, isModalOpen, onClose }) => {
 
   const handleInputChange = (e, index) => {
     const newData = [...data];
-    newData[index].styleNo = e.target.value;
+    newData[index].style_no = e.target.value;
     setData(newData);
   };
 
@@ -106,20 +91,21 @@ const StyleNo = ({ searchQuery, isModalOpen, onClose }) => {
     );
   };
 
- 
   const handleDelete = async () => {
     try {
       const idsToDelete = checkedIds;
-      await Promise.all(idsToDelete.map(async id => {
-        await apiService.delete(`/styles/${id}`);
-      }));
-      
+      await Promise.all(
+        idsToDelete.map(async (id) => {
+          await apiService.delete(`/styles/${id}`);
+        })
+      );
+
       // Update data locally
       const newData = data.filter((row) => !checkedIds.includes(row.id));
       setData(newData);
       setCheckedIds([]);
     } catch (error) {
-      console.error('Error deleting styles:', error);
+      console.error("Error deleting styles:", error);
       // Handle error as needed
     }
   };
@@ -144,15 +130,32 @@ const StyleNo = ({ searchQuery, isModalOpen, onClose }) => {
     setInputValue(e.target.value);
   };
 
+  const handleSingleStyle= async () => {
+    try {
+      const response = await apiService.post("/styles/create", {
+        style_no: singleStyles,
+      });
+      // setSingleBrands(...singleBrands, inputValue.trim());
+      // setInputValue("");
+      if (response.status === 201) {
+        setData(response.data);
+      }
+    } catch (error) {
+      console.error("Error adding style:", error);
+    }
+  };
+
   const handleAddStyle = async () => {
     try {
       if (inputValue.trim() !== "") {
-         await apiService.post("/styles/create", { style_no: inputValue.trim() });
+        await apiService.post("/styles/create", {
+          style_no: inputValue.trim(),
+        });
         setAddedStyles([...addedStyles, inputValue.trim()]);
         setInputValue("");
       }
     } catch (error) {
-      console.error('Error adding style:', error);
+      console.error("Error adding style:", error);
       // Handle error as needed
     }
   };
@@ -162,6 +165,12 @@ const StyleNo = ({ searchQuery, isModalOpen, onClose }) => {
     newAddedStyles.splice(index, 1);
     setAddedStyles(newAddedStyles);
   };
+
+  const filteredData = data.filter(
+    (item) =>
+      item.style_no &&
+      item.style_no.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   const startIndex = (currentPage - 1) * recordsPerPage;
   const endIndex = startIndex + recordsPerPage;
@@ -205,41 +214,43 @@ const StyleNo = ({ searchQuery, isModalOpen, onClose }) => {
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {currentData.map((row, index) => (
+            {currentData?.map((row, index) => (
               <tr key={row.id} style={{ maxHeight: "50px" }}>
                 <td className="px-2 py-3 whitespace-nowrap text-md text-center text-black w-12">
                   {startIndex + index + 1}
                 </td>
                 <td className="px-2 py-3 whitespace-nowrap text-md text-center text-black w-28">
-                {editIndex === row.id ? (
+                  {editIndex === startIndex + index ? (
                     <input
                       type="text"
-                      value={row.styleNo}
+                      value={row.style_no}
                       onChange={(e) => handleInputChange(e, index)}
                       className="border border-gray-300 rounded-md w-28 px-2 py-2"
                     />
                   ) : (
-                    row.styleNo
+                    row.style_no
                   )}
                 </td>
                 <td className="px-6 py-3 whitespace-nowrap text-md text-center text-black flex-grow">
                   <button
-                     onClick={() => handleStatusToggle(row.id)}
+                    onClick={() =>
+                      handleStatusToggle({ id: row.id, isActive: row.isActive })
+                    }
                     className="px-2 py-1 rounded-full"
                   >
                     <div className="flex space-x-2">
                       <span
                         className={
-                          row.status === "active"
+                          row.isActive === true
                             ? "text-green-600 w-20"
                             : "text-gray-300 w-20"
                         }
                       >
-                        {row.status === "active" ? "Active" : "In-Active"}
+                        {row.isActive === true ? "Active" : "In-Active"}
                       </span>
                       <img
                         src={
-                          row.status === "active"
+                          row.isActive === true
                             ? toggleActiveIcon
                             : toggleInactiveIcon
                         }
@@ -249,9 +260,9 @@ const StyleNo = ({ searchQuery, isModalOpen, onClose }) => {
                   </button>
                 </td>
                 <td className="px-2 py-3 whitespace-nowrap text-md text-center text-black w-16">
-                {editIndex === row.id ? (
+                  {editIndex === row.id ? (
                     <button
-                    onClick={() => handleSaveClick(index, row.id)}
+                      onClick={() => handleSaveClick(index, row.id)}
                       className="bg-green-200 border border-green-500 px-2 py-1 rounded-lg flex"
                     >
                       <img src={tickIcon} alt="" className="mt-1 mr-2" />
@@ -259,7 +270,7 @@ const StyleNo = ({ searchQuery, isModalOpen, onClose }) => {
                     </button>
                   ) : (
                     <button
-                    onClick={() => handleEditClick(row.id)}
+                      onClick={() => handleEditClick(row.id)}
                       className="text-blue-500 text-center"
                     >
                       <img src={editIcon} alt="Edit" className="h-6 w-6" />
@@ -341,19 +352,19 @@ const StyleNo = ({ searchQuery, isModalOpen, onClose }) => {
                 <hr className="w-full mt-3" />
               </div>
               <div className="flex flex-col items-center">
-                <p className="text-gray-400 font-bold mt-10">
+                {/* <p className="text-gray-400 font-bold mt-10">
                   *For multiple “Style no” feed use enter after each values
-                </p>
+                </p> */}
                 <input
                   className="bg-gray-200 rounded w-80 py-3 px-4 text-gray-700 focus:outline-none focus:shadow-outline mt-5 text-lg text-center"
                   type="text"
                   placeholder="Enter style no"
-                  value={inputValue}
-                  onChange={handleInputChangeModal}
+                  value={singleStyles}
+                  onChange={(e) => setSingleStyles(e.target.value)}
                 />
                 <button
                   className="bg-sky-600 w-80 py-3 text-white rounded-lg font-bold text-lg mt-3"
-                  onClick={handleAddStyle}
+                  onClick={handleSingleStyle}
                 >
                   Update
                 </button>
@@ -367,33 +378,7 @@ const StyleNo = ({ searchQuery, isModalOpen, onClose }) => {
                     </span>
                   </p>
                 </div>
-                <div className="bg-gray-100 mt-10 w-full h-screen max-h-[13vh]">
-                  {addedStyles.length > 0 ? (
-                    <div className="flex flex-wrap mt-3">
-                      {addedStyles.map((style, index) => (
-                        <div
-                          key={index}
-                          className="w-35 flex items-center bg-gray-200 px-5 py-2 mb-2 mx-2"
-                        >
-                          <span>{style}</span>
-                          <button onClick={() => handleRemoveStyle(index)}>
-                            <img
-                              src={closeIcon}
-                              alt="Remove"
-                              className="w-3 h-3 ml-3"
-                            />
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="flex justify-center items-center h-full">
-                      <span className="text-gray-500 text-xl">
-                        No style entries
-                      </span>
-                    </div>
-                  )}
-                </div>
+             
               </div>
             </div>
           </div>

@@ -60,7 +60,7 @@ const Login = () => {
   //     const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   //     return regex.test(email);
   // }
-
+ 
   return (
     <section
       style={{
