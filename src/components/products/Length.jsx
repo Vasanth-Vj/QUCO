@@ -11,22 +11,9 @@ import excelIcon from "../../assets/excel-icon.svg";
 import apiService from "../../apiService";
 
 const Length = ({ searchQuery, isModalOpen, onClose }) => {
-  // const [data, setData] = useState([
-  // { id: 1, length: 'Short length', status: 'active' },
-  // { id: 2, length: 'medium length', status: 'inactive' },
-  // { id: 3, length: 'Full length', status: 'active' },
-  // { id: 4, length: 'cut', status: 'inactive' },
-  // { id: 5, length: 'loose', status: 'active' },
-  // { id: 6, length: 'Jersey', status: 'inactive' },
-  // { id: 7, length: 'Jersey', status: 'active' },
-  // { id: 8, length: 'Jersey', status: 'inactive' },
-  // { id: 9, length: 'Jersey', status: 'active' },
-  // { id: 10, length: 'Jersey', status: 'inactive' },
-  // { id: 11, length: 'Jersey', status: 'active' },
-  // { id: 12, length: 'Jersey', status: 'inactive' },
-  // ]);
+
   const [data, setData] = useState([]);
-  const [length, setLength] = useState([]);
+  const [editedLength, setEditedLength] = useState("");
   const [editIndex, setEditIndex] = useState(null);
   const [checkedIds, setCheckedIds] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
@@ -46,11 +33,12 @@ const Length = ({ searchQuery, isModalOpen, onClose }) => {
       setData(response.data);
     } catch (err) {
       console.log("Error Fetching Length", err);
-      setLength([]);
+
     }
   };
 
-  const handleStatusToggle = async (id, isActive) => {
+  // handle toggle button click
+  const handleStatusToggle = async ({ id, isActive }) => {
     try {
       const response = await apiService.put(`/lengths/${id}`, {
         isActive: !isActive,
@@ -64,45 +52,33 @@ const Length = ({ searchQuery, isModalOpen, onClose }) => {
     }
   };
 
-  const handleEditClick = async (id) => {
-    try {
-      const response = await apiService.get(`/lengths/${id}`);
-      const styleToUpdate = response.data;
-      const updatedData = data.map((length) =>
-        length.id === id ? styleToUpdate : length
-      );
-      setData(updatedData);
-      setEditIndex(id);
-    } catch (error) {
-      console.error(
-        `Error fetching error length with ID ${id} for edit:`,
-        error
-      );
-      // Handle error as needed
-    }
+   // handle edit button click
+   const handleEditClick = ({ id, lengthType }) => {
+    setEditIndex(id);
+    setEditedLength(lengthType);
+  };
+   // handle input change
+   const handleInputChange = (e) => {
+    setEditedLength(e.target.value);
   };
 
-  const handleSaveClick = async (index, id) => {
-    try {
-      const length = data.find((length) => length.id === id);
-      await apiService.put(`/lengths/${id}`, { Length: length.Length });
 
-      // Update data locally
-      setData(
-        data.map((length) => (length.id === id ? { ...length } : length))
-      );
+ // handle save button click
+ const handleSaveClick = async (index, id) => {
+  try {
+    const response = await apiService.put(`/lengths/${id}`, {
+      lengthType: editedLength,
+    });
+    if (response.status === 200) {
+      fetchAllLengths();
       setEditIndex(null);
-    } catch (error) {
-      console.error(`Error saving length with ID ${id}:`, error);
-      // Handle error as needed
     }
-  };
-
-  const handleInputChange = (e, index) => {
-    const newData = [...data];
-    newData[index].lengthType = e.target.value;
-    setData(newData);
-  };
+  } catch (error) {
+    console.error(`Error saving length with ID ${id}:`, error);
+    // Handle error as needed
+  }
+};
+ 
 
   const handleCheckboxChange = (id) => {
     setCheckedIds((prev) =>
@@ -110,22 +86,20 @@ const Length = ({ searchQuery, isModalOpen, onClose }) => {
     );
   };
 
-  const handleDelete = async () => {
+  // handle delete button click
+  const handleDelete = async (id) => {
     try {
-      const idsToDelete = checkedIds;
-      await Promise.all(
-        idsToDelete.map(async (id) => {
-          await apiService.delete(`/lengths/${id}`);
-        })
-      );
-      const newData = data.filter((row) => !checkedIds.includes(row.id));
-      setData(newData);
-      setCheckedIds([]);
+      const response = await apiService.delete(`/lengths/${id}`);
+      console.log(response);
+      if (response.status === 202) {
+        fetchAllLengths();
+      }
     } catch (error) {
-      console.error("Error deleting lengths:", error);
+      console.error("Error deleting length:", error);
       // Handle error as needed
     }
   };
+
 
   const handlePageChange = (direction) => {
     if (direction === "prev" && currentPage > 1) {
@@ -143,9 +117,6 @@ const Length = ({ searchQuery, isModalOpen, onClose }) => {
     setCurrentPage(1);
   };
 
-  const handleInputChangeModal = (e) => {
-    setInputValue(e.target.value);
-  };
 
   const handleSingleLength = async () => {
     try {
@@ -154,7 +125,8 @@ const Length = ({ searchQuery, isModalOpen, onClose }) => {
       });
 
       if (response.status === 201) {
-        setData(response.data);
+        setSingleLength("");
+        fetchAllLengths();
       }
     } catch (error) {
       console.error("Error adding length:", error);
@@ -227,11 +199,11 @@ const Length = ({ searchQuery, isModalOpen, onClose }) => {
                   {startIndex + index + 1}
                 </td>
                 <td className="px-3 py-3 whitespace-nowrap text-md text-left text-black w-40">
-                  {editIndex === startIndex + index ? (
+                  {editIndex === row.id ? (
                     <input
                       type="text"
-                      value={row.lengthType}
-                      onChange={(e) => handleInputChange(e, index)}
+                      value={editedLength}
+                      onChange={handleInputChange}
                       className="border border-gray-300 rounded-md px-2 py-2 text-left w-40"
                     />
                   ) : (
@@ -240,9 +212,9 @@ const Length = ({ searchQuery, isModalOpen, onClose }) => {
                 </td>
                 <td className="px-6 py-3 whitespace-nowrap text-md text-center text-black flex-grow">
                   <button
-                    onClick={() =>
-                      handleStatusToggle({ id: row.id, isActive: row.isActive })
-                    }
+                  onClick={() =>
+                    handleStatusToggle({ id: row.id, isActive: row.isActive })
+                  }
                     className="px-2 py-1 rounded-full"
                   >
                     <div className="flex space-x-2">
@@ -277,7 +249,12 @@ const Length = ({ searchQuery, isModalOpen, onClose }) => {
                     </button>
                   ) : (
                     <button
-                      onClick={() => handleEditClick(row.id)}
+                    onClick={() =>
+                      handleEditClick({
+                        id: row.id,
+                        lengthType: row.lengthType,
+                      })
+                    }
                       className="text-blue-500 text-center"
                     >
                       <img src={editIcon} alt="Edit" className="h-6 w-6" />
@@ -292,7 +269,14 @@ const Length = ({ searchQuery, isModalOpen, onClose }) => {
                     onChange={() => handleCheckboxChange(row.id)}
                   />
                 </td>
-                <td></td>
+                <td className="px-2 py-3 whitespace-nowrap text-md text-center text-black w-8">
+                  <button
+                    onClick={() => handleDelete(row.id)}
+                    className="text-red-500"
+                  >
+                    <img src={deleteIcon} alt="Delete" className="h-6 w-6" />
+                  </button>
+                </td>
               </tr>
             ))}
           </tbody>

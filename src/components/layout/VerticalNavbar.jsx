@@ -103,8 +103,8 @@ const VerticalNavbar = () => {
                   <span className="ms-3">Dashboard</span>
                 </NavLink>
               </li>
-              <li className={`${isActiveTab("/main/permissions") || isActiveTab("/main/users") ? 'bg-white text-black' : ''}`}>
-                <div className="flex items-center p-2 rounded-lg dark:text-white hover:bg-gray-100 hover:text-black dark:hover:bg-gray-700 group cursor-pointer" onClick={toggleAdminDropdown}>
+              <li className={`${isActiveTab("/main/permissions") || isActiveTab("/main/users") ? 'text-black bg-white' : 'dark:text-white'}`}>
+                <div className="flex items-center p-2 rounded-lg hover:bg-gray-100 hover:text-black dark:hover:bg-gray-700 group cursor-pointer" onClick={toggleAdminDropdown}>
                 <img 
   src={getIcon(adminIcon, adminHighlightedIcon, ['permissions', 'users'])} 
   alt="" 
@@ -119,7 +119,7 @@ const VerticalNavbar = () => {
                 </div>
                 {isAdminDropdownOpen && (
                   <ul className="space-y-2">
-                    <li className={isActiveTab("/main/permissions") ? 'bg-gray-200 text-black' : ''}>
+                    <li className={isActiveTab("/main/permissions") ? 'bg-gray-200 text-black' : isActiveTab("/main/users") ? 'bg-white dark:text-black' : ''}>
                       <NavLink
                         to="/main/permissions"
                         className="flex items-center p-2 px-10 rounded-lg dark:text-white hover:bg-gray-100 hover:text-black dark:hover:bg-gray-700 group aria-[current=page]:bg-gray-200 w-full aria-[current=page]:text-black"
@@ -127,10 +127,10 @@ const VerticalNavbar = () => {
                         <span className="ms-3">Permissions</span>
                       </NavLink>
                     </li>
-                    <li className={isActiveTab("/main/users") ? 'bg-gray-200 text-black' : ''}>
+                    <li className={isActiveTab("/main/users") ? 'bg-gray-200 text-black' : isActiveTab("/main/permissions") ? 'bg-white dark:text-black' : ""}>
                       <NavLink
                         to="/main/users"
-                        className="flex items-center p-2 px-10 rounded-lg dark:text-white hover:bg-gray-100 hover:text-black dark:hover:bg-gray-700 group aria-[current=page]:bg-gray-200 aria-[current=page]:text-black"
+                        className="flex items-center p-2 px-10 rounded-lg hover:bg-gray-100 hover:text-black dark:hover:bg-gray-700 group aria-[current=page]:bg-gray-200 aria-[current=page]:text-black"
                       >
                         <span className="ms-3">Users</span>
                       </NavLink>
@@ -138,8 +138,8 @@ const VerticalNavbar = () => {
                   </ul>
                 )}
               </li>
-              <li className={isActiveTab("/main/add-products") || isActiveTab("/main/product-master") ? 'bg-white text-black' : ''}>
-                <div className="flex items-center p-2 rounded-lg dark:text-white hover:bg-gray-100 hover:text-black dark:hover:bg-gray-700 group cursor-pointer" onClick={toggleProductDropdown}>
+              <li className={isActiveTab("/main/add-products") || isActiveTab("/main/product-master") ? 'bg-white text-black' : 'dark:text-white'}>
+                <div className="flex items-center p-2 rounded-lg hover:bg-gray-100 hover:text-black dark:hover:bg-gray-700 group cursor-pointer" onClick={toggleProductDropdown}>
                 <img 
   src={getIcon(productIcon, productHighlightedIcon, ['product-master', 'add-products'])} 
   alt="" 
@@ -154,18 +154,18 @@ const VerticalNavbar = () => {
                 </div>
                 {isProductDropdownOpen && (
                   <ul className="space-y-2">
-                    <li className={isActiveTab("/main/product-master") ? 'bg-gray-100 text-black' : ''}>
+                    <li className={isActiveTab("/main/product-master") ? 'bg-gray-100 text-black' : isActiveTab("/main/add-products") ? 'bg-white dark:text-black' : ''}>
                       <NavLink
                         to="/main/product-master"
-                        className="flex items-center p-2 px-10 whitespace-nowrap rounded-lg dark:text-white hover:bg-gray-100 hover:text-black dark:hover:bg-gray-700 group aria-[current=page]:bg-gray-200 aria-[current=page]:text-black"
+                        className="flex items-center p-2 px-10 whitespace-nowrap rounded-lg hover:bg-gray-100 hover:text-black dark:hover:bg-gray-700 group aria-[current=page]:bg-gray-200 aria-[current=page]:text-black"
                       >
                         <span className="ms-3">Product Master</span>
                       </NavLink>
                     </li>
-                    <li className={isActiveTab("/main/add-products") ? 'bg-gray-100 text-black' : ''}>
+                    <li className={isActiveTab("/main/add-products") ? 'bg-gray-100 text-black' : isActiveTab("/main/product-master") ? 'bg-white dark:text-black' : ''}>
                       <NavLink
                         to="/main/add-products"
-                        className="flex items-center p-2 px-10 whitespace-nowrap rounded-lg dark:text-white hover:bg-gray-100 hover:text-black dark:hover:bg-gray-700 group aria-[current=page]:bg-gray-200 aria-[current=page]:text-black"
+                        className="flex items-center p-2 px-10 whitespace-nowrap rounded-lg hover:bg-gray-100 hover:text-black dark:hover:bg-gray-700 group aria-[current=page]:bg-gray-200 aria-[current=page]:text-black"
                       >
                         <span className="ms-3">Add Products</span>
                       </NavLink>
@@ -173,8 +173,8 @@ const VerticalNavbar = () => {
                   </ul>
                 )}
               </li>
-              <li className={isActiveTab("/main/stock") ? 'bg-white text-black' : ''}>
-                <div className="flex items-center p-2 rounded-lg dark:text-white hover:bg-gray-100 hover:text-black dark:hover:bg-gray-700 group cursor-pointer" onClick={toggleStockDropdown}>
+              <li className={isActiveTab("/main/stock") ? 'bg-white text-black' : 'dark:text-white'}>
+                <div className="flex items-center p-2 rounded-lg hover:bg-gray-100 hover:text-black dark:hover:bg-gray-700 group cursor-pointer" onClick={toggleStockDropdown}>
                 <img 
   src={getIcon(stockIcon, stockHighlightedIcon, ['stock-in', 'stock-out'])} 
   alt="" 
@@ -189,18 +189,18 @@ const VerticalNavbar = () => {
                 </div>
                 {isStockDropdownOpen && (
                   <ul className="space-y-2">
-                    <li className={isActiveTab("/main/stock-in") ? 'bg-gray-100 text-black' : ''}>
+                    <li className={isActiveTab("/main/stock-in") ? 'bg-gray-100 text-black' : isActiveTab("/main/stock-out") ? 'bg-white dark:text-black' : ''}>
                       <NavLink
                         to="/main/stock-in"
-                        className="flex items-center p-2 px-10 whitespace-nowrap rounded-lg dark:text-white hover:bg-gray-100 hover:text-black dark:hover:bg-gray-700 group"
+                        className="flex items-center p-2 px-10 whitespace-nowrap rounded-lg hover:bg-gray-100 hover:text-black dark:hover:bg-gray-700 group"
                       >
                         <span className="ms-3">Stock In</span>
                       </NavLink>
                     </li>
-                    <li className={isActiveTab("/main/stock-out") ? 'bg-gray-100 text-black' : ''}>
+                    <li className={isActiveTab("/main/stock-out") ? 'bg-gray-100 text-black' : isActiveTab("/main/stock-in") ? 'bg-white dark:text-black' : ''}>
                       <NavLink
                         to="/main/stock-out"
-                        className="flex items-center p-2 px-10 whitespace-nowrap rounded-lg dark:text-white hover:bg-gray-100 hover:text-black dark:hover:bg-gray-700 group"
+                        className="flex items-center p-2 px-10 whitespace-nowrap rounded-lg hover:bg-gray-100 hover:text-black dark:hover:bg-gray-700 group"
                       >
                         <span className="ms-3">Stock Out</span>
                       </NavLink>

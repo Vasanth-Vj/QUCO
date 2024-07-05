@@ -12,7 +12,7 @@ import apiService from "../../apiService";
 
 const Fabric = ({ searchQuery, isModalOpen, onClose }) => {
   const [data, setData] = useState([]);
-  const [fabric, setFabric] = useState([]);
+  const [editedFabricName, setEditedFabricName] = useState("");
   const [editIndex, setEditIndex] = useState(null);
   const [checkedIds, setCheckedIds] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
@@ -32,7 +32,7 @@ const Fabric = ({ searchQuery, isModalOpen, onClose }) => {
       setData(response.data); // Assuming response.data contains an array of brands
     } catch (error) {
       console.error("Error fetching fabrics:", error);
-      setFabric([]); // Handle error as needed
+  
     }
   };
 
@@ -49,64 +49,55 @@ const Fabric = ({ searchQuery, isModalOpen, onClose }) => {
       // Handle error as needed
     }
   };
-  const handleEditClick = async (id) => {
-    try {
-      const response = await apiService.get(`/fabrics/${id}`);
-      const styleToUpdate = response.data;
-      const updatedData = data.map((fabric) =>
-        fabric.id === id ? styleToUpdate : fabric
-      );
-      setData(updatedData);
-      setEditIndex(id);
-    } catch (error) {
-      console.error(`Error fetching fabric with ID ${id} for edit:`, error);
-      // Handle error as needed
-    }
+
+
+  // handle edit button click
+  const handleEditClick = ({ id, fabricName }) => {
+    setEditIndex(id);
+    setEditedFabricName(fabricName);
   };
+
+    // handle input change
+    const handleInputChange = (e) => {
+      setEditedFabricName(e.target.value);
+    };
+
+  // handle save button click
   const handleSaveClick = async (index, id) => {
     try {
-      const fabric = data.find((fabric) => fabric.id === id);
-      await apiService.put(`/fabrics/${id}`, { Fabric: fabric.Fabric });
-
-      // Update data locally
-      setData(
-        data.map((fabric) => (fabric.id === id ? { ...fabric } : fabric))
-      );
-      setEditIndex(null);
+      const response = await apiService.put(`/fabrics/${id}`, {
+        fabricName: editedFabricName,
+      });
+      if (response.status === 200) {
+        fetchAllfabrics();
+        setEditIndex(null);
+      }
     } catch (error) {
-      console.error(`Error saving fabric with ID ${id}:`, error);
+      console.error(`Error saving brand with ID ${id}:`, error);
       // Handle error as needed
     }
   };
-  const handleInputChange = (e, index) => {
-    const newData = [...data];
-    newData[index].fabricName = e.target.value;
-    setData(newData);
-  };
-
+ 
   const handleCheckboxChange = (id) => {
     setCheckedIds((prev) =>
       prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
     );
   };
 
-  const handleDelete = async () => {
-    try {
-      const idsToDelete = checkedIds;
-      await Promise.all(
-        idsToDelete.map(async (id) => {
-          await apiService.delete(`/fabrics/${id}`);
-        })
-      );
-      const newData = data.filter((row) => !checkedIds.includes(row.id));
-      setData(newData);
-      setCheckedIds([]);
-    } catch (error) {
-      console.error("Error deleting fabric:", error);
-      // Handle error as needed
-    }
-  };
-
+    // handle delete button click
+    const handleDelete = async (id) => {
+      try {
+        const response = await apiService.delete(`/fabrics/${id}`);
+        console.log(response);
+        if (response.status === 202) {
+          fetchAllfabrics();
+        }
+      } catch (error) {
+        console.error("Error deleting fabrics:", error);
+        // Handle error as needed
+      }
+    };
+  
   const handlePageChange = (direction) => {
     if (direction === "prev" && currentPage > 1) {
       setCurrentPage(currentPage - 1);
@@ -123,9 +114,6 @@ const Fabric = ({ searchQuery, isModalOpen, onClose }) => {
     setCurrentPage(1);
   };
 
-  const handleInputChangeModal = (e) => {
-    setInputValue(e.target.value);
-  };
 
   const handleSingleFabric = async () => {
     try {
@@ -133,7 +121,8 @@ const Fabric = ({ searchQuery, isModalOpen, onClose }) => {
         fabricName: singleFabrics,
       });
       if (response.status === 201) {
-        setData(response.data);
+        setSingleFabrics("");
+        fetchAllfabrics();
       }
     } catch (error) {
       console.error("Error adding fabric:", error);
@@ -212,11 +201,11 @@ const Fabric = ({ searchQuery, isModalOpen, onClose }) => {
                   {startIndex + index + 1}
                 </td>
                 <td className="px-2 py-3 whitespace-nowrap text-md text-center text-black w-28">
-                  {editIndex === startIndex + index ? (
+                  {editIndex === row.id ? (
                     <input
                       type="text"
-                      value={row.fabricName}
-                      onChange={(e) => handleInputChange(e, index)}
+                      value={editedFabricName}
+                      onChange={handleInputChange}
                       className="border border-gray-300 rounded-md w-28 px-2 py-2"
                     />
                   ) : (
@@ -262,7 +251,12 @@ const Fabric = ({ searchQuery, isModalOpen, onClose }) => {
                     </button>
                   ) : (
                     <button
-                      onClick={() => handleEditClick(row.id)}
+                    onClick={() =>
+                      handleEditClick({
+                        id: row.id,
+                        fabricName: row.fabricName,
+                      })
+                    }
                       className="text-blue-500 text-center"
                     >
                       <img src={editIcon} alt="Edit" className="h-6 w-6" />

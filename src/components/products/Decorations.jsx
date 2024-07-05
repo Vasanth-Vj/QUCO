@@ -12,7 +12,7 @@ import apiService from "../../apiService";
 
 const Decorations = ({ searchQuery, isModalOpen, onClose }) => {
   const [data, setData] = useState([]);
-  const [decoration, setDecoration] = useState([]);
+  const [editedDecorationName, setEditeddecorationName] = useState("");
   const [editIndex, setEditIndex] = useState(null);
   const [checkedIds, setCheckedIds] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
@@ -32,10 +32,11 @@ const Decorations = ({ searchQuery, isModalOpen, onClose }) => {
       setData(response.data); // Assuming response.data contains an array of brands
     } catch (error) {
       console.error("Error fetching decoration:", error);
-      setDecoration([]); // Handle error as needed
+
     }
   };
 
+  // handle toggle button click
   const handleStatusToggle = async ({ id, isActive }) => {
     try {
       const response = await apiService.put(`/decorations/${id}`, {
@@ -53,69 +54,54 @@ const Decorations = ({ searchQuery, isModalOpen, onClose }) => {
     }
   };
 
-  const handleEditClick = async (id) => {
-    try {
-      const response = await apiService.get(`/decorations/${id}`);
-      const styleToUpdate = response.data;
-      const updatedData = data.map((decoration) =>
-        decoration.id === id ? styleToUpdate : decoration
-      );
-      setData(updatedData);
-      setEditIndex(id);
-    } catch (error) {
-      console.error(`Error fetching decoration with ID ${id} for edit:`, error);
-      // Handle error as needed
-    }
+ // handle edit button click
+ const handleEditClick = ({ id, decorationName }) => {
+  setEditIndex(id);
+  setEditeddecorationName(decorationName);
+};
+
+  // handle input change
+  const handleInputChange = (e) => {
+    setEditeddecorationName(e.target.value);
   };
 
-  const handleSaveClick = async (index, id) => {
+
+   // handle save button click
+   const handleSaveClick = async (index, id) => {
     try {
-      const decoration = data.find((decoration) => decoration.id === id);
-      await apiService.put(`/decorations/${id}`, {
-        Decoration: decoration.Decoration,
+      const response = await apiService.put(`/decorations/${id}`, {
+        decorationName: editedDecorationName,
       });
-
-      // Update data locally
-      setData(
-        data.map((decoration) =>
-          decoration.id === id ? { ...decoration } : decoration
-        )
-      );
-      setEditIndex(null);
+      if (response.status === 200) {
+        fetchAllDecorations();
+        setEditIndex(null);
+      }
     } catch (error) {
-      console.error(`Error saving decoration with ID ${id}:`, error);
+      console.error(`Error saving decoration  with ID ${id}:`, error);
       // Handle error as needed
     }
   };
-
-  const handleInputChange = (e, index) => {
-    const newData = [...data];
-    newData[index].decorations = e.target.value;
-    setData(newData);
-  };
-
+ 
   const handleCheckboxChange = (id) => {
     setCheckedIds((prev) =>
       prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
     );
   };
 
-  const handleDelete = async () => {
+  // handle delete button click
+  const handleDelete = async (id) => {
     try {
-      const idsToDelete = checkedIds;
-      await Promise.all(
-        idsToDelete.map(async (id) => {
-          await apiService.delete(`/decorations/${id}`);
-        })
-      );
-      const newData = data.filter((row) => !checkedIds.includes(row.id));
-      setData(newData);
-      setCheckedIds([]);
+      const response = await apiService.delete(`/decorations/${id}`);
+      console.log(response);
+      if (response.status === 202) {
+        fetchAllDecorations();
+      }
     } catch (error) {
-      console.error("Error deleting decoration:", error);
+      console.error("Error deleting decorations:", error);
       // Handle error as needed
     }
   };
+
   const handlePageChange = (direction) => {
     if (direction === "prev" && currentPage > 1) {
       setCurrentPage(currentPage - 1);
@@ -132,9 +118,6 @@ const Decorations = ({ searchQuery, isModalOpen, onClose }) => {
     setCurrentPage(1);
   };
 
-  const handleInputChangeModal = (e) => {
-    setInputValue(e.target.value);
-  };
 
   const handleSingleDecoration = async () => {
     try {
@@ -143,7 +126,8 @@ const Decorations = ({ searchQuery, isModalOpen, onClose }) => {
       });
 
       if (response.status === 201) {
-        setData(response.data);
+        setSingleDecorations("");
+        fetchAllDecorations();
       }
     } catch (error) {
       console.error("Error adding decoration:", error);
@@ -217,11 +201,11 @@ const Decorations = ({ searchQuery, isModalOpen, onClose }) => {
                   {startIndex + index + 1}
                 </td>
                 <td className="px-2 py-3 whitespace-nowrap text-md text-center text-black w-28">
-                  {editIndex === startIndex + index ? (
+                  {editIndex === row.id ? (
                     <input
                       type="text"
-                      value={row.decorationName}
-                      onChange={(e) => handleInputChange(e, index)}
+                      value={editedDecorationName}
+                      onChange={handleInputChange}
                       className="border border-gray-300 rounded-md w-28 px-2 py-2"
                     />
                   ) : (
@@ -267,7 +251,12 @@ const Decorations = ({ searchQuery, isModalOpen, onClose }) => {
                     </button>
                   ) : (
                     <button
-                      onClick={() => handleEditClick(row.id )}
+                    onClick={() =>
+                      handleEditClick({
+                        id: row.id,
+                        decorationName: row.decorationName,
+                      })
+                    }
                       className="text-blue-500 text-center"
                     >
                       <img src={editIcon} alt="Edit" className="h-6 w-6" />
@@ -282,7 +271,14 @@ const Decorations = ({ searchQuery, isModalOpen, onClose }) => {
                     onChange={() => handleCheckboxChange(row.id)}
                   />
                 </td>
-                <td></td>
+                <td className="px-2 py-3 whitespace-nowrap text-md text-center text-black w-8">
+                  <button
+                    onClick={() => handleDelete(row.id)}
+                    className="text-red-500"
+                  >
+                    <img src={deleteIcon} alt="Delete" className="h-6 w-6" />
+                  </button>
+                </td>
               </tr>
             ))}
           </tbody>

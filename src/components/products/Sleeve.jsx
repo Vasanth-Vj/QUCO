@@ -11,22 +11,9 @@ import excelIcon from "../../assets/excel-icon.svg";
 import apiService from "../../apiService";
 
 const Sleeve = ({ searchQuery, isModalOpen, onClose }) => {
-  // const [data, setData] = useState([
-  // { id: 1, sleeve: 'Round sleeve', status: 'active' },
-  // { id: 2, sleeve: 'V sleeve', status: 'inactive' },
-  // { id: 3, sleeve: 'Tight collar', status: 'active' },
-  // { id: 4, sleeve: 'cut', status: 'inactive' },
-  // { id: 5, sleeve: 'loose', status: 'active' },
-  // { id: 6, sleeve: 'Jersey', status: 'inactive' },
-  // { id: 7, sleeve: 'Jersey', status: 'active' },
-  // { id: 8, sleeve: 'Jersey', status: 'inactive' },
-  // { id: 9, sleeve: 'Jersey', status: 'active' },
-  // { id: 10, sleeve: 'Jersey', status: 'inactive' },
-  // { id: 11, sleeve: 'Jersey', status: 'active' },
-  // { id: 12, sleeve: 'Jersey', status: 'inactive' },
-  // ]);
+
   const [data, setData] = useState([]);
-  const [sleeve, setSleeve] = useState([]);
+  const [editedSleeveName, setEditedSleeveName] = useState("");
   const [editIndex, setEditIndex] = useState(null);
   const [checkedIds, setCheckedIds] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
@@ -46,9 +33,11 @@ const Sleeve = ({ searchQuery, isModalOpen, onClose }) => {
       setData(response.data); // Assuming response.data contains an array of brands
     } catch (error) {
       console.error("Error fetching sleeves:", error);
-      setSleeve([]); // Handle error as needed
+
     }
   };
+
+    // handle toggle button click
   const handleStatusToggle = async ({ id, isActive }) => {
     try {
       const response = await apiService.put(`/sleeves/${id}`, {
@@ -63,42 +52,35 @@ const Sleeve = ({ searchQuery, isModalOpen, onClose }) => {
     }
   };
 
-  const handleEditClick = async (id) => {
-    try {
-      const response = await apiService.get(`/sleeves/${id}`);
-      const styleToUpdate = response.data;
-      const updatedData = data.map((sleeve) =>
-        sleeve.id === id ? styleToUpdate : sleeve
-      );
-      setData(updatedData);
-      setEditIndex(id);
-    } catch (error) {
-      console.error(`Error fetching sleeve with ID ${id} for edit:`, error);
-      // Handle error as needed
-    }
+// handle edit button click
+const handleEditClick = ({ id, sleeveName }) => {
+  setEditIndex(id);
+  setEditedSleeveName(sleeveName);
+};
+
+  // handle input change
+  const handleInputChange = (e) => {
+    setEditedSleeveName(e.target.value);
   };
 
-  const handleSaveClick = async (index, id) => {
-    try {
-      const sleeve = data.find((sleeve) => sleeve.id === id);
-      await apiService.put(`/sleeves/${id}`, { Sleeve: sleeve.Sleeve });
 
-      // Update data locally
-      setData(
-        data.map((sleeve) => (sleeve.id === id ? { ...sleeve } : sleeve))
-      );
-      setEditIndex(null);
+   // handle save button click
+   const handleSaveClick = async (index, id) => {
+    try {
+      const response = await apiService.put(`/sleeves/${id}`, {
+        sleeveName: editedSleeveName,
+      });
+      if (response.status === 200) {
+        fetchAllSleeves();
+        setEditIndex(null);
+      }
     } catch (error) {
       console.error(`Error saving sleeve with ID ${id}:`, error);
       // Handle error as needed
     }
   };
 
-  const handleInputChange = (e, index) => {
-    const newData = [...data];
-    newData[index].sleeveName = e.target.value;
-    setData(newData);
-  };
+ ;
 
   const handleCheckboxChange = (id) => {
     setCheckedIds((prev) =>
@@ -106,23 +88,19 @@ const Sleeve = ({ searchQuery, isModalOpen, onClose }) => {
     );
   };
 
-  const handleDelete = async () => {
+   // handle delete button click
+   const handleDelete = async (id) => {
     try {
-      const idsToDelete = checkedIds;
-      await Promise.all(
-        idsToDelete.map(async (id) => {
-          await apiService.delete(`/sleeves/${id}`);
-        })
-      );
-      const newData = data.filter((row) => !checkedIds.includes(row.id));
-      setData(newData);
-      setCheckedIds([]);
+      const response = await apiService.delete(`/sleeves/${id}`);
+      console.log(response);
+      if (response.status === 202) {
+        fetchAllSleeves();
+      }
     } catch (error) {
-      console.error("Error deleting sleeves:", error);
+      console.error("Error deleting sleeve:", error);
       // Handle error as needed
     }
   };
-
   const handlePageChange = (direction) => {
     if (direction === "prev" && currentPage > 1) {
       setCurrentPage(currentPage - 1);
@@ -139,9 +117,6 @@ const Sleeve = ({ searchQuery, isModalOpen, onClose }) => {
     setCurrentPage(1);
   };
 
-  const handleInputChangeModal = (e) => {
-    setInputValue(e.target.value);
-  };
 
   const handleSingleSleeve = async () => {
     try {
@@ -150,7 +125,8 @@ const Sleeve = ({ searchQuery, isModalOpen, onClose }) => {
       });
 
       if (response.status === 201) {
-        setData(response.data);
+        setSingleSleeves("");
+        fetchAllSleeves();
       }
     } catch (error) {
       console.error("Error adding sleeve:", error);
@@ -222,11 +198,11 @@ const Sleeve = ({ searchQuery, isModalOpen, onClose }) => {
                   {startIndex + index + 1}
                 </td>
                 <td className="px-3 py-3 whitespace-nowrap text-md text-left text-black w-40">
-                  {editIndex === startIndex + index ? (
+                  {editIndex === row.id ? (
                     <input
                       type="text"
-                      value={row.sleeveName}
-                      onChange={(e) => handleInputChange(e, index)}
+                      value={editedSleeveName}
+                      onChange={handleInputChange}
                       className="border border-gray-300 rounded-md px-2 py-2 text-left w-40"
                     />
                   ) : (
@@ -272,7 +248,12 @@ const Sleeve = ({ searchQuery, isModalOpen, onClose }) => {
                     </button>
                   ) : (
                     <button
-                      onClick={() => handleEditClick(row.id)}
+                    onClick={() =>
+                      handleEditClick({
+                        id: row.id,
+                        sleeveName: row.sleeveName,
+                      })
+                    }
                       className="text-blue-500 text-center"
                     >
                       <img src={editIcon} alt="Edit" className="h-6 w-6" />
@@ -287,7 +268,14 @@ const Sleeve = ({ searchQuery, isModalOpen, onClose }) => {
                     onChange={() => handleCheckboxChange(row.id)}
                   />
                 </td>
-                <td></td>
+                <td className="px-2 py-3 whitespace-nowrap text-md text-center text-black w-8">
+                  <button
+                    onClick={() => handleDelete(row.id)}
+                    className="text-red-500"
+                  >
+                    <img src={deleteIcon} alt="Delete" className="h-6 w-6" />
+                  </button>
+                </td>
               </tr>
             ))}
           </tbody>

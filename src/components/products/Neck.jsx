@@ -11,20 +11,18 @@ import excelIcon from "../../assets/excel-icon.svg";
 import apiService from "../../apiService";
 
 const Neck = ({ searchQuery, isModalOpen, onClose }) => {
-  // const [data, setData] = useState([
-  // { id: 1, neck: 'Round Neck', status: 'active' },
-  // { id: 2, neck: 'V neck', status: 'inactive' },
-  // { id: 3, neck: 'Tight collar', status: 'active' },
-  // { id: 4, neck: 'cut', status: 'inactive' },
-  // { id: 5, neck: 'loose', status: 'active' },
-  // { id: 6, neck: 'Jersey', status: 'inactive' },
-  // { id: 7, neck: 'Jersey', status: 'active' },
-  // { id: 8, neck: 'Jersey', status: 'inactive' },
-  // { id: 9, neck: 'Jersey', status: 'active' },
-  // { id: 10, neck: 'Jersey', status: 'inactive' },
-  // { id: 11, neck: 'Jersey', status: 'active' },
-  // { id: 12, neck: 'Jersey', status: 'inactive' },
-  // ]);
+
+
+  const [data, setData] = useState([]);
+  const [editedNeck, setEditedNeck] = useState("");
+  const [editIndex, setEditIndex] = useState(null);
+  const [checkedIds, setCheckedIds] = useState([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [recordsPerPage, setRecordsPerPage] = useState(5);
+  const [inputValue, setInputValue] = useState("");
+  const [addedStyles, setAddedStyles] = useState([]);
+  const [singleNecks, setSingleNecks] = useState("");
+
   useEffect(() => {
     fetchAllNecks();
   }, []);
@@ -36,24 +34,13 @@ const Neck = ({ searchQuery, isModalOpen, onClose }) => {
       setData(response.data); // Assuming response.data contains an array of brands
     } catch (error) {
       console.error("Error fetching necks:", error);
-      setNeck([]); // Handle error as needed
+
     }
   };
 
-  const [data, setData] = useState([]);
-  const [neck, setNeck] = useState([]);
-  const [editIndex, setEditIndex] = useState(null);
-  const [checkedIds, setCheckedIds] = useState([]);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [recordsPerPage, setRecordsPerPage] = useState(5);
-  const [inputValue, setInputValue] = useState("");
-  const [addedStyles, setAddedStyles] = useState([]);
-  const [singleNecks, setSingleNecks] = useState("");
 
-  // const filteredData = data.filter(item =>
-  // item.neck.toLowerCase().includes(searchQuery.toLowerCase())
-  // );
 
+  // handle toggle button click
   const handleStatusToggle = async ({ id, isActive }) => {
     try {
       const response = await apiService.put(`/necks/${id}`, {
@@ -68,37 +55,31 @@ const Neck = ({ searchQuery, isModalOpen, onClose }) => {
     }
   };
 
-  const handleEditClick = async (id) => {
-    try {
-      const response = await apiService.get(`/necks/${id}`);
-      const styleToUpdate = response.data;
-      const updatedData = data.map((neck) =>
-        neck.id === id ? styleToUpdate : neck
-      );
-      setData(updatedData);
-      setEditIndex(id);
-    } catch (error) {
-      console.error(`Error fetching neck with ID ${id} for edit:`, error);
-      // Handle error as needed
-    }
+  // handle edit button click
+  const handleEditClick = ({ id, neckType }) => {
+    setEditIndex(id);
+    setEditedNeck(neckType);
   };
-  const handleSaveClick = async (index, id) => {
-    try {
-      const brand = data.find((neck) => neck.id === id);
-      await apiService.put(`/brands/${id}`, { Neck: neck.Neck });
 
-      // Update data locally
-      setData(data.map((neck) => (neck.id === id ? { ...neck } : neck)));
-      setEditIndex(null);
+    // handle input change
+    const handleInputChange = (e) => {
+      setEditedNeck(e.target.value);
+    };
+
+   // handle save button click
+   const handleSaveClick = async (index, id) => {
+    try {
+      const response = await apiService.put(`/necks/${id}`, {
+        neckType: editedNeck,
+      });
+      if (response.status === 200) {
+        fetchAllNecks();
+        setEditIndex(null);
+      }
     } catch (error) {
       console.error(`Error saving neck with ID ${id}:`, error);
       // Handle error as needed
     }
-  };
-  const handleInputChange = (e, index) => {
-    const newData = [...data];
-    newData[index].neckType = e.target.value;
-    setData(newData);
   };
 
   const handleCheckboxChange = (id) => {
@@ -107,22 +88,20 @@ const Neck = ({ searchQuery, isModalOpen, onClose }) => {
     );
   };
 
-  const handleDelete = async () => {
-    try {
-      const idsToDelete = checkedIds;
-      await Promise.all(
-        idsToDelete.map(async (id) => {
-          await apiService.delete(`/necks/${id}`);
-        })
-      );
-      const newData = data.filter((row) => !checkedIds.includes(row.id));
-      setData(newData);
-      setCheckedIds([]);
-    } catch (error) {
-      console.error("Error deleting necks:", error);
-      // Handle error as needed
+// handle delete button click
+const handleDelete = async (id) => {
+  try {
+    const response = await apiService.delete(`/necks/${id}`);
+    console.log(response);
+    if (response.status === 202) {
+      fetchAllNecks();
     }
-  };
+  } catch (error) {
+    console.error("Error deleting necks:", error);
+    // Handle error as needed
+  }
+};
+
   const handlePageChange = (direction) => {
     if (direction === "prev" && currentPage > 1) {
       setCurrentPage(currentPage - 1);
@@ -139,9 +118,6 @@ const Neck = ({ searchQuery, isModalOpen, onClose }) => {
     setCurrentPage(1);
   };
 
-  const handleInputChangeModal = (e) => {
-    setInputValue(e.target.value);
-  };
 
   const handleSingleNeck = async () => {
     try {
@@ -150,7 +126,8 @@ const Neck = ({ searchQuery, isModalOpen, onClose }) => {
       });
 
       if (response.status === 201) {
-        setData(response.data);
+        setSingleNecks("");
+        fetchAllNecks();
       }
     } catch (error) {
       console.error("Error adding neck:", error);
@@ -224,11 +201,11 @@ const Neck = ({ searchQuery, isModalOpen, onClose }) => {
                   {startIndex + index + 1}
                 </td>
                 <td className="px-3 py-3 whitespace-nowrap text-md text-left text-black w-40">
-                  {editIndex === startIndex + index ? (
+                  {editIndex === row.id ? (
                     <input
                       type="text"
-                      value={row.neckType}
-                      onChange={(e) => handleInputChange(e, index)}
+                      value={editedNeck}
+                      onChange={handleInputChange}
                       className="border border-gray-300 rounded-md px-2 py-2 text-left w-40"
                     />
                   ) : (
@@ -266,7 +243,7 @@ const Neck = ({ searchQuery, isModalOpen, onClose }) => {
                 <td className="px-2 py-3 whitespace-nowrap text-md text-center text-black w-16">
                   {editIndex === row.id ? (
                     <button
-                      onClick={() => handleSaveClick(index, row.id)}
+                    onClick={() => handleSaveClick(index, row.id)}
                       className="bg-green-200 border border-green-500 px-2 py-1 rounded-lg flex"
                     >
                       <img src={tickIcon} alt="" className="mt-1 mr-2" />
@@ -274,7 +251,12 @@ const Neck = ({ searchQuery, isModalOpen, onClose }) => {
                     </button>
                   ) : (
                     <button
-                      onClick={() => handleEditClick(row.id)}
+                    onClick={() =>
+                      handleEditClick({
+                        id: row.id,
+                        neckType: row.neckType,
+                      })
+                    }
                       className="text-blue-500 text-center"
                     >
                       <img src={editIcon} alt="Edit" className="h-6 w-6" />
@@ -289,7 +271,14 @@ const Neck = ({ searchQuery, isModalOpen, onClose }) => {
                     onChange={() => handleCheckboxChange(row.id)}
                   />
                 </td>
-                <td></td>
+                <td className="px-2 py-3 whitespace-nowrap text-md text-center text-black w-8">
+                  <button
+                    onClick={() => handleDelete(row.id)}
+                    className="text-red-500"
+                  >
+                    <img src={deleteIcon} alt="Delete" className="h-6 w-6" />
+                  </button>
+                </td>
               </tr>
             ))}
           </tbody>
@@ -349,9 +338,9 @@ const Neck = ({ searchQuery, isModalOpen, onClose }) => {
                 <hr className="w-full mt-3" />
               </div>
               <div className="flex flex-col items-center">
-                <p className="text-gray-400 font-bold mt-10">
+                {/* <p className="text-gray-400 font-bold mt-10">
                   *For multiple “Neck ” feed use enter after each values
-                </p>
+                </p> */}
                 <input
                   className="bg-gray-200 rounded w-80 py-3 px-4 text-gray-700 focus:outline-none focus:shadow-outline mt-5 text-lg text-center"
                   type="text"
@@ -375,24 +364,7 @@ const Neck = ({ searchQuery, isModalOpen, onClose }) => {
                     </span>
                   </p>
                 </div>
-                {/* <div className="bg-gray-100 mt-10 w-full h-screen max-h-[13vh]">
-{addedStyles.length > 0 ? (
-<div className="flex flex-wrap mt-3">
-{addedStyles.map((style, index) => (
-<div key={index} className="w-35 flex items-center bg-gray-200 px-5 py-2 mb-2 mx-2">
-<span>{style}</span>
-<button onClick={() => handleRemoveStyle(index)}>
-<img src={closeIcon} alt="Remove" className="w-3 h-3 ml-3" />
-</button>
-</div>
-))}
-</div>
-) : (
-<div className="flex justify-center items-center h-full">
-<span className="text-gray-500 text-xl">No neck entries</span>
-</div>
-)}
-</div> */}
+           
               </div>
             </div>
           </div>

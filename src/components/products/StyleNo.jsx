@@ -12,31 +12,55 @@ import apiService from "../../apiService";
 
 const StyleNo = ({ searchQuery, isModalOpen, onClose }) => {
   const [data, setData] = useState([]);
-  const [style, setStyle] = useState([]);
+  const [editedStyle, setEditedStyle] = useState("");
+  const [editedStyleNo, setEditedStyleNo] = useState("");
+  const [editedShortDescription, setEditedShortDescription] = useState("");
+  const [editedLongDescription, setEditedLongDescription] = useState("");
   const [editIndex, setEditIndex] = useState(null);
-  const [checkedIds, setCheckedIds] = useState([]);   
+  const [checkedIds, setCheckedIds] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [recordsPerPage, setRecordsPerPage] = useState(5);
   const [inputValue, setInputValue] = useState("");
-  const [addedStyles, setAddedStyles] = useState([]);
-  const [singleStyles, setSingleStyles] = useState("");
+  const [addedBrands, setAddedBrands] = useState([]);
+  const [singleStyle, setSingleStyle] = useState("");
+  const [oneShortDescreption, setOneShortDescreption] = useState("");
+  const [oneLongDescription, setOneLongDescription] = useState("");
 
   useEffect(() => {
-    // Fetch data when component mounts
     fetchAllStyles();
   }, []);
 
   const fetchAllStyles = async () => {
     try {
       const response = await apiService.get("/styles/getall");
+      console.log(response.data);
       setData(response.data);
     } catch (error) {
-      console.error("Error fetching styles:", error);
-      setStyle([]); // Handle error as needed
+      console.error("Error fetching Style:", error);
     }
   };
 
-  const handleStatusToggle = async (id, isActive) => {
+  // handle single style
+  const handleSingleStyle = async () => {
+    try {
+      const response = await apiService.post("/styles/create", {
+        style_no: singleStyle,
+        short_description: oneShortDescreption,
+        full_description: oneLongDescription,
+      });
+
+      if (response.status === 201) {
+        fetchAllStyles();
+        setSingleStyle("");
+        setOneShortDescreption("");
+        setOneLongDescription("");
+      }
+    } catch (error) {
+      console.error("Error adding Style:", error);
+    }
+  };
+
+  const handleStatusToggle = async ({ id, isActive }) => {
     try {
       const response = await apiService.put(`/styles/${id}`, {
         isActive: !isActive,
@@ -45,44 +69,37 @@ const StyleNo = ({ searchQuery, isModalOpen, onClose }) => {
         fetchAllStyles();
       }
     } catch (error) {
-      console.error(`Error toggling status for style with ID ${id}:`, error);
+      console.error(`Error toggling status for styles with ID ${id}:`, error);
       // Handle error as needed
     }
   };
 
-  const handleEditClick = async (id) => {
-    try {
-      const response = await apiService.get(`/styles/${id}`);
-      const styleToUpdate = response.data;
-      const updatedData = data.map((style) =>
-        style.id === id ? styleToUpdate : style
-      );
-      setData(updatedData);
-      setEditIndex(id);
-    } catch (error) {
-      console.error(`Error fetching style with ID ${id} for edit:`, error);
-      // Handle error as needed
-    }
+  const handleEditClick = ({ id, styleNo, short, long }) => {
+    setEditIndex(id);
+    setEditedStyleNo(styleNo);
+    setEditedShortDescription(short);
+    setEditedLongDescription(long);
+  };
+
+  const handleInputChange = (e) => {
+    setEditedStyle(e.target.value);
   };
 
   const handleSaveClick = async (index, id) => {
     try {
-      const style = data.find((style) => style.id === id);
-      await apiService.put(`/styles/${id}`, { StyleNo: style.StyleNo });
-
-      // Update data locally
-      setData(data.map((style) => (style.id === id ? { ...style } : style)));
-      setEditIndex(null);
+      const response = await apiService.put(`/styles/${id}`, {
+        style_no: editedStyleNo,
+        short_description: editedShortDescription,
+        full_description: editedLongDescription,
+      });
+      if (response.status === 200) {
+        fetchAllStyles();
+        setEditIndex(null);
+      }
     } catch (error) {
-      console.error(`Error saving style with ID ${id}:`, error);
+      console.error(`Error saving styles with ID ${id}:`, error);
       // Handle error as needed
     }
-  };
-
-  const handleInputChange = (e, index) => {
-    const newData = [...data];
-    newData[index].style_no = e.target.value;
-    setData(newData);
   };
 
   const handleCheckboxChange = (id) => {
@@ -91,19 +108,13 @@ const StyleNo = ({ searchQuery, isModalOpen, onClose }) => {
     );
   };
 
-  const handleDelete = async () => {
+  const handleDelete = async (id) => {
     try {
-      const idsToDelete = checkedIds;
-      await Promise.all(
-        idsToDelete.map(async (id) => {
-          await apiService.delete(`/styles/${id}`);
-        })
-      );
-
-      // Update data locally
-      const newData = data.filter((row) => !checkedIds.includes(row.id));
-      setData(newData);
-      setCheckedIds([]);
+      const response = await apiService.delete(`/styles/${id}`);
+      console.log(response);
+      if (response.status === 202) {
+        fetchAllStyles();
+      }
     } catch (error) {
       console.error("Error deleting styles:", error);
       // Handle error as needed
@@ -126,44 +137,23 @@ const StyleNo = ({ searchQuery, isModalOpen, onClose }) => {
     setCurrentPage(1);
   };
 
-  const handleInputChangeModal = (e) => {
-    setInputValue(e.target.value);
-  };
-
-  const handleSingleStyle= async () => {
-    try {
-      const response = await apiService.post("/styles/create", {
-        style_no: singleStyles,
-      });
-      // setSingleBrands(...singleBrands, inputValue.trim());
-      // setInputValue("");
-      if (response.status === 201) {
-        setData(response.data);
-      }
-    } catch (error) {
-      console.error("Error adding style:", error);
-    }
-  };
-
-  const handleAddStyle = async () => {
+  const handleAddBrand = async () => {
     try {
       if (inputValue.trim() !== "") {
-        await apiService.post("/styles/create", {
-          style_no: inputValue.trim(),
-        });
-        setAddedStyles([...addedStyles, inputValue.trim()]);
+        await apiService.post("/brands/create", { Brand: inputValue.trim() });
+        setAddedBrands([...addedBrands, inputValue.trim()]); // Assuming response returns the created brand object with a property like `brandName`
         setInputValue("");
       }
     } catch (error) {
-      console.error("Error adding style:", error);
+      console.error("Error adding brand:", error);
       // Handle error as needed
     }
   };
 
-  const handleRemoveStyle = (index) => {
-    const newAddedStyles = [...addedStyles];
-    newAddedStyles.splice(index, 1);
-    setAddedStyles(newAddedStyles);
+  const handleRemoveBrand = (index) => {
+    const newAddedBrands = [...addedBrands];
+    newAddedBrands.splice(index, 1);
+    setAddedBrands(newAddedBrands);
   };
 
   const filteredData = data.filter(
@@ -177,21 +167,27 @@ const StyleNo = ({ searchQuery, isModalOpen, onClose }) => {
   const currentData = filteredData.slice(startIndex, endIndex);
 
   return (
-    <div className="p-4 bg-white">
+    <div className=" mx-auto p-4 bg-white">
       <div className="min-h-[60vh] max-h-[60vh] overflow-y-auto">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50 w-full">
             <tr>
-              <th className="px-2 py-3 text-center text-md font-bold text-black uppercase w-28">
+              <th className="px-2 py-3 text-center text-md font-bold text-black uppercase w-12">
                 Si No
               </th>
-              <th className="px-2 py-3 text-center text-md font-bold text-black uppercase w-40">
-                Style No
+              <th className="px-2 py-3 text-center text-md font-bold text-black uppercase w-24">
+                Style no
               </th>
-              <th className="px-6 py-3 text-center text-md font-bold text-black uppercase flex-grow">
+              <th className="px-2 py-3 text-center text-md font-bold text-black uppercase w-32">
+                Short Description
+              </th>
+              <th className="px-2 py-3 text-center text-md font-bold text-black uppercase w-40">
+                Long Description
+              </th>
+              <th className="px-6 py-3 text-center text-md font-bold text-black uppercase w-20">
                 Status
               </th>
-              <th className="px-2 py-3 text-center text-md font-bold text-black uppercase w-28">
+              <th className="px-2 py-3 text-center text-md font-bold text-black uppercase w-20">
                 Action
               </th>
               <th className="px-2 py-3 text-center text-md font-bold text-black uppercase w-20">
@@ -220,15 +216,39 @@ const StyleNo = ({ searchQuery, isModalOpen, onClose }) => {
                   {startIndex + index + 1}
                 </td>
                 <td className="px-2 py-3 whitespace-nowrap text-md text-center text-black w-28">
-                  {editIndex === startIndex + index ? (
+                  {editIndex === row.id ? (
                     <input
                       type="text"
-                      value={row.style_no}
-                      onChange={(e) => handleInputChange(e, index)}
+                      value={editedStyleNo}
+                      onChange={(e) => setEditedStyleNo(e.target.value)}
                       className="border border-gray-300 rounded-md w-28 px-2 py-2"
                     />
                   ) : (
                     row.style_no
+                  )}
+                </td>
+                <td className="px-2 py-3 whitespace-nowrap text-md text-center text-black w-28">
+                  {editIndex === row.id ? (
+                    <input
+                      type="text"
+                      value={editedShortDescription}
+                      onChange={(e) => setEditedShortDescription(e.target.value)}
+                      className="border border-gray-300 rounded-md w-28 px-2 py-2"
+                    />
+                  ) : (
+                    row.short_description
+                  )}
+                </td>
+                <td className="px-2 py-3 whitespace-nowrap text-md text-center text-black w-28">
+                  {editIndex ===  row.id ? (
+                    <input
+                      type="text"
+                      value={editedLongDescription}
+                      onChange={(e) => setEditedLongDescription(e.target.value)}
+                      className="border border-gray-300 rounded-md w-28 px-2 py-2"
+                    />
+                  ) : (
+                    row.full_description
                   )}
                 </td>
                 <td className="px-6 py-3 whitespace-nowrap text-md text-center text-black flex-grow">
@@ -270,7 +290,14 @@ const StyleNo = ({ searchQuery, isModalOpen, onClose }) => {
                     </button>
                   ) : (
                     <button
-                      onClick={() => handleEditClick(row.id)}
+                      onClick={() =>
+                        handleEditClick({
+                          id: row.id,
+                          styleNo: row.style_no,
+                          short: row.short_description,
+                          long: row.full_description,
+                        })
+                      }
                       className="text-blue-500 text-center"
                     >
                       <img src={editIcon} alt="Edit" className="h-6 w-6" />
@@ -337,11 +364,11 @@ const StyleNo = ({ searchQuery, isModalOpen, onClose }) => {
             className="fixed inset-0 bg-black opacity-50"
             onClick={onClose}
           ></div>
-          <div className="relative bg-white rounded-lg shadow-lg w-full max-w-[35vw] h-screen max-h-[50vh] overflow-y-auto lg:overflow-hidden">
+          <div className="relative bg-white rounded-lg shadow-lg w-full max-w-[35vw] h-screen max-h-[80vh] overflow-y-auto lg:overflow-hidden">
             <div className="py-2 flex flex-col">
               <div>
                 <div className="flex justify-center">
-                  <h2 className="text-2xl font-bold">Add Style No</h2>
+                  <h2 className="text-2xl font-bold">Add Style</h2>
                   <button
                     className="absolute right-5 cursor-pointer"
                     onClick={onClose}
@@ -353,18 +380,31 @@ const StyleNo = ({ searchQuery, isModalOpen, onClose }) => {
               </div>
               <div className="flex flex-col items-center">
                 {/* <p className="text-gray-400 font-bold mt-10">
-                  *For multiple “Style no” feed use enter after each values
+                  *For multiple brand feed use enter after each values"
                 </p> */}
                 <input
                   className="bg-gray-200 rounded w-80 py-3 px-4 text-gray-700 focus:outline-none focus:shadow-outline mt-5 text-lg text-center"
                   type="text"
-                  placeholder="Enter style no"
-                  value={singleStyles}
-                  onChange={(e) => setSingleStyles(e.target.value)}
+                  placeholder="Enter Style No"
+                  value={singleStyle}
+                  onChange={(e) => setSingleStyle(e.target.value)}
+                />
+                <textarea
+                  class="bg-gray-200 h-full min-h-[100px] min-w-[30vw] rounded-[7px] px-3  text-gray-700 focus:outline-none focus:shadow-outline mt-5 text-xl text-left"
+                  rows={1}
+                  placeholder="Enter short description"
+                  value={oneShortDescreption}
+                  onChange={(e) => setOneShortDescreption(e.target.value)}
+                />
+                <textarea
+                  class="bg-gray-200 h-full min-h-[100px] min-w-[30vw] rounded-[7px] px-3  text-gray-700 focus:outline-none focus:shadow-outline mt-5 text-xl text-left"
+                  placeholder="Enter full description"
+                  value={oneLongDescription}
+                  onChange={(e) => setOneLongDescription(e.target.value)}
                 />
                 <button
                   className="bg-sky-600 w-80 py-3 text-white rounded-lg font-bold text-lg mt-3"
-                  onClick={handleSingleStyle}
+                  onClick={() => handleSingleStyle()}
                 >
                   Update
                 </button>
@@ -378,7 +418,33 @@ const StyleNo = ({ searchQuery, isModalOpen, onClose }) => {
                     </span>
                   </p>
                 </div>
-             
+                {/* <div className="bg-gray-100 mt-10 w-full h-screen max-h-[13vh]">
+                  {addedBrands.length > 0 ? (
+                    <div className="flex flex-wrap mt-3">
+                      {addedBrands.map((style, index) => (
+                        <div
+                          key={index}
+                          className="w-35 flex items-center bg-gray-200 px-5 py-2 mb-2 mx-2"
+                        >
+                          <span>{style}</span>
+                          <button onClick={() => handleRemoveBrand(index)}>
+                            <img
+                              src={closeIcon}
+                              alt="Remove"
+                              className="w-3 h-3 ml-3"
+                            />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="flex justify-center items-center h-full">
+                      <span className="text-gray-500 text-xl">
+                        No brand entries
+                      </span>
+                    </div>
+                  )}
+                </div> */}
               </div>
             </div>
           </div>

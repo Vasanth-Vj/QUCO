@@ -12,7 +12,7 @@ import apiService from "../../apiService";
 
 const FabricFinish = ({ searchQuery, isModalOpen, onClose }) => {
   const [data, setData] = useState([]);
-  const [fabricFinish, setFabricFinish] = useState([]);
+  const [editedfabricFinishName, setEditedFabricFinishName] = useState("");
   const [editIndex, setEditIndex] = useState(null);
   const [checkedIds, setCheckedIds] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
@@ -31,11 +31,12 @@ const FabricFinish = ({ searchQuery, isModalOpen, onClose }) => {
       setData(response.data); // Assuming response.data contains an array of brands
     } catch (error) {
       console.error("Error fetching fabricFinishes:", error);
-      setFabricFinish([]); // Handle error as needed
+
     }
   };
 
-  const handleStatusToggle = async (id, isActive) => {
+    // handle toggle button click
+  const handleStatusToggle = async ({ id, isActive }) => {
     try {
       const response = await apiService.put(`/fabricFinishes/${id}`, {
         isActive: !isActive,
@@ -44,55 +45,38 @@ const FabricFinish = ({ searchQuery, isModalOpen, onClose }) => {
         fetchAllfabricFinishes();
       }
     } catch (error) {
-      console.error(
-        `Error toggling status for fabricFinish with ID ${id}:`,
-        error
-      );
+      console.error(`Error toggling status for fabric Finishes with ID ${id}:`, error);
       // Handle error as needed
     }
   };
-  const handleEditClick = async (id) => {
-    try {
-      const response = await apiService.get(`/fabricFinishes/${id}`);
-      const styleToUpdate = response.data;
-      const updatedData = data.map((fabricFinish) =>
-        fabricFinish.id === id ? styleToUpdate : fabricFinish
-      );
-      setData(updatedData);
-      setEditIndex(id);
-    } catch (error) {
-      console.error(
-        `Error fetching fabricFinish with ID ${id} for edit:`,
-        error
-      );
-      // Handle error as needed
-    }
+  
+  // handle edit button click
+  const handleEditClick = ({ id, fabricFinishName }) => {
+    setEditIndex(id);
+    setEditedFabricFinishName(fabricFinishName);
   };
-  const handleUpdateClick = async (index, id) => {
+
+    // handle input change
+    const handleInputChange = (e) => {
+      setEditedFabricFinishName(e.target.value);
+    };
+
+  // handle save button click
+  const handleSaveClick = async (index, id) => {
     try {
-      const fabricFinish = data.find((fabricFinish) => fabricFinish.id === id);
-      await apiService.put(`/fabricFinishes/${id}`, {
-        FabricFinish: fabricFinish.FabricFinish,
+      const response = await apiService.put(`/fabricFinishes/${id}`, {
+        fabricFinishName: editedfabricFinishName,
       });
-
-      // Update data locally
-      setData(
-        data.map((fabricFinish) =>
-          fabricFinish.id === id ? { ...fabricFinish } : fabricFinish
-        )
-      );
-      setEditIndex(null);
+      if (response.status === 200) {
+        fetchAllfabricFinishes();
+        setEditIndex(null);
+      }
     } catch (error) {
-      console.error(`Error saving fabricFinish with ID ${id}:`, error);
+      console.error(`Error saving fabric FinishName with ID ${id}:`, error);
       // Handle error as needed
     }
   };
 
-  const handleInputChange = (e, index) => {
-    const newData = [...data];
-    newData[index].fabricFinishName = e.target.value;
-    setData(newData);
-  };
 
   const handleCheckboxChange = (id) => {
     setCheckedIds((prev) =>
@@ -100,19 +84,15 @@ const FabricFinish = ({ searchQuery, isModalOpen, onClose }) => {
     );
   };
 
-  const handleDelete = async () => {
+  const handleDelete = async (id) => {
     try {
-      const idsToDelete = checkedIds;
-      await Promise.all(
-        idsToDelete.map(async (id) => {
-          await apiService.delete(`/fabricFinishes/${id}`);
-        })
-      );
-      const newData = data.filter((row) => !checkedIds.includes(row.id));
-      setData(newData);
-      setCheckedIds([]);
+      const response = await apiService.delete(`/fabricFinishes/${id}`);
+      console.log(response);
+      if (response.status === 202) {
+        fetchAllfabricFinishes();
+      }
     } catch (error) {
-      console.error("Error deleting fabricFinish:", error);
+      console.error("Error deleting fabric Finishes:", error);
       // Handle error as needed
     }
   };
@@ -133,9 +113,6 @@ const FabricFinish = ({ searchQuery, isModalOpen, onClose }) => {
     setCurrentPage(1);
   };
 
-  const handleInputChangeModal = (e) => {
-    setInputValue(e.target.value);
-  };
 
   const handleSingleFabricFinish = async () => {
     try {
@@ -143,7 +120,8 @@ const FabricFinish = ({ searchQuery, isModalOpen, onClose }) => {
         fabricFinishName: singleFabricFinishes,
       });
       if (response.status === 201) {
-        setData(response.data);
+        setSingleFabricFinishes("");
+        fetchAllfabricFinishes();
       }
     } catch (error) {
       console.error("Error adding fabricFinish:", error);
@@ -225,11 +203,11 @@ const FabricFinish = ({ searchQuery, isModalOpen, onClose }) => {
                   {startIndex + index + 1}
                 </td>
                 <td className="px-2 py-3 whitespace-nowrap text-md text-center text-black w-28">
-                  {editIndex === startIndex + index ? (
+                  {editIndex === row.id ? (
                     <input
                       type="text"
-                      value={row.fabricFinishName}
-                      onChange={(e) => handleInputChange(e, index)}
+                      value={editedfabricFinishName}
+                      onChange={handleInputChange}
                       className="border border-gray-300 rounded-md w-28 px-2 py-2"
                     />
                   ) : (
@@ -238,7 +216,7 @@ const FabricFinish = ({ searchQuery, isModalOpen, onClose }) => {
                 </td>
                 <td className="px-6 py-3 whitespace-nowrap text-md text-center text-black flex-grow">
                   <button
-                    onClick={() =>
+                     onClick={() =>
                       handleStatusToggle({ id: row.id, isActive: row.isActive })
                     }
                     className="px-2 py-1 rounded-full"
@@ -267,7 +245,7 @@ const FabricFinish = ({ searchQuery, isModalOpen, onClose }) => {
                 <td className="px-2 py-3 whitespace-nowrap text-md text-center text-black w-16">
                   {editIndex ===row.id ? (
                     <button
-                      onClick={() => handleUpdateClick(index, row.id)}
+                      onClick={() => handleSaveClick(index, row.id)}
                       className="bg-green-200 border border-green-500 px-2 py-1 rounded-lg flex"
                     >
                       <img src={tickIcon} alt="" className="mt-1 mr-2" />
@@ -275,7 +253,12 @@ const FabricFinish = ({ searchQuery, isModalOpen, onClose }) => {
                     </button>
                   ) : (
                     <button
-                      onClick={() => handleEditClick(row.id)}
+                    onClick={() =>
+                      handleEditClick({
+                        id: row.id,
+                        fabricFinishName: row.fabricFinishName,
+                      })
+                    }
                       className="text-blue-500 text-center"
                     >
                       <img src={editIcon} alt="Edit" className="h-6 w-6" />
@@ -290,7 +273,14 @@ const FabricFinish = ({ searchQuery, isModalOpen, onClose }) => {
                     onChange={() => handleCheckboxChange(row.id)}
                   />
                 </td>
-                <td></td>
+                <td className="px-2 py-3 whitespace-nowrap text-md text-center text-black w-8">
+                  <button
+                    onClick={() => handleDelete(row.id)}
+                    className="text-red-500"
+                  >
+                    <img src={deleteIcon} alt="Delete" className="h-6 w-6" />
+                  </button>
+                </td>
               </tr>
             ))}
           </tbody>

@@ -12,7 +12,7 @@ import apiService from "../../apiService";
 
 const PrintOrEmb = ({ searchQuery, isModalOpen, onClose }) => {
   const [data, setData] = useState([]);
-  const [print, setPrint] = useState([]);
+  const [editedPrintName, setEditedPrintName] = useState("");
   const [editIndex, setEditIndex] = useState(null);
   const [checkedIds, setCheckedIds] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
@@ -31,11 +31,12 @@ const PrintOrEmb = ({ searchQuery, isModalOpen, onClose }) => {
       console.log(response.data);
       setData(response.data); // Assuming response.data contains an array of brands
     } catch (error) {
-      console.error("Error fetching brands:", error);
-      setPrint([]); // Handle error as needed
+      console.error("Error fetching print", error);
+  
     }
   };
 
+  // handle toggle button click
   const handleStatusToggle = async ({ id, isActive }) => {
     try {
       const response = await apiService.put(`/printEmb/${id}`, {
@@ -49,61 +50,56 @@ const PrintOrEmb = ({ searchQuery, isModalOpen, onClose }) => {
       // Handle error as needed
     }
   };
-  const handleEditClick = async (id) => {
-    try {
-      const response = await apiService.get(`/printEmb/${id}`);
-      const styleToUpdate = response.data;
-      const updatedData = data.map((print) =>
-        print.id === id ? styleToUpdate : print
-      );
-      setData(updatedData);
-      setEditIndex(id);
-    } catch (error) {
-      console.error(`Error fetching printEmb with ID ${id} for edit:`, error);
-      // Handle error as needed
-    }
+
+ // handle edit button click
+  const handleEditClick = ({ id, printType }) => {
+    setEditIndex(id);
+    setEditedPrintName(printType);
   };
+
+  // handle input change
+  const handleInputChange = (e) => {
+    setEditedPrintName(e.target.value);
+  };
+
+
+  // handle save button click
   const handleSaveClick = async (index, id) => {
     try {
-      const print = data.find((print) => print.id === id);
-      await apiService.put(`/printEmb/${id}`, { Print: print.Print });
-
-      // Update data locally
-      setData(data.map((print) => (print.id === id ? { ...print } : print)));
-      setEditIndex(null);
+      const response = await apiService.put(`/printEmb${id}`, {
+        printType: editedPrintName,
+      });
+      if (response.status === 200) {
+        fetchAllPrints();
+        setEditIndex(null);
+      }
     } catch (error) {
-      console.error(`Error saving print with ID ${id}:`, error);
+      console.error(`Error saving print Type with ID ${id}:`, error);
       // Handle error as needed
     }
   };
 
-  const handleInputChange = (e, index) => {
-    const newData = [...data];
-    newData[index].printOrEmb = e.target.value;
-    setData(newData);
-  };
 
   const handleCheckboxChange = (id) => {
     setCheckedIds((prev) =>
       prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
     );
   };
-  const handleDelete = async () => {
+
+  // handle delete button click
+  const handleDelete = async (id) => {
     try {
-      const idsToDelete = checkedIds;
-      await Promise.all(
-        idsToDelete.map(async (id) => {
-          await apiService.delete(`/printEmb/${id}`);
-        })
-      );
-      const newData = data.filter((row) => !checkedIds.includes(row.id));
-      setData(newData);
-      setCheckedIds([]);
+      const response = await apiService.delete(`/printEmb/${id}`);
+      console.log(response);
+      if (response.status === 202) {
+        fetchAllPrints();
+      }
     } catch (error) {
-      console.error("Error deleting printEmb:", error);
+      console.error("Error deleting print type:", error);
       // Handle error as needed
     }
   };
+
   const handlePageChange = (direction) => {
     if (direction === "prev" && currentPage > 1) {
       setCurrentPage(currentPage - 1);
@@ -120,9 +116,6 @@ const PrintOrEmb = ({ searchQuery, isModalOpen, onClose }) => {
     setCurrentPage(1);
   };
 
-  const handleInputChangeModal = (e) => {
-    setInputValue(e.target.value);
-  };
 
   const handleSinglePrint = async () => {
     try {
@@ -131,7 +124,8 @@ const PrintOrEmb = ({ searchQuery, isModalOpen, onClose }) => {
       });
 
       if (response.status === 201) {
-        setData(response.data);
+        setSinglePrints("");
+        fetchAllPrints();
       }
     } catch (error) {
       console.error("Error adding printEmb:", error);
@@ -205,11 +199,11 @@ const PrintOrEmb = ({ searchQuery, isModalOpen, onClose }) => {
                   {startIndex + index + 1}
                 </td>
                 <td className="px-2 py-3 whitespace-nowrap text-md text-center text-black w-28">
-                  {editIndex === startIndex + index ? (
+                  {editIndex === row.id ? (
                     <input
                       type="text"
-                      value={row.printType}
-                      onChange={(e) => handleInputChange(e, index)}
+                      value={editedPrintName}
+                      onChange={handleInputChange}
                       className="border border-gray-300 rounded-md w-28 px-2 py-2"
                     />
                   ) : (
@@ -245,7 +239,7 @@ const PrintOrEmb = ({ searchQuery, isModalOpen, onClose }) => {
                   </button>
                 </td>
                 <td className="px-2 py-3 whitespace-nowrap text-md text-center text-black w-16">
-                  {editIndex === row.id ? (
+                {editIndex === row.id ? (
                     <button
                     onClick={() => handleSaveClick(index, row.id)}
                       className="bg-green-200 border border-green-500 px-2 py-1 rounded-lg flex"
@@ -255,7 +249,12 @@ const PrintOrEmb = ({ searchQuery, isModalOpen, onClose }) => {
                     </button>
                   ) : (
                     <button
-                      onClick={() => handleEditClick(row.id )}
+                    onClick={() =>
+                      handleEditClick({
+                        id: row.id,
+                        printType: row.printType,
+                      })
+                    }
                       className="text-blue-500 text-center"
                     >
                       <img src={editIcon} alt="Edit" className="h-6 w-6" />
@@ -270,7 +269,14 @@ const PrintOrEmb = ({ searchQuery, isModalOpen, onClose }) => {
                     onChange={() => handleCheckboxChange(row.id)}
                   />
                 </td>
-                <td></td>
+                <td className="px-2 py-3 whitespace-nowrap text-md text-center text-black w-8">
+                  <button
+                    onClick={() => handleDelete(row.id)}
+                    className="text-red-500"
+                  >
+                    <img src={deleteIcon} alt="Delete" className="h-6 w-6" />
+                  </button>
+                </td>
               </tr>
             ))}
           </tbody>

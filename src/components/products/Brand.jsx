@@ -12,7 +12,7 @@ import apiService from "../../apiService";
 
 const Brand = ({ searchQuery, isModalOpen, onClose }) => {
   const [data, setData] = useState([]);
-  const [brand, setBrand] = useState([]);
+  const [editedBrandName, setEditedBrandName] = useState("");
   const [editIndex, setEditIndex] = useState(null);
   const [checkedIds, setCheckedIds] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
@@ -32,10 +32,10 @@ const Brand = ({ searchQuery, isModalOpen, onClose }) => {
       setData(response.data); // Assuming response.data contains an array of brands
     } catch (error) {
       console.error("Error fetching brands:", error);
-      setBrand([]); // Handle error as needed
     }
   };
 
+  // handle toggle button click
   const handleStatusToggle = async ({ id, isActive }) => {
     try {
       const response = await apiService.put(`/brands/${id}`, {
@@ -49,39 +49,33 @@ const Brand = ({ searchQuery, isModalOpen, onClose }) => {
       // Handle error as needed
     }
   };
-  const handleEditClick = async (id) => {
-    try {
-      const response = await apiService.get(`/brands/${id}`);
-      const styleToUpdate = response.data;
-      const updatedData = data.map((brand) =>
-        brand.id === id ? styleToUpdate : brand
-      );
-      setData(updatedData);
-      setEditIndex(id);
-    } catch (error) {
-      console.error(`Error fetching brand with ID ${id} for edit:`, error);
-      // Handle error as needed
-    }
+  
+
+  // handle edit button click
+  const handleEditClick = ({ id, brandName }) => {
+    setEditIndex(id);
+    setEditedBrandName(brandName);
   };
 
+  // handle input change
+  const handleInputChange = (e) => {
+    setEditedBrandName(e.target.value);
+  };
+
+  // handle save button click
   const handleSaveClick = async (index, id) => {
     try {
-      const brand = data.find((brand) => brand.id === id);
-      await apiService.put(`/brands/${id}`, { Brand: brand.Brand });
-
-      // Update data locally
-      setData(data.map((brand) => (brand.id === id ? { ...brand } : brand)));
-      setEditIndex(null);
+      const response = await apiService.put(`/brands/${id}`, {
+        brandName: editedBrandName,
+      });
+      if (response.status === 200) {
+        fetchAllBrands();
+        setEditIndex(null);
+      }
     } catch (error) {
       console.error(`Error saving brand with ID ${id}:`, error);
       // Handle error as needed
     }
-  };
-
-  const handleInputChange = (e, index) => {
-    const newData = [...data];
-    newData[index].brandName = e.target.value;
-    setData(newData);
   };
 
   const handleCheckboxChange = (id) => {
@@ -90,22 +84,20 @@ const Brand = ({ searchQuery, isModalOpen, onClose }) => {
     );
   };
 
-  const handleDelete = async () => {
+  // handle delete button click
+  const handleDelete = async (id) => {
     try {
-      const idsToDelete = checkedIds;
-      await Promise.all(
-        idsToDelete.map(async (id) => {
-          await apiService.delete(`/brands/${id}`);
-        })
-      );
-      const newData = data.filter((row) => !checkedIds.includes(row.id));
-      setData(newData);
-      setCheckedIds([]);
+      const response = await apiService.delete(`/brands/${id}`);
+      console.log(response);
+      if (response.status === 202) {
+        fetchAllBrands();
+      }
     } catch (error) {
       console.error("Error deleting brands:", error);
       // Handle error as needed
     }
   };
+
   const handlePageChange = (direction) => {
     if (direction === "prev" && currentPage > 1) {
       setCurrentPage(currentPage - 1);
@@ -122,10 +114,6 @@ const Brand = ({ searchQuery, isModalOpen, onClose }) => {
     setCurrentPage(1);
   };
 
-  const handleInputChangeModal = (e) => {
-    setInputValue(e.target.value);
-  };
-
   const handleSingleBrand = async () => {
     try {
       const response = await apiService.post("/brands/create", {
@@ -133,7 +121,8 @@ const Brand = ({ searchQuery, isModalOpen, onClose }) => {
       });
 
       if (response.status === 201) {
-        setData(response.data);
+        setSingleBrands("");
+        fetchAllBrands();
       }
     } catch (error) {
       console.error("Error adding brand:", error);
@@ -156,7 +145,7 @@ const Brand = ({ searchQuery, isModalOpen, onClose }) => {
     const newAddedBrands = [...addedBrands];
     newAddedBrands.splice(index, 1);
     setAddedBrands(newAddedBrands);
-  };  
+  };
 
   const filteredData = data.filter(
     (item) =>
@@ -212,11 +201,11 @@ const Brand = ({ searchQuery, isModalOpen, onClose }) => {
                   {startIndex + index + 1}
                 </td>
                 <td className="px-2 py-3 whitespace-nowrap text-md text-center text-black w-28">
-                  {editIndex === startIndex + index ? (
+                  {editIndex === row.id ? (
                     <input
                       type="text"
-                      value={row.brandName}
-                      onChange={(e) => handleInputChange(e, index)}
+                      value={editedBrandName}
+                      onChange={handleInputChange}
                       className="border border-gray-300 rounded-md w-28 px-2 py-2"
                     />
                   ) : (
@@ -262,7 +251,12 @@ const Brand = ({ searchQuery, isModalOpen, onClose }) => {
                     </button>
                   ) : (
                     <button
-                      onClick={() => handleEditClick(row.id)}
+                      onClick={() =>
+                        handleEditClick({
+                          id: row.id,
+                          brandName: row.brandName,
+                        })
+                      }
                       className="text-blue-500 text-center"
                     >
                       <img src={editIcon} alt="Edit" className="h-6 w-6" />
@@ -370,33 +364,7 @@ const Brand = ({ searchQuery, isModalOpen, onClose }) => {
                     </span>
                   </p>
                 </div>
-                {/* <div className="bg-gray-100 mt-10 w-full h-screen max-h-[13vh]">
-                  {addedBrands.length > 0 ? (
-                    <div className="flex flex-wrap mt-3">
-                      {addedBrands.map((style, index) => (
-                        <div
-                          key={index}
-                          className="w-35 flex items-center bg-gray-200 px-5 py-2 mb-2 mx-2"
-                        >
-                          <span>{style}</span>
-                          <button onClick={() => handleRemoveBrand(index)}>
-                            <img
-                              src={closeIcon}
-                              alt="Remove"
-                              className="w-3 h-3 ml-3"
-                            />
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="flex justify-center items-center h-full">
-                      <span className="text-gray-500 text-xl">
-                        No brand entries
-                      </span>
-                    </div>
-                  )}
-                </div> */}
+ 
               </div>
             </div>
           </div>

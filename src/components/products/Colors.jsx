@@ -12,7 +12,7 @@ import apiService from "../../apiService";
 
 const Colors = ({ searchQuery, isModalOpen, onClose }) => {
   const [data, setData] = useState([]);
-  const [color, setColor] = useState([]);
+  const [editedColorName, setEditedColorName] = useState("");
   const [editIndex, setEditIndex] = useState(null);
   const [checkedIds, setCheckedIds] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
@@ -32,10 +32,11 @@ const Colors = ({ searchQuery, isModalOpen, onClose }) => {
       setData(response.data); // Assuming response.data contains an array of brands
     } catch (error) {
       console.error("Error fetching colors:", error);
-      setColor([]); // Handle error as needed
+
     }
   };
 
+  // handle toggle button click
   const handleStatusToggle = async ({ id, isActive }) => {
     try {
       const response = await apiService.put(`/colors/${id}`, {
@@ -50,40 +51,36 @@ const Colors = ({ searchQuery, isModalOpen, onClose }) => {
     }
   };
 
-  const handleEditClick = async (id) => {
-    try {
-      const response = await apiService.get(`/colors/${id}`);
-      const styleToUpdate = response.data;
-      const updatedData = data.map((color) =>
-        color.id === id ? styleToUpdate : color
-      );
-      setData(updatedData);
-      setEditIndex(id);
-    } catch (error) {
-      console.error(`Error fetching color with ID ${id} for edit:`, error);
-      // Handle error as needed
-    }
+
+  // handle edit button click
+  const handleEditClick = ({ id, colorName }) => {
+    setEditIndex(id);
+    setEditedColorName(colorName);
   };
 
+   // handle input change
+   const handleInputChange = (e) => {
+    setEditedColorName(e.target.value);
+  };
+
+
+
+  // handle save button click
   const handleSaveClick = async (index, id) => {
     try {
-      const color = data.find((color) => color.id === id);
-      await apiService.put(`/colors/${id}`, { Color: color.Color });
-
-      // Update data locally
-      setData(data.map((color) => (color.id === id ? { ...color } : color)));
-      setEditIndex(null);
+      const response = await apiService.put(`/colors/${id}`, {
+        colorName: editedColorName,
+      });
+      if (response.status === 200) {
+        fetchAllColors();
+        setEditIndex(null);
+      }
     } catch (error) {
       console.error(`Error saving color with ID ${id}:`, error);
       // Handle error as needed
     }
   };
 
-  const handleInputChange = (e, index) => {
-    const newData = [...data];
-    newData[index].colors = e.target.value;
-    setData(newData);
-  };
 
   const handleCheckboxChange = (id) => {
     setCheckedIds((prev) =>
@@ -91,22 +88,20 @@ const Colors = ({ searchQuery, isModalOpen, onClose }) => {
     );
   };
 
-  const handleDelete = async () => {
+  // handle delete button click
+  const handleDelete = async (id) => {
     try {
-      const idsToDelete = checkedIds;
-      await Promise.all(
-        idsToDelete.map(async (id) => {
-          await apiService.delete(`/colors/${id}`);
-        })
-      );
-      const newData = data.filter((row) => !checkedIds.includes(row.id));
-      setData(newData);
-      setCheckedIds([]);
+      const response = await apiService.delete(`/colors/${id}`);
+      console.log(response);
+      if (response.status === 202) {
+        fetchAllColors();
+      }
     } catch (error) {
       console.error("Error deleting colors:", error);
       // Handle error as needed
     }
   };
+
   const handlePageChange = (direction) => {
     if (direction === "prev" && currentPage > 1) {
       setCurrentPage(currentPage - 1);
@@ -123,10 +118,7 @@ const Colors = ({ searchQuery, isModalOpen, onClose }) => {
     setCurrentPage(1);
   };
 
-  const handleInputChangeModal = (e) => {
-    setInputValue(e.target.value);
-  };
-
+  
   const handleSingleColor = async () => {
     try {
       const response = await apiService.post("/colors/create", {
@@ -134,7 +126,8 @@ const Colors = ({ searchQuery, isModalOpen, onClose }) => {
       });
 
       if (response.status === 201) {
-        setData(response.data);
+        setSinglecolors("");
+        fetchAllColors();
       }
     } catch (error) {
       console.error("Error adding color:", error);
@@ -208,11 +201,11 @@ const Colors = ({ searchQuery, isModalOpen, onClose }) => {
                   {startIndex + index + 1}
                 </td>
                 <td className="px-2 py-3 whitespace-nowrap text-md text-center text-black w-28">
-                  {editIndex === startIndex + index ? (
+                  {editIndex === row.id ? (
                     <input
                       type="text"
-                      value={row.colorName}
-                      onChange={(e) => handleInputChange(e, index)}
+                      value={editedColorName}
+                      onChange={handleInputChange}
                       className="border border-gray-300 rounded-md w-28 px-2 py-2"
                     />
                   ) : (
@@ -221,9 +214,9 @@ const Colors = ({ searchQuery, isModalOpen, onClose }) => {
                 </td>
                 <td className="px-6 py-3 whitespace-nowrap text-md text-center text-black flex-grow">
                   <button
-                   onClick={() =>
-                    handleStatusToggle({ id: row.id, isActive: row.isActive })
-                  }
+                      onClick={() =>
+                        handleStatusToggle({ id: row.id, isActive: row.isActive })
+                      }
                     className="px-2 py-1 rounded-full"
                   >
                     <div className="flex space-x-2">
@@ -258,7 +251,12 @@ const Colors = ({ searchQuery, isModalOpen, onClose }) => {
                     </button>
                   ) : (
                     <button
-                      onClick={() => handleEditClick(row.id)}
+                    onClick={() =>
+                      handleEditClick({
+                        id: row.id,
+                        colorName: row.colorName,
+                      })
+                    }
                       className="text-blue-500 text-center"
                     >
                       <img src={editIcon} alt="Edit" className="h-6 w-6" />
@@ -273,7 +271,14 @@ const Colors = ({ searchQuery, isModalOpen, onClose }) => {
                     onChange={() => handleCheckboxChange(row.id)}
                   />
                 </td>
-                <td></td>
+                <td className="px-2 py-3 whitespace-nowrap text-md text-center text-black w-8">
+                  <button
+                    onClick={() => handleDelete(row.id)}
+                    className="text-red-500"
+                  >
+                    <img src={deleteIcon} alt="Delete" className="h-6 w-6" />
+                  </button>
+                </td>
               </tr>
             ))}
           </tbody>
