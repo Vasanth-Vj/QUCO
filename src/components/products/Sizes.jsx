@@ -12,14 +12,14 @@ import apiService from "../../apiService";
 
 const Sizes = ({ searchQuery, isModalOpen, onClose }) => {
   const [data, setData] = useState([]);
-  const [editedSize, setEditedSize] = useState("");
+  const [editedSizes, setEditedSizes] = useState("");
   const [editIndex, setEditIndex] = useState(null);
   const [checkedIds, setCheckedIds] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [recordsPerPage, setRecordsPerPage] = useState(5);
+  const [sizes, setSizes] = useState([]);
   const [inputValue, setInputValue] = useState("");
-  const [addedStyles, setAddedStyles] = useState([]);
-  const [singleSizes, setSingleSizes] = useState("");
+  const [singleSize, setSingleSize] = useState("");
 
   useEffect(() => {
     fetchAllSizes();
@@ -31,9 +31,13 @@ const Sizes = ({ searchQuery, isModalOpen, onClose }) => {
       console.log(response.data);
       setData(response.data); // Assuming response.data contains an array of brands
     } catch (error) {
-      console.error("Error fetching sizes:", error);
+      console.error("Error fetching Sizes", error);
     }
   };
+
+  const filteredData = data.filter((item) =>
+    item.sizes.toLowerCase().includes(searchQuery.toLowerCase())
+  );
   // handle toggle button click
   const handleStatusToggle = async ({ id, isActive }) => {
     try {
@@ -44,36 +48,41 @@ const Sizes = ({ searchQuery, isModalOpen, onClose }) => {
         fetchAllSizes();
       }
     } catch (error) {
-      console.error(`Error toggling status for size with ID ${id}:`, error);
+      console.error(`Error toggling status for sizes with ID ${id}:`, error);
       // Handle error as needed
     }
   };
 
   // handle edit button click
-  const handleEditClick = ({ id, sizes }) => {
+  const handleEditClick = ({ id, type_name }) => {
     setEditIndex(id);
-    setEditedSize(sizes);
-  };
-
-  // handle input change
-  const handleInputChange = (e) => {
-    setEditedSize(e.target.value);
+    setEditedSizes(type_name);
   };
 
   // handle save button click
   const handleSaveClick = async (index, id) => {
     try {
-      const response = await apiService.put(`/sizes/${id}`, {
-        sizes: editedSize,
+      const response = await apiService.put(`/sizes${id}`, {
+        type_name: editedSizes,
       });
       if (response.status === 200) {
         fetchAllSizes();
         setEditIndex(null);
       }
     } catch (error) {
-      console.error(`Error saving size with ID ${id}:`, error);
+      console.error(`Error saving Sizes with ID ${id}:`, error);
       // Handle error as needed
     }
+  };
+
+  const handleInputChangeType = (e) => {
+    setInputValue(e.target.value);
+  };
+
+  const handleInputChange = (e, index) => {
+    const newData = [...data];
+    newData[index].sizes = e.target.value;
+    setData(newData);
   };
 
   const handleCheckboxChange = (id) => {
@@ -91,7 +100,7 @@ const Sizes = ({ searchQuery, isModalOpen, onClose }) => {
         fetchAllSizes();
       }
     } catch (error) {
-      console.error("Error deleting size:", error);
+      console.error("Error deleting sizes:", error);
       // Handle error as needed
     }
   };
@@ -112,37 +121,41 @@ const Sizes = ({ searchQuery, isModalOpen, onClose }) => {
     setCurrentPage(1);
   };
 
-  const handleSingleSize = async () => {
+  const handleSizeChange = (index, event) => {
+    const newSizes = [...sizes];
+    newSizes[index].size = event.target.value;
+    setSizes(newSizes);
+  };
+
+  const handleAddSizeField = () => {
+    setSizes([...sizes, []]);
+  };
+
+  const handleRemoveSizeField = (index) => {
+    const newSizes = sizes.filter((_, i) => i !== index);
+    setSizes(newSizes);
+  };
+
+  const handleAddSizes = async() => {
     try {
-      const response = await apiService.post("/sizes/create", {
-        sizes: singleSizes,
-      });
-
-      if (response.status === 201) {
-        setData(response.data);
-      }
+      const newSizes = sizes.map(size => size.trim()).filter(size => size !== "");
+      console.log(newSizes);
+      const response = await apiService.post('/sizes/create',)
     } catch (error) {
-      console.error("Error adding size:", error);
+      
+    }
+    const newSizes = sizes
+      .map((size) => size.size.trim())
+      .filter((size) => size !== "");
+    if (newSizes.length > 0) {
+      setData([
+        ...data,
+        { id: data.length + 1, sizes: newSizes, status: "active" },
+      ]);
+      setSizes([{ size: "" }]);
+      onClose();
     }
   };
-
-  const handleAddStyle = () => {
-    if (inputValue.trim() !== "") {
-      setAddedStyles([...addedStyles, inputValue.trim()]);
-      setInputValue("");
-    }
-  };
-
-  const handleRemoveStyle = (index) => {
-    const newAddedStyles = [...addedStyles];
-    newAddedStyles.splice(index, 1);
-    setAddedStyles(newAddedStyles);
-  };
-
-  const filteredData = data.filter(
-    (item) =>
-      item.sizes && item.sizes.toLowerCase().includes(searchQuery.toLowerCase())
-  );
 
   const startIndex = (currentPage - 1) * recordsPerPage;
   const endIndex = startIndex + recordsPerPage;
@@ -158,6 +171,9 @@ const Sizes = ({ searchQuery, isModalOpen, onClose }) => {
                 Si No
               </th>
               <th className="px-2 py-3 text-center text-md font-bold text-black uppercase w-40">
+                Type Name
+              </th>
+              <th className="px-2 py-3 text-center text-md font-bold text-black uppercase w-40">
                 sizes
               </th>
               <th className="px-6 py-3 text-center text-md font-bold text-black uppercase flex-grow">
@@ -166,7 +182,7 @@ const Sizes = ({ searchQuery, isModalOpen, onClose }) => {
               <th className="px-2 py-3 text-center text-md font-bold text-black uppercase w-28">
                 Action
               </th>
-              <th className="px-2 py-3 text-center text-md font-bold text-black uppercase w-20">
+              <th className="px-2 py-3 text-center text-md font-bold text-black uppercase w-28">
                 <input
                   type="checkbox"
                   className="form-checkbox"
@@ -195,12 +211,24 @@ const Sizes = ({ searchQuery, isModalOpen, onClose }) => {
                   {editIndex === row.id ? (
                     <input
                       type="text"
-                      value={editedSize}
+                      value={editedSizes}
                       onChange={handleInputChange}
                       className="border border-gray-300 rounded-md w-28 px-2 py-2"
                     />
                   ) : (
-                    row.sizes
+                    row.type_name
+                  )}
+                </td>
+                <td className="px-2 py-3 whitespace-nowrap text-md text-center text-black w-28">
+                  {editIndex === startIndex + index ? (
+                    <input
+                      type="text"
+                      value={row.type_name}
+                      onChange={(e) => handleInputChange(e, startIndex + index)}
+                      className="border border-gray-300 rounded-md w-28 px-2 py-2"
+                    />
+                  ) : (
+                    row.sizes.join(", ")
                   )}
                 </td>
                 <td className="px-6 py-3 whitespace-nowrap text-md text-center text-black flex-grow">
@@ -234,7 +262,7 @@ const Sizes = ({ searchQuery, isModalOpen, onClose }) => {
                 <td className="px-2 py-3 whitespace-nowrap text-md text-center text-black w-16">
                   {editIndex === row.id ? (
                     <button
-                      onClick={() => handleSaveClick(index, row.id)}
+                    onClick={() => handleSaveClick(index, row.id)}
                       className="bg-green-200 border border-green-500 px-2 py-1 rounded-lg flex"
                     >
                       <img src={tickIcon} alt="" className="mt-1 mr-2" />
@@ -245,7 +273,7 @@ const Sizes = ({ searchQuery, isModalOpen, onClose }) => {
                     onClick={() =>
                       handleEditClick({
                         id: row.id,
-                        sizes: row.sizes,
+                        type_name: row.type_name,
                       })
                     }
                       className="text-blue-500 text-center"
@@ -314,7 +342,7 @@ const Sizes = ({ searchQuery, isModalOpen, onClose }) => {
             className="fixed inset-0 bg-black opacity-50"
             onClick={onClose}
           ></div>
-          <div className="relative bg-white rounded-lg shadow-lg w-full max-w-[35vw] h-screen max-h-[50vh] overflow-y-auto lg:overflow-hidden">
+          <div className="relative bg-white rounded-lg shadow-lg w-full max-w-[35vw] h-screen overflow-y-auto lg:overflow-hidden">
             <div className="py-2 flex flex-col">
               <div>
                 <div className="flex justify-center">
@@ -329,19 +357,44 @@ const Sizes = ({ searchQuery, isModalOpen, onClose }) => {
                 <hr className="w-full mt-3" />
               </div>
               <div className="flex flex-col items-center">
-                <p className="text-gray-400 font-bold mt-10">
+                {/* <p className="text-gray-400 font-bold mt-10">
                   *For multiple “Sizes” feed use enter after each values
-                </p>
+                </p> */}
                 <input
                   className="bg-gray-200 rounded w-80 py-3 px-4 text-gray-700 focus:outline-none focus:shadow-outline mt-5 text-lg text-center"
                   type="text"
-                  placeholder="Enter sizes"
-                  value={singleSizes}
-                  onChange={(e) => setSingleSizes(e.target.value)}
+                  placeholder="Enter Size Type"
+                  value={inputValue}
+                  onChange={handleInputChangeType}
                 />
+                {sizes.map((size, index) => (
+                  <div key={index} className="flex items-center my-2">
+                    <input
+                      className="bg-gray-200 rounded py-3 px-4 text-gray-700 focus:outline-none focus:shadow-outline mt-2 text-lg text-center"
+                      type="text"
+                      placeholder={`Enter size ${index + 1}`}
+                      value={size.size}
+                      onChange={(e) => handleSizeChange(index, e)}
+                    />
+                    {sizes.length > 1 && (
+                      <button
+                        className="ml-2 text-red-500"
+                        onClick={() => handleRemoveSizeField(index)}
+                      >
+                        <img src={closeIcon} alt="Remove" className="w-6 h-6" />
+                      </button>
+                    )}
+                  </div>
+                ))}
+                <button
+                  className="text-blue-600 px-2 py-2 font-bold text-md mt-3"
+                  onClick={handleAddSizeField}
+                >
+                  Add Another Size
+                </button>
                 <button
                   className="bg-sky-600 w-80 py-3 text-white rounded-lg font-bold text-lg mt-3"
-                  onClick={handleSingleSize}
+                  onClick={handleAddSizes}
                 >
                   Update
                 </button>

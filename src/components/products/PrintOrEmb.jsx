@@ -12,13 +12,12 @@ import apiService from "../../apiService";
 
 const PrintOrEmb = ({ searchQuery, isModalOpen, onClose }) => {
   const [data, setData] = useState([]);
-  const [editedPrintName, setEditedPrintName] = useState("");
+  const [editedPrint, setEditedprint] = useState("");
   const [editIndex, setEditIndex] = useState(null);
   const [checkedIds, setCheckedIds] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [recordsPerPage, setRecordsPerPage] = useState(5);
   const [inputValue, setInputValue] = useState("");
-  const [addedStyles, setAddedStyles] = useState([]);
   const [singlePrints, setSinglePrints] = useState("");
 
   useEffect(() => {
@@ -31,8 +30,7 @@ const PrintOrEmb = ({ searchQuery, isModalOpen, onClose }) => {
       console.log(response.data);
       setData(response.data); // Assuming response.data contains an array of brands
     } catch (error) {
-      console.error("Error fetching print", error);
-  
+      console.error("Error fetching Print or Emb:", error);
     }
   };
 
@@ -46,39 +44,37 @@ const PrintOrEmb = ({ searchQuery, isModalOpen, onClose }) => {
         fetchAllPrints();
       }
     } catch (error) {
-      console.error(`Error toggling status for printEmb with ID ${id}:`, error);
+      console.error(`Error toggling status for Print or Emb with ID ${id}:`, error);
       // Handle error as needed
     }
   };
 
- // handle edit button click
+  // handle edit button click
   const handleEditClick = ({ id, printType }) => {
     setEditIndex(id);
-    setEditedPrintName(printType);
+    setEditedprint(printType);
   };
 
   // handle input change
   const handleInputChange = (e) => {
-    setEditedPrintName(e.target.value);
+    setEditedprint(e.target.value);
   };
-
 
   // handle save button click
   const handleSaveClick = async (index, id) => {
     try {
-      const response = await apiService.put(`/printEmb${id}`, {
-        printType: editedPrintName,
+      const response = await apiService.put(`/printEmb/${id}`, {
+        printType: editedPrint,
       });
       if (response.status === 200) {
         fetchAllPrints();
         setEditIndex(null);
       }
     } catch (error) {
-      console.error(`Error saving print Type with ID ${id}:`, error);
+      console.error(`Error saving print or Emb with ID ${id}:`, error);
       // Handle error as needed
     }
   };
-
 
   const handleCheckboxChange = (id) => {
     setCheckedIds((prev) =>
@@ -95,7 +91,7 @@ const PrintOrEmb = ({ searchQuery, isModalOpen, onClose }) => {
         fetchAllPrints();
       }
     } catch (error) {
-      console.error("Error deleting print type:", error);
+      console.error("Error deleting Print or Emb:", error);
       // Handle error as needed
     }
   };
@@ -116,7 +112,6 @@ const PrintOrEmb = ({ searchQuery, isModalOpen, onClose }) => {
     setCurrentPage(1);
   };
 
-
   const handleSinglePrint = async () => {
     try {
       const response = await apiService.post("/printEmb/create", {
@@ -128,22 +123,10 @@ const PrintOrEmb = ({ searchQuery, isModalOpen, onClose }) => {
         fetchAllPrints();
       }
     } catch (error) {
-      console.error("Error adding printEmb:", error);
+      console.error("Error adding Print or Emb:", error);
     }
   };
 
-  const handleAddStyle = () => {
-    if (inputValue.trim() !== "") {
-      setAddedStyles([...addedStyles, inputValue.trim()]);
-      setInputValue("");
-    }
-  };
-
-  const handleRemoveStyle = (index) => {
-    const newAddedStyles = [...addedStyles];
-    newAddedStyles.splice(index, 1);
-    setAddedStyles(newAddedStyles);
-  };
 
   const filteredData = data.filter(
     (item) =>
@@ -165,7 +148,7 @@ const PrintOrEmb = ({ searchQuery, isModalOpen, onClose }) => {
                 Si No
               </th>
               <th className="px-2 py-3 text-center text-md font-bold text-black uppercase w-40">
-                printOrEmb
+                Reference No
               </th>
               <th className="px-6 py-3 text-center text-md font-bold text-black uppercase flex-grow">
                 Status
@@ -202,7 +185,7 @@ const PrintOrEmb = ({ searchQuery, isModalOpen, onClose }) => {
                   {editIndex === row.id ? (
                     <input
                       type="text"
-                      value={editedPrintName}
+                      value={editedPrint}
                       onChange={handleInputChange}
                       className="border border-gray-300 rounded-md w-28 px-2 py-2"
                     />
@@ -239,9 +222,9 @@ const PrintOrEmb = ({ searchQuery, isModalOpen, onClose }) => {
                   </button>
                 </td>
                 <td className="px-2 py-3 whitespace-nowrap text-md text-center text-black w-16">
-                {editIndex === row.id ? (
+                  {editIndex === row.id ? (
                     <button
-                    onClick={() => handleSaveClick(index, row.id)}
+                      onClick={() => handleSaveClick(index, row.id)}
                       className="bg-green-200 border border-green-500 px-2 py-1 rounded-lg flex"
                     >
                       <img src={tickIcon} alt="" className="mt-1 mr-2" />
@@ -249,12 +232,12 @@ const PrintOrEmb = ({ searchQuery, isModalOpen, onClose }) => {
                     </button>
                   ) : (
                     <button
-                    onClick={() =>
-                      handleEditClick({
-                        id: row.id,
-                        printType: row.printType,
-                      })
-                    }
+                      onClick={() =>
+                        handleEditClick({
+                          id: row.id,
+                          printType: row.printType,
+                        })
+                      }
                       className="text-blue-500 text-center"
                     >
                       <img src={editIcon} alt="Edit" className="h-6 w-6" />
@@ -321,11 +304,11 @@ const PrintOrEmb = ({ searchQuery, isModalOpen, onClose }) => {
             className="fixed inset-0 bg-black opacity-50"
             onClick={onClose}
           ></div>
-          <div className="relative bg-white rounded-lg shadow-lg w-full max-w-[35vw] h-screen max-h-[50vh] overflow-y-auto lg:overflow-hidden">
+          <div className="relative bg-white rounded-lg shadow-lg w-full max-w-[35vw] h-screen max-h-[40vh] overflow-y-auto lg:overflow-hidden">
             <div className="py-2 flex flex-col">
               <div>
                 <div className="flex justify-center">
-                  <h2 className="text-2xl font-bold">Add Print (or) Emb</h2>
+                  <h2 className="text-2xl font-bold">Add Print or Emb</h2>
                   <button
                     className="absolute right-5 cursor-pointer"
                     onClick={onClose}
@@ -337,12 +320,12 @@ const PrintOrEmb = ({ searchQuery, isModalOpen, onClose }) => {
               </div>
               <div className="flex flex-col items-center">
                 {/* <p className="text-gray-400 font-bold mt-10">
-                  *For multiple “Print” feed use enter after each values
+                  *For multiple brand feed use enter after each values"
                 </p> */}
                 <input
                   className="bg-gray-200 rounded w-80 py-3 px-4 text-gray-700 focus:outline-none focus:shadow-outline mt-5 text-lg text-center"
                   type="text"
-                  placeholder="Enter Print (or) Emb"
+                  placeholder="Enter brand name"
                   value={singlePrints}
                   onChange={(e) => setSinglePrints(e.target.value)}
                 />
@@ -362,7 +345,6 @@ const PrintOrEmb = ({ searchQuery, isModalOpen, onClose }) => {
                     </span>
                   </p>
                 </div>
-            
               </div>
             </div>
           </div>

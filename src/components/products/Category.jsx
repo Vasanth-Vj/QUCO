@@ -10,96 +10,71 @@ import closeIcon from "../../assets/close-modal-icon.svg";
 import excelIcon from "../../assets/excel-icon.svg";
 import apiService from "../../apiService";
 
-const ShortDescription = ({ searchQuery, isModalOpen, onClose }) => {
+const Category = ({ searchQuery, isModalOpen, onClose }) => {
   const [data, setData] = useState([]);
-  const [shortDescription, setShortDescription] = useState([]);
+  const [editedCategoryName, setEditedcategoryName] = useState("");
   const [editIndex, setEditIndex] = useState(null);
   const [checkedIds, setCheckedIds] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [recordsPerPage, setRecordsPerPage] = useState(5);
   const [inputValue, setInputValue] = useState("");
-  const [addedStyles, setAddedStyles] = useState([]);
-  const [singleShortDescription, setSingleShortDescription] = useState("");
+
+  const [singleCategory, setSingleCategory] = useState("");
 
   useEffect(() => {
-    fetchAllShortDescription();
+    fetchAllCategorys();
   }, []);
 
-  const fetchAllShortDescription = async () => {
+  const fetchAllCategorys = async () => {
     try {
-      const response = await apiService.get("/styles/getall");
+      const response = await apiService.get("/categories/getall");
       console.log(response.data);
-      setData(response.data); // Assuming response.data contains an array of brands
+      setData(response.data); 
     } catch (error) {
-      console.error("Error fetching short Description:", error);
-      setShortDescription([]); // Handle error as needed
+      console.error("Error fetching Categorys:", error);
     }
   };
 
+  // handle toggle button click
   const handleStatusToggle = async ({ id, isActive }) => {
     try {
-      const response = await apiService.put(`/styles/${id}`, {
+      const response = await apiService.put(`/categories/${id}`, {
         isActive: !isActive,
       });
       if (response.status === 200) {
-        fetchAllShortDescription();
+        fetchAllCategorys();
       }
     } catch (error) {
-      console.error(
-        `Error toggling status for short Description with ID ${id}:`,
-        error
-      );
+      console.error(`Error toggling status for Category with ID ${id}:`, error);
       // Handle error as needed
     }
   };
-  const handleEditClick = async (id) => {
-    try {
-      const response = await apiService.get(`/styles/${id}`);
-      const styleToUpdate = response.data;
-      const updatedData = data.map((shortDescription) =>
-        shortDescription.id === id ? styleToUpdate : shortDescription
-      );
-      setData(updatedData);
-      setEditIndex(id);
-    } catch (error) {
-      console.error(
-        `Error fetching short Description with ID ${id} for edit:`,
-        error
-      );
-      // Handle error as needed
-    }
+
+  // handle edit button click
+  const handleEditClick = ({ id, categoryName }) => {
+    setEditIndex(id);
+    setEditedcategoryName(categoryName);
   };
+
+  // handle input change
+  const handleInputChange = (e) => {
+    setEditedcategoryName(e.target.value);
+  };
+
+  // handle save button click
   const handleSaveClick = async (index, id) => {
     try {
-      const shortDescription = data.find(
-        (shortDescription) => shortDescription.id === id
-      );
-      await apiService.put(`/styles/${id}`, {
-        ShortDescription: shortDescription.ShortDescription,
+      const response = await apiService.put(`/categories/${id}`, {
+        categoryName: editedCategoryName,
       });
-
-      // Update data locally
-      setData(
-        data.map((shortDescription) =>
-          shortDescription.id === id
-            ? { ...shortDescription }
-            : shortDescription
-        )
-      );
-      setEditIndex(null);
+      if (response.status === 200) {
+        fetchAllCategorys();
+        setEditIndex(null);
+      }
     } catch (error) {
-      console.error(
-        `Error saving 
-shortDescription with ID ${id}:`,
-        error
-      );
+      console.error(`Error saving Caterogry with ID ${id}:`, error);
       // Handle error as needed
     }
-  };
-  const handleInputChange = (e, index) => {
-    const newData = [...data];
-    newData[index].short_description = e.target.value;
-    setData(newData);
   };
 
   const handleCheckboxChange = (id) => {
@@ -108,22 +83,20 @@ shortDescription with ID ${id}:`,
     );
   };
 
-  const handleDelete = async () => {
+  // handle delete button click
+  const handleDelete = async (id) => {
     try {
-      const idsToDelete = checkedIds;
-      await Promise.all(
-        idsToDelete.map(async (id) => {
-          await apiService.delete(`/styles/${id}`);
-        })
-      );
-      const newData = data.filter((row) => !checkedIds.includes(row.id));
-      setData(newData);
-      setCheckedIds([]);
+      const response = await apiService.delete(`/categories/${id}`);
+      console.log(response);
+      if (response.status === 202) {
+        fetchAllCategorys();
+      }
     } catch (error) {
-      console.error("Error deleting short Description:", error);
+      console.error("Error deleting category:", error);
       // Handle error as needed
     }
   };
+
   const handlePageChange = (direction) => {
     if (direction === "prev" && currentPage > 1) {
       setCurrentPage(currentPage - 1);
@@ -140,41 +113,27 @@ shortDescription with ID ${id}:`,
     setCurrentPage(1);
   };
 
-  const handleInputChangeModal = (e) => {
-    setInputValue(e.target.value);
-  };
-
-  const handleSingleShortDescription= async () => {
+  const handleSingleCategory = async () => {
     try {
-      const response = await apiService.post("/styles/create", {
-        short_description: singleShortDescription,
+      const response = await apiService.post("/categories/create", {
+        categoryName: singleCategory,
       });
 
       if (response.status === 201) {
-        setData(response.data);
+        setSingleCategory("");
+        fetchAllCategorys();
       }
     } catch (error) {
-      console.error("Error adding short Description:", error);
+      console.error("Error adding category:", error);
     }
   };
 
-  const handleAddStyle = () => {
-    if (inputValue.trim() !== "") {
-      setAddedStyles([...addedStyles, inputValue.trim()]);
-      setInputValue("");
-    }
-  };
-
-  const handleRemoveStyle = (index) => {
-    const newAddedStyles = [...addedStyles];
-    newAddedStyles.splice(index, 1);
-    setAddedStyles(newAddedStyles);
-  };
+ 
 
   const filteredData = data.filter(
     (item) =>
-      item.short_description &&
-      item.short_description.toLowerCase().includes(searchQuery.toLowerCase())
+      item.categoryName &&
+      item.categoryName.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const startIndex = (currentPage - 1) * recordsPerPage;
@@ -190,8 +149,8 @@ shortDescription with ID ${id}:`,
               <th className="px-2 py-3 text-center text-md font-bold text-black uppercase w-28">
                 Si No
               </th>
-              <th className="px-2 py-3 text-left text-md font-bold text-black uppercase w-60">
-                Short Description
+              <th className="px-2 py-3 text-center text-md font-bold text-black uppercase w-40">
+                Reference No
               </th>
               <th className="px-6 py-3 text-center text-md font-bold text-black uppercase flex-grow">
                 Status
@@ -224,16 +183,16 @@ shortDescription with ID ${id}:`,
                 <td className="px-2 py-3 whitespace-nowrap text-md text-center text-black w-12">
                   {startIndex + index + 1}
                 </td>
-                <td className="px-2 py-3 whitespace-nowrap text-md text-left text-black w-28">
-                  {editIndex === startIndex + index ? (
+                <td className="px-2 py-3 whitespace-nowrap text-md text-center text-black w-28">
+                  {editIndex === row.id ? (
                     <input
                       type="text"
-                      value={row.short_description}
-                      onChange={(e) => handleInputChange(e, index)}
-                      className="border border-gray-300 rounded-md lg:w-[500px] w-[400px] px-2 py-2"
+                      value={editedCategoryName}
+                      onChange={handleInputChange}
+                      className="border border-gray-300 rounded-md w-28 px-2 py-2"
                     />
                   ) : (
-                    row.short_description
+                    row.categoryName
                   )}
                 </td>
                 <td className="px-6 py-3 whitespace-nowrap text-md text-center text-black flex-grow">
@@ -251,7 +210,7 @@ shortDescription with ID ${id}:`,
                             : "text-gray-300 w-20"
                         }
                       >
-                        {row.isActive === true? "Active" : "In-Active"}
+                        {row.isActive === true ? "Active" : "In-Active"}
                       </span>
                       <img
                         src={
@@ -265,9 +224,9 @@ shortDescription with ID ${id}:`,
                   </button>
                 </td>
                 <td className="px-2 py-3 whitespace-nowrap text-md text-center text-black w-16">
-                  {editIndex ===  row.id  ? (
+                  {editIndex === row.id ? (
                     <button
-                    onClick={() => handleSaveClick(index, row.id)}
+                      onClick={() => handleSaveClick(index, row.id)}
                       className="bg-green-200 border border-green-500 px-2 py-1 rounded-lg flex"
                     >
                       <img src={tickIcon} alt="" className="mt-1 mr-2" />
@@ -275,7 +234,12 @@ shortDescription with ID ${id}:`,
                     </button>
                   ) : (
                     <button
-                      onClick={() => handleEditClick(row.id)}
+                      onClick={() =>
+                        handleEditClick({
+                          id: row.id,
+                          categoryName: row.categoryName,
+                        })
+                      }
                       className="text-blue-500 text-center"
                     >
                       <img src={editIcon} alt="Edit" className="h-6 w-6" />
@@ -290,7 +254,14 @@ shortDescription with ID ${id}:`,
                     onChange={() => handleCheckboxChange(row.id)}
                   />
                 </td>
-                <td></td>
+                <td className="px-2 py-3 whitespace-nowrap text-md text-center text-black w-8">
+                  <button
+                    onClick={() => handleDelete(row.id)}
+                    className="text-red-500"
+                  >
+                    <img src={deleteIcon} alt="Delete" className="h-6 w-6" />
+                  </button>
+                </td>
               </tr>
             ))}
           </tbody>
@@ -335,11 +306,11 @@ shortDescription with ID ${id}:`,
             className="fixed inset-0 bg-black opacity-50"
             onClick={onClose}
           ></div>
-          <div className="relative bg-white rounded-lg shadow-lg w-full max-w-[35vw] h-screen max-h-[50vh] overflow-y-auto lg:overflow-hidden">
+          <div className="relative bg-white rounded-lg shadow-lg w-full max-w-[35vw] h-screen max-h-[40vh] overflow-y-auto lg:overflow-hidden">
             <div className="py-2 flex flex-col">
               <div>
                 <div className="flex justify-center">
-                  <h2 className="text-2xl font-bold">Add Short Description</h2>
+                  <h2 className="text-2xl font-bold">Add Category</h2>
                   <button
                     className="absolute right-5 cursor-pointer"
                     onClick={onClose}
@@ -351,18 +322,18 @@ shortDescription with ID ${id}:`,
               </div>
               <div className="flex flex-col items-center">
                 {/* <p className="text-gray-400 font-bold mt-10">
-                  *For multiple “Short description” feed use enter after each
-                  values
+                  *For multiple category feed use enter after each values"
                 </p> */}
-                <textarea
-                  class="bg-gray-200 h-full min-h-[100px] min-w-[30vw] rounded-[7px] px-3  text-gray-700 focus:outline-none focus:shadow-outline mt-5 text-xl text-center"
-                  placeholder="Enter short description"
-                  value={singleShortDescription}
-                  onChange={(e) => setSingleShortDescription(e.target.value)}
-                ></textarea>
+                <input
+                  className="bg-gray-200 rounded w-80 py-3 px-4 text-gray-700 focus:outline-none focus:shadow-outline mt-5 text-lg text-center"
+                  type="text"
+                  placeholder="Enter Category name"
+                  value={singleCategory}
+                  onChange={(e) => setSingleCategory(e.target.value)}
+                />
                 <button
                   className="bg-sky-600 w-80 py-3 text-white rounded-lg font-bold text-lg mt-3"
-                  onClick={handleSingleShortDescription}
+                  onClick={() => handleSingleCategory()}
                 >
                   Update
                 </button>
@@ -376,7 +347,6 @@ shortDescription with ID ${id}:`,
                     </span>
                   </p>
                 </div>
-             
               </div>
             </div>
           </div>
@@ -386,4 +356,4 @@ shortDescription with ID ${id}:`,
   );
 };
 
-export default ShortDescription;
+export default Category;

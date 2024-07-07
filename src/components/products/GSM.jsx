@@ -31,7 +31,6 @@ const GSM = ({ searchQuery, isModalOpen, onClose }) => {
       setData(response.data); // Assuming response.data contains an array of brands
     } catch (error) {
       console.error("Error fetching gsms:", error);
-
     }
   };
 
@@ -50,21 +49,19 @@ const GSM = ({ searchQuery, isModalOpen, onClose }) => {
     }
   };
 
-
- // handle edit button click
- const handleEditClick = ({ id, gsmValue }) => {
-  setEditIndex(id);
-  setEditedGsmName(gsmValue);
-};
+  // handle edit button click
+  const handleEditClick = ({ id, gsmValue }) => {
+    setEditIndex(id);
+    setEditedGsmName(gsmValue);
+  };
 
   // handle input change
   const handleInputChange = (e) => {
     setEditedGsmName(e.target.value);
   };
 
-
-   // handle save button click
-   const handleSaveClick = async (index, id) => {
+  // handle save button click
+  const handleSaveClick = async (index, id) => {
     try {
       const response = await apiService.put(`/gsms/${id}`, {
         gsmValue: editedGsmName,
@@ -78,7 +75,6 @@ const GSM = ({ searchQuery, isModalOpen, onClose }) => {
       // Handle error as needed
     }
   };
-
 
   const handleCheckboxChange = (id) => {
     setCheckedIds((prev) =>
@@ -115,7 +111,6 @@ const GSM = ({ searchQuery, isModalOpen, onClose }) => {
     setCurrentPage(1);
   };
 
- 
   const handleSingleGsm = async () => {
     try {
       const response = await apiService.post("/gsms/create", {
@@ -150,11 +145,10 @@ const GSM = ({ searchQuery, isModalOpen, onClose }) => {
     setAddedgsms(newAddedgsms);
   };
 
-  const filteredData = data.filter(
-    (item) =>
-      item.gsmValue &&
-      item.gsmValue.includes(searchQuery)
-  );
+  const filteredData = data.filter((item) => {
+    const gsmValue = item.gsmValue.toString().toLowerCase();
+    return gsmValue.includes(searchQuery.toLowerCase());
+  });
 
   const startIndex = (currentPage - 1) * recordsPerPage;
   const endIndex = startIndex + recordsPerPage;
@@ -217,9 +211,9 @@ const GSM = ({ searchQuery, isModalOpen, onClose }) => {
                 </td>
                 <td className="px-6 py-3 whitespace-nowrap text-md text-center text-black flex-grow">
                   <button
-                   onClick={() =>
-                    handleStatusToggle({ id: row.id, isActive: row.isActive })
-                  }
+                    onClick={() =>
+                      handleStatusToggle({ id: row.id, isActive: row.isActive })
+                    }
                     className="px-2 py-1 rounded-full"
                   >
                     <div className="flex space-x-2">
@@ -254,12 +248,12 @@ const GSM = ({ searchQuery, isModalOpen, onClose }) => {
                     </button>
                   ) : (
                     <button
-                    onClick={() =>
-                      handleEditClick({
-                        id: row.id,
-                        gsmValue: row.gsmValue,
-                      })
-                    }
+                      onClick={() =>
+                        handleEditClick({
+                          id: row.id,
+                          gsmValue: row.gsmValue,
+                        })
+                      }
                       className="text-blue-500 text-center"
                     >
                       <img src={editIcon} alt="Edit" className="h-6 w-6" />

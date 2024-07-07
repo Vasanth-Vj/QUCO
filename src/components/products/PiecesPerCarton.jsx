@@ -151,11 +151,10 @@ const PiecesPerOuterCarton = ({ searchQuery, isModalOpen, onClose }) => {
     setAddedStyles(newAddedStyles);
   };
 
-  const filteredData = data.filter(
-    (item) =>
-      item.number_of_pcs &&
-      item.number_of_pcs.includes(searchQuery)
-  );
+  const filteredData = data.filter((item) => {
+    const number_of_pcs = item.number_of_pcs.toString().toLowerCase();
+    return number_of_pcs.includes(searchQuery.toLowerCase());
+  });
 
   const startIndex = (currentPage - 1) * recordsPerPage;
   const endIndex = startIndex + recordsPerPage;

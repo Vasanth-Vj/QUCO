@@ -60,10 +60,11 @@ const StyleNo = ({ searchQuery, isModalOpen, onClose }) => {
     }
   };
 
-  const handleStatusToggle = async ({ id, isActive }) => {
+  const handleStatusToggle = async ({ id, isActive, styleNo }) => {
     try {
       const response = await apiService.put(`/styles/${id}`, {
         isActive: !isActive,
+        style_no: styleNo,
       });
       if (response.status === 200) {
         fetchAllStyles();
@@ -254,7 +255,7 @@ const StyleNo = ({ searchQuery, isModalOpen, onClose }) => {
                 <td className="px-6 py-3 whitespace-nowrap text-md text-center text-black flex-grow">
                   <button
                     onClick={() =>
-                      handleStatusToggle({ id: row.id, isActive: row.isActive })
+                      handleStatusToggle({ id: row.id, isActive: row.isActive, styleNo: row.style_no})
                     }
                     className="px-2 py-1 rounded-full"
                   >

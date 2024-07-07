@@ -23,7 +23,7 @@ const EditProductModal = ({ show, onClose, productId }) => {
     { id: "pr8", value: "8", label: "Colors" },
     { id: "pr9", value: "9", label: "Sizes" },
     { id: "pr10", value: "10", label: "Decorations" },
-    { id: "pr11", value: "11", label: "Print Or emb name" },
+    { id: "pr11", value: "11", label: "Print or Emb name" },
     { id: "pr12", value: "12", label: "Short description" },
     { id: "pr13", value: "13", label: "Full description" },
     { id: "pr14", value: "14", label: "Stitch details" },
@@ -65,17 +65,23 @@ const EditProductModal = ({ show, onClose, productId }) => {
     };
   }, [editFieldId]);
 
-  if (!show) return null; 
+  if (!show) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <div className="fixed inset-0 bg-black opacity-50" onClick={onClose}></div>
+      <div
+        className="fixed inset-0 bg-black opacity-50"
+        onClick={onClose}
+      ></div>
       <div className="relative bg-white rounded-lg shadow-lg w-full max-w-[80vw] h-full max-h-[80vh] overflow-y-auto lg:overflow-hidden">
         <div className="px-10 py-5">
           <div className="flex justify-start items-center relative">
             <h2 className="text-2xl font-bold">Style No: {styleNo}</h2>
-            <button className="absolute right-0 cursor-pointer" onClick={onClose}>
-                <img src={closeIcon} alt="Close" />
+            <button
+              className="absolute right-0 cursor-pointer"
+              onClick={onClose}
+            >
+              <img src={closeIcon} alt="Close" />
             </button>
           </div>
           <hr className="my-2" />
@@ -121,7 +127,9 @@ const EditProductModal = ({ show, onClose, productId }) => {
                     className="border border-gray-300 rounded-md p-1 w-40"
                   />
                 ) : (
-                  <span className="flex-grow text-gray-400 text-left">{field.value}</span>
+                  <span className="flex-grow text-gray-400 text-left">
+                    {field.value}
+                  </span>
                 )}
               </div>
             ))}
