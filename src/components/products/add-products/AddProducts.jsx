@@ -111,7 +111,8 @@ const AddProducts = ({ searchQuery }) => {
     } catch (error) {
       console.error('Error deleting products:', error);
     }
-  };
+  };  
+  
 
   const handlePageChange = (direction) => {
     if (direction === "prev" && currentPage > 1) {
