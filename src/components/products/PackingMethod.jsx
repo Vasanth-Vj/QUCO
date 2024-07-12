@@ -20,6 +20,9 @@ const PackingMethod = ({ searchQuery, isModalOpen, onClose }) => {
   const [inputValue, setInputValue] = useState("");
   const [addedStyles, setAddedStyles] = useState([]);
   const [singlePacking, setSinglePacking] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
+ 
 
   useEffect(() => {
     fetchAllPacking();
@@ -27,7 +30,11 @@ const PackingMethod = ({ searchQuery, isModalOpen, onClose }) => {
 
   const fetchAllPacking = async () => {
     try {
-      const response = await apiService.get("/packingMethods/getall");
+      const response = await apiService.get("/packingMethods/getall", {
+        headers:{
+          'Content-Type': 'application/json',
+        }
+      });
       console.log(response.data);
       setData(response.data); // Assuming response.data contains an array of brands
     } catch (error) {
@@ -40,6 +47,10 @@ const PackingMethod = ({ searchQuery, isModalOpen, onClose }) => {
     try {
       const response = await apiService.put(`/packingMethods/${id}`, {
         isActive: !isActive,
+      }, {
+        headers:{
+          'Content-Type': 'application/json',
+        }
       });
       if (response.status === 200) {
         fetchAllPacking();
@@ -69,6 +80,10 @@ const PackingMethod = ({ searchQuery, isModalOpen, onClose }) => {
     try {
       const response = await apiService.put(`/packingMethods/${id}`, {
         packingType: editedPacking,
+      }, {
+        headers:{
+          'Content-Type': 'application/json',
+        }
       });
       if (response.status === 200) {
         fetchAllPacking();
@@ -97,7 +112,11 @@ const PackingMethod = ({ searchQuery, isModalOpen, onClose }) => {
   // handle delete button click
   const handleDelete = async (id) => {
     try {
-      const response = await apiService.delete(`/packingMethods/${id}`);
+      const response = await apiService.delete(`/packingMethods/${id}`, {
+        headers:{
+          'Content-Type': 'application/json',
+        }
+      });
       console.log(response);
       if (response.status === 202) {
         fetchAllPacking();
@@ -128,16 +147,44 @@ const PackingMethod = ({ searchQuery, isModalOpen, onClose }) => {
     try {
       const response = await apiService.post("/packingMethods/create", {
         packingType: singlePacking,
+      }, {
+        headers:{
+          'Content-Type': 'application/json',
+        }
       });
 
       if (response.status === 201) {
         setSinglePacking("");
+        setSuccessMessage("PackingbMethod added successfully.");
+        setErrorMessage("");
         fetchAllPacking();
-      }
-    } catch (error) {
-      console.error("Error adding packing methods:", error);
+      // Clear messages after 5 seconds
+      setTimeout(() => {
+        setSuccessMessage("");
+        setErrorMessage("");
+      }, 5000);
     }
-  };
+  } catch (error) {
+    if (error.response && error.response.status === 500) {
+      setErrorMessage("Packing Method already exists.");
+
+      // Clear messages after 5 seconds
+      setTimeout(() => {
+        setSuccessMessage("");
+        setErrorMessage("");
+      }, 5000);
+    } else {
+      setErrorMessage("Error adding packing method.");
+
+      // Clear messages after 5 seconds
+      setTimeout(() => {
+        setSuccessMessage("");
+        setErrorMessage("");
+      }, 5000);
+    }
+    setSuccessMessage("");
+  }
+};
 
   const handleAddStyle = () => {
     if (inputValue.trim() !== "") {
@@ -356,6 +403,16 @@ const PackingMethod = ({ searchQuery, isModalOpen, onClose }) => {
                   value={singlePacking}
                   onChange={(e) => setSinglePacking(e.target.value)}
                 />
+                 {successMessage && (
+              <div className="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 my-4">
+                <p>{successMessage}</p>
+              </div>
+            )}
+            {errorMessage && (
+              <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 my-4">
+                <p>{errorMessage}</p>
+              </div>
+            )}
                 <button
                   className="bg-sky-600 w-80 py-3 text-white rounded-lg font-bold text-lg mt-3"
                   onClick={handleSinglePacking}

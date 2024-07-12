@@ -11,8 +11,6 @@ import excelIcon from "../../assets/excel-icon.svg";
 import apiService from "../../apiService";
 
 const Neck = ({ searchQuery, isModalOpen, onClose }) => {
-
-
   const [data, setData] = useState([]);
   const [editedNeck, setEditedNeck] = useState("");
   const [editIndex, setEditIndex] = useState(null);
@@ -22,6 +20,8 @@ const Neck = ({ searchQuery, isModalOpen, onClose }) => {
   const [inputValue, setInputValue] = useState("");
   const [addedStyles, setAddedStyles] = useState([]);
   const [singleNecks, setSingleNecks] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
 
   useEffect(() => {
     fetchAllNecks();
@@ -29,23 +29,32 @@ const Neck = ({ searchQuery, isModalOpen, onClose }) => {
 
   const fetchAllNecks = async () => {
     try {
-      const response = await apiService.get("/necks/getall");
+      const response = await apiService.get("/necks/getall", {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
       console.log(response.data);
       setData(response.data); // Assuming response.data contains an array of brands
     } catch (error) {
       console.error("Error fetching necks:", error);
-
     }
   };
-
-
 
   // handle toggle button click
   const handleStatusToggle = async ({ id, isActive }) => {
     try {
-      const response = await apiService.put(`/necks/${id}`, {
-        isActive: !isActive,
-      });
+      const response = await apiService.put(
+        `/necks/${id}`,
+        {
+          isActive: !isActive,
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
       if (response.status === 200) {
         fetchAllNecks();
       }
@@ -61,17 +70,25 @@ const Neck = ({ searchQuery, isModalOpen, onClose }) => {
     setEditedNeck(neckType);
   };
 
-    // handle input change
-    const handleInputChange = (e) => {
-      setEditedNeck(e.target.value);
-    };
+  // handle input change
+  const handleInputChange = (e) => {
+    setEditedNeck(e.target.value);
+  };
 
-   // handle save button click
-   const handleSaveClick = async (index, id) => {
+  // handle save button click
+  const handleSaveClick = async (index, id) => {
     try {
-      const response = await apiService.put(`/necks/${id}`, {
-        neckType: editedNeck,
-      });
+      const response = await apiService.put(
+        `/necks/${id}`,
+        {
+          neckType: editedNeck,
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
       if (response.status === 200) {
         fetchAllNecks();
         setEditIndex(null);
@@ -88,19 +105,23 @@ const Neck = ({ searchQuery, isModalOpen, onClose }) => {
     );
   };
 
-// handle delete button click
-const handleDelete = async (id) => {
-  try {
-    const response = await apiService.delete(`/necks/${id}`);
-    console.log(response);
-    if (response.status === 202) {
-      fetchAllNecks();
+  // handle delete button click
+  const handleDelete = async (id) => {
+    try {
+      const response = await apiService.delete(`/necks/${id}`, {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+      console.log(response);
+      if (response.status === 202) {
+        fetchAllNecks();
+      }
+    } catch (error) {
+      console.error("Error deleting necks:", error);
+      // Handle error as needed
     }
-  } catch (error) {
-    console.error("Error deleting necks:", error);
-    // Handle error as needed
-  }
-};
+  };
 
   const handlePageChange = (direction) => {
     if (direction === "prev" && currentPage > 1) {
@@ -118,19 +139,50 @@ const handleDelete = async (id) => {
     setCurrentPage(1);
   };
 
-
   const handleSingleNeck = async () => {
     try {
-      const response = await apiService.post("/necks/create", {
-        neckType: singleNecks,
-      });
+      const response = await apiService.post(
+        "/necks/create",
+        {
+          neckType: singleNecks,
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
 
       if (response.status === 201) {
         setSingleNecks("");
-        fetchAllNecks();
+        setSuccessMessage("Neck added successfully.");
+        setErrorMessage("");
+
+        // Clear messages after 5 seconds
+        setTimeout(() => {
+          setSuccessMessage("");
+          setErrorMessage("");
+        }, 5000);
       }
     } catch (error) {
-      console.error("Error adding neck:", error);
+      if (error.response && error.response.status === 500) {
+        setErrorMessage("Neck already exists.");
+
+        // Clear messages after 5 seconds
+        setTimeout(() => {
+          setSuccessMessage("");
+          setErrorMessage("");
+        }, 5000);
+      } else {
+        setErrorMessage("Error adding neck.");
+
+        // Clear messages after 5 seconds
+        setTimeout(() => {
+          setSuccessMessage("");
+          setErrorMessage("");
+        }, 5000);
+      }
+      setSuccessMessage("");
     }
   };
 
@@ -243,7 +295,7 @@ const handleDelete = async (id) => {
                 <td className="px-2 py-3 whitespace-nowrap text-md text-center text-black w-16">
                   {editIndex === row.id ? (
                     <button
-                    onClick={() => handleSaveClick(index, row.id)}
+                      onClick={() => handleSaveClick(index, row.id)}
                       className="bg-green-200 border border-green-500 px-2 py-1 rounded-lg flex"
                     >
                       <img src={tickIcon} alt="" className="mt-1 mr-2" />
@@ -251,12 +303,12 @@ const handleDelete = async (id) => {
                     </button>
                   ) : (
                     <button
-                    onClick={() =>
-                      handleEditClick({
-                        id: row.id,
-                        neckType: row.neckType,
-                      })
-                    }
+                      onClick={() =>
+                        handleEditClick({
+                          id: row.id,
+                          neckType: row.neckType,
+                        })
+                      }
                       className="text-blue-500 text-center"
                     >
                       <img src={editIcon} alt="Edit" className="h-6 w-6" />
@@ -348,6 +400,16 @@ const handleDelete = async (id) => {
                   value={singleNecks}
                   onChange={(e) => setSingleNecks(e.target.value)}
                 />
+                {successMessage && (
+                  <div className="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 my-4">
+                    <p>{successMessage}</p>
+                  </div>
+                )}
+                {errorMessage && (
+                  <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 my-4">
+                    <p>{errorMessage}</p>
+                  </div>
+                )}
                 <button
                   className="bg-sky-600 w-80 py-3 text-white rounded-lg font-bold text-lg mt-3"
                   onClick={() => handleSingleNeck()}
@@ -364,7 +426,6 @@ const handleDelete = async (id) => {
                     </span>
                   </p>
                 </div>
-           
               </div>
             </div>
           </div>

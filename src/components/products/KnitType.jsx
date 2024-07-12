@@ -20,6 +20,8 @@ const KnitType = ({ searchQuery, isModalOpen, onClose }) => {
   const [inputValue, setInputValue] = useState("");
   const [addedStyles, setAddedStyles] = useState([]);
   const [singleKints, setSingleKints] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
 
   useEffect(() => {
     fetchAllKints();
@@ -27,48 +29,69 @@ const KnitType = ({ searchQuery, isModalOpen, onClose }) => {
 
   const fetchAllKints = async () => {
     try {
-      const response = await apiService.get("/knitTypes/getall");
+      const response = await apiService.get("/knitTypes/getall", {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
       console.log(response.data);
       setData(response.data); // Assuming response.data contains an array of brands
     } catch (error) {
       console.error("Error fetching knitTypes:", error);
-   
     }
   };
 
   // handle toggle button click
   const handleStatusToggle = async ({ id, isActive }) => {
     try {
-      const response = await apiService.put(`/knitTypes/${id}`, {
-        isActive: !isActive,
-      });
+      const response = await apiService.put(
+        `/knitTypes/${id}`,
+        {
+          isActive: !isActive,
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
       if (response.status === 200) {
         fetchAllKints();
       }
     } catch (error) {
-      console.error(`Error toggling status for knit Types with ID ${id}:`, error);
+      console.error(
+        `Error toggling status for knit Types with ID ${id}:`,
+        error
+      );
       // Handle error as needed
     }
   };
 
-   // handle edit button click
-   const handleEditClick = ({ id, knitType }) => {
+  // handle edit button click
+  const handleEditClick = ({ id, knitType }) => {
     setEditIndex(id);
     setEditedKnitName(knitType);
   };
 
-   // handle input change
-   const handleInputChange = (e) => {
+  // handle input change
+  const handleInputChange = (e) => {
     setEditedKnitName(e.target.value);
   };
 
-
-   // handle save button click
-   const handleSaveClick = async (index, id) => {
+  // handle save button click
+  const handleSaveClick = async (index, id) => {
     try {
-      const response = await apiService.put(`/knitTypes/${id}`, {
-        knitType: editedKnitName,
-      });
+      const response = await apiService.put(
+        `/knitTypes/${id}`,
+        {
+          knitType: editedKnitName,
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
       if (response.status === 200) {
         fetchAllKints();
         setEditIndex(null);
@@ -78,7 +101,6 @@ const KnitType = ({ searchQuery, isModalOpen, onClose }) => {
       // Handle error as needed
     }
   };
- 
 
   const handleCheckboxChange = (id) => {
     setCheckedIds((prev) =>
@@ -89,7 +111,11 @@ const KnitType = ({ searchQuery, isModalOpen, onClose }) => {
   // handle delete button click
   const handleDelete = async (id) => {
     try {
-      const response = await apiService.delete(`/knitTypes/${id}`);
+      const response = await apiService.delete(`/knitTypes/${id}`, {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
       console.log(response);
       if (response.status === 202) {
         fetchAllKints();
@@ -116,20 +142,50 @@ const KnitType = ({ searchQuery, isModalOpen, onClose }) => {
     setCurrentPage(1);
   };
 
-
-
-  const handleSingleKnit= async () => {
+  const handleSingleKnit = async () => {
     try {
-      const response = await apiService.post("/knitTypes/create", {
-        knitType: singleKints,
-      });
+      const response = await apiService.post(
+        "/knitTypes/create",
+        {
+          knitType: singleKints,
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
 
       if (response.status === 201) {
         setSingleKints("");
+        setSuccessMessage("Knit Type added successfully.");
+        setErrorMessage("");
         fetchAllKints();
+        // Clear messages after 5 seconds
+        setTimeout(() => {
+          setSuccessMessage("");
+          setErrorMessage("");
+        }, 5000);
       }
     } catch (error) {
-      console.error("Error adding knitType:", error);
+      if (error.response && error.response.status === 500) {
+        setErrorMessage("Knit Type already exists.");
+
+        // Clear messages after 5 seconds
+        setTimeout(() => {
+          setSuccessMessage("");
+          setErrorMessage("");
+        }, 5000);
+      } else {
+        setErrorMessage("Error adding knit type.");
+
+        // Clear messages after 5 seconds
+        setTimeout(() => {
+          setSuccessMessage("");
+          setErrorMessage("");
+        }, 5000);
+      }
+      setSuccessMessage("");
     }
   };
 
@@ -213,10 +269,10 @@ const KnitType = ({ searchQuery, isModalOpen, onClose }) => {
                 </td>
                 <td className="px-6 py-3 whitespace-nowrap text-md text-center text-black flex-grow">
                   <button
-                  onClick={() =>
-                    handleStatusToggle({ id: row.id, isActive: row.isActive })
-                  }
-                  className="px-2 py-1 rounded-full"
+                    onClick={() =>
+                      handleStatusToggle({ id: row.id, isActive: row.isActive })
+                    }
+                    className="px-2 py-1 rounded-full"
                   >
                     <div className="flex space-x-2">
                       <span
@@ -226,7 +282,7 @@ const KnitType = ({ searchQuery, isModalOpen, onClose }) => {
                             : "text-gray-300 w-20"
                         }
                       >
-                        { row.isActive === true? "Active" : "In-Active"}
+                        {row.isActive === true ? "Active" : "In-Active"}
                       </span>
                       <img
                         src={
@@ -250,12 +306,12 @@ const KnitType = ({ searchQuery, isModalOpen, onClose }) => {
                     </button>
                   ) : (
                     <button
-                    onClick={() =>
-                      handleEditClick({
-                        id: row.id,
-                        knitType: row.knitType,
-                      })
-                    }
+                      onClick={() =>
+                        handleEditClick({
+                          id: row.id,
+                          knitType: row.knitType,
+                        })
+                      }
                       className="text-blue-500 text-center"
                     >
                       <img src={editIcon} alt="Edit" className="h-6 w-6" />
@@ -347,6 +403,16 @@ const KnitType = ({ searchQuery, isModalOpen, onClose }) => {
                   value={singleKints}
                   onChange={(e) => setSingleKints(e.target.value)}
                 />
+                {successMessage && (
+                  <div className="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 my-4">
+                    <p>{successMessage}</p>
+                  </div>
+                )}
+                {errorMessage && (
+                  <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 my-4">
+                    <p>{errorMessage}</p>
+                  </div>
+                )}
                 <button
                   className="bg-sky-600 w-80 py-3 text-white rounded-lg font-bold text-lg mt-3"
                   onClick={() => handleSingleKnit()}
@@ -363,7 +429,6 @@ const KnitType = ({ searchQuery, isModalOpen, onClose }) => {
                     </span>
                   </p>
                 </div>
-             
               </div>
             </div>
           </div>

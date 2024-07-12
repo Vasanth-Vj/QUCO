@@ -1,46 +1,154 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from "react";
 import editIcon from "../../assets/edit-icon.svg";
+import addIcon from "../../assets/add-icon-green.svg";
 import toggleActiveIcon from "../../assets/toggle-active.svg";
 import toggleInactiveIcon from "../../assets/toggle-inactive.svg";
+import deleteIconRed from "../../assets/delete-icon-red.svg";
 import deleteIcon from "../../assets/delete-icon.svg";
 import leftArrowIcon from "../../assets/left-arrow-icon.svg";
 import rightArrowIcon from "../../assets/right-arrow-icon.svg";
 import tickIcon from "../../assets/tick-icon.svg";
-import MesasurementModal from './Mesasurement-model';
-import closeIcon from "../../assets/close-modal-icon.svg"
+import MesasurementModal from "./Mesasurement-model";
+import closeIcon from "../../assets/close-modal-icon.svg";
+import apiService from "../../apiService";
 
 const MeasurementChart = ({ searchQuery, isModalOpen, onClose }) => {
-  const [data, setData] = useState([
-    { id: 1, measurementChart: 'Short length', status: 'active' },
-    { id: 2, measurementChart: 'medium length', status: 'inactive' },
-    { id: 3, measurementChart: 'Full length', status: 'active' },
-    { id: 4, measurementChart: 'cut', status: 'inactive' },
-    { id: 5, measurementChart: 'loose', status: 'active' },
-    { id: 6, measurementChart: 'Jersey', status: 'inactive' },
-    { id: 7, measurementChart: 'Jersey', status: 'active' },
-    { id: 8, measurementChart: 'Jersey', status: 'inactive' },
-    { id: 9, measurementChart: 'Jersey', status: 'active' },
-    { id: 10, measurementChart: 'Jersey', status: 'inactive' },
-    { id: 11, measurementChart: 'Jersey', status: 'active' },
-    { id: 12, measurementChart: 'Jersey', status: 'inactive' },
-  ]);
-  
+  const [data, setData] = useState([]);
   const [editIndex, setEditIndex] = useState(null);
   const [checkedIds, setCheckedIds] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [recordsPerPage, setRecordsPerPage] = useState(5);
-  const [inputValue, setInputValue] = useState("");
+  const [name, setTypeName] = useState("");
+  const [category, setCategory] = useState(""); // New state for category
   const [addedStyles, setAddedStyles] = useState([]);
   const [isSecondModalOpen, setIsSecondModalOpen] = useState(false);
+  const [sizes, setSizes] = useState([{ key: '', value: '' }]);
+  const [image, setImage] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
+  const [successMessage, setSuccessMessage] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
 
-  const filteredData = data.filter(item =>
-    item.measurementChart.toLowerCase().includes(searchQuery.toLowerCase())
+
+  useEffect(() => {
+    fetchAllMeasurements();
+  }, []);
+
+  const fetchAllMeasurements = async () => {
+    try {
+      const response = await apiService.get("/mesurementCharts/getall", {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      console.log(response.data);
+      if(response.status === 200) {
+        setData(response.data);
+      }
+    } catch (error) {
+      console.error("Error fetching brands:", error);
+    }
+  };
+
+  const filteredData = data.filter((item) =>
+    item.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const handleStatusToggle = (index) => {
-    const newData = [...data];
-    newData[index].status = newData[index].status === 'active' ? 'inactive' : 'active';
-    setData(newData);
+  // handle size change
+  const handleAddSizeField = () => {
+    setSizes([...sizes, { key: '', value: '' }]);
+  };
+
+  const handleSizeChange = (index, event) => {
+    const { name, value } = event.target;
+    const newSizes = [...sizes];
+    newSizes[index][name] = value;
+    setSizes(newSizes);
+  };
+
+  const handleRemoveSizeField = (index) => {
+    const newSizes = [...sizes];
+    newSizes.splice(index, 1);
+    setSizes(newSizes);
+  };
+
+  //handle single mesurement chart entry
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const formattedSizes = sizes.reduce((acc, size) => {
+        acc[size.key] = size.value;
+        return acc;
+      }, {});
+      
+      const formData = new FormData();
+      formData.append("name", name);
+      formData.append("category", category); // Include category in the form data
+      formData.append('sizes', JSON.stringify(formattedSizes));
+      if (image) {
+        formData.append("sample_size_file", image);
+      }
+
+      const response = await apiService.post(
+        "/mesurementCharts/create",
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+      console.log(response);
+
+      if (response.status === 201) {
+        fetchAllMeasurements();
+        setSuccessMessage("Measurement chart added successfully.");
+        setErrorMessage("");
+        onClose();
+       // Clear messages after 5 seconds
+       setTimeout(() => {
+        setSuccessMessage("");
+        setErrorMessage("");
+      }, 5000);
+    }
+  } catch (error) {
+    if (error.response && error.response.status === 500) {
+      setErrorMessage("Measurement chart already exists.");
+
+      // Clear messages after 5 seconds
+      setTimeout(() => {
+        setSuccessMessage("");
+        setErrorMessage("");
+      }, 5000);
+    } else {
+      setErrorMessage("Error adding measurement chart.");
+
+      // Clear messages after 5 seconds
+      setTimeout(() => {
+        setSuccessMessage("");
+        setErrorMessage("");
+      }, 5000);
+    }
+    setSuccessMessage("");
+  }
+};
+
+  // handle toggle button click
+  const handleStatusToggle = async ({ id, isActive }) => {
+    try {
+      const response = await apiService.put(`/mesurementCharts/isActive/${id}`, {
+        isActive: !isActive,
+      }, {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      if (response.status === 200) {
+        fetchAllMeasurements();
+      }
+    } catch (error) {
+      console.error(`Error toggling status for length with ID ${id}:`, error);
+      // Handle error as needed
+    }
   };
 
   const handleEditClick = (index) => {
@@ -71,16 +179,30 @@ const MeasurementChart = ({ searchQuery, isModalOpen, onClose }) => {
     }
   };
 
-  const handleDelete = () => {
-    const newData = data.filter((row) => !checkedIds.includes(row.id));
-    setData(newData);
-    setCheckedIds([]);
+  const handleDelete = async (id) => {
+    try {
+      const response = await apiService.delete(`/mesurementCharts/${id}`, {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.status === 202) {
+        fetchAllMeasurements();
+      }
+    } catch (error) {
+      console.error("Error deleting length:", error);
+      // Handle error as needed
+    }
   };
 
   const handlePageChange = (direction) => {
-    if (direction === 'prev' && currentPage > 1) {
+    if (direction === "prev" && currentPage > 1) {
       setCurrentPage(currentPage - 1);
-    } else if (direction === 'next' && currentPage < Math.ceil(data.length / recordsPerPage)) {
+    } else if (
+      direction === "next" &&
+      currentPage < Math.ceil(data.length / recordsPerPage)
+    ) {
       setCurrentPage(currentPage + 1);
     }
   };
@@ -90,11 +212,29 @@ const MeasurementChart = ({ searchQuery, isModalOpen, onClose }) => {
     setCurrentPage(1);
   };
 
+  // handle images
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setImage(file);
+      setImagePreview(URL.createObjectURL(file));
+    } else {
+      setImage(null);
+      setImagePreview(null);
+    }
+  };
+
+  const handleImageRemove = () => {
+    setImage(null);
+    setImagePreview(null);
+  };
+
   const startIndex = (currentPage - 1) * recordsPerPage;
   const endIndex = startIndex + recordsPerPage;
   const currentData = filteredData.slice(startIndex, endIndex);
 
-  const isHeaderCheckboxChecked = checkedIds.length > 0 && checkedIds.length === data.length;
+  const isHeaderCheckboxChecked =
+    checkedIds.length > 0 && checkedIds.length === data.length;
 
   return (
     <div className="px-4 py-2 sm:px-6 lg:px-8">
@@ -102,11 +242,25 @@ const MeasurementChart = ({ searchQuery, isModalOpen, onClose }) => {
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50 w-full">
             <tr>
-              <th className="px-2 py-3 text-center text-md font-bold text-black uppercase w-40">Si No</th>
-              <th className="px-2 py-3 text-left text-md font-bold text-black uppercase 2xl:w-[500px] xl:w-[450px] min-w-[200px]">Measurement Chart</th>
-              <th className="px-6 py-3 text-center text-md font-bold text-black uppercase flex-grow">Status</th>
-              <th className="px-2 py-3 text-center text-md font-bold text-black uppercase w-28">Action</th>
-              <th className="px-2 py-3 text-center text-md font-bold text-black uppercase w-20">
+              <th className="px-2 py-3 text-center text-md font-bold text-black uppercase w-1/12">
+                Si No
+              </th>
+              <th className="px-2 py-3 text-left text-md font-bold text-black uppercase w-1/4">
+                Measurement Chart
+              </th>
+              <th className="px-2 py-3 text-left text-md font-bold text-black uppercase w-1/4">
+                Sizes
+              </th>
+              <th className="px-2 py-3 text-left text-md font-bold text-black uppercase w-1/12">
+                Category
+              </th>
+              <th className="px-6 py-3 text-center text-md font-bold text-black uppercase w-1/12">
+                Status
+              </th>
+              <th className="px-2 py-3 text-center text-md font-bold text-black uppercase w-1/12">
+                Action
+              </th>
+              <th className="px-2 py-3 text-center text-md font-bold text-black uppercase w-1/12">
                 <input
                   type="checkbox"
                   className="form-checkbox"
@@ -116,127 +270,163 @@ const MeasurementChart = ({ searchQuery, isModalOpen, onClose }) => {
               </th>
               <th className="px-2 py-3 text-center text-md font-bold text-black uppercase w-8">
                 <button onClick={handleDelete} className="text-red-500">
-                  <img src={deleteIcon} alt="Delete" className='h-6 w-6' />
+                  <img src={deleteIcon} alt="Delete" className="h-5 w-5" />
                 </button>
               </th>
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
             {currentData.map((row, index) => (
-              <tr key={row.id} style={{ maxHeight: '50px' }}>
-                <td className="px-3 py-3 whitespace-nowrap text-md text-center text-black w-40">{startIndex + index + 1}</td>
+              <tr key={row.id} style={{ maxHeight: "50px" }}>
+                <td className="px-3 py-3 whitespace-nowrap text-md text-center text-black w-40">
+                  {startIndex + index + 1}
+                </td>
                 <td className="px-3 py-3 whitespace-nowrap text-md text-left text-black 2xl:w-[500px] xl:w-[450px] min-w-[200px]">
-                  {editIndex === startIndex + index ? (
+                  {editIndex === index ? (
                     <input
                       type="text"
-                      value={row.measurementChart}
-                      onChange={(e) => handleInputChange(e, startIndex + index)}
-                      className="border border-gray-300 rounded-md px-2 py-2 text-left 2xl:w-[500px] xl:w-[450px] min-w-[200px]"
+                      value={row.name}
+                      onChange={(e) => handleInputChange(e, index)}
+                      className="w-full px-2 py-1 border rounded-md focus:outline-none focus:border-blue-500"
                     />
                   ) : (
-                    row.measurementChart
+                    row.name
                   )}
                 </td>
-                <td className="px-6 py-3 whitespace-nowrap text-md text-center text-black flex-grow">
+                <td className="px-3 py-3 whitespace-nowrap text-md text-left text-black w-40">
+                  {row.sizes ? Object.keys(row.sizes).map((key) => (
+                    <span key={key}>{key}: {row.sizes[key]}, </span>
+                  )) : null}
+                </td>
+                <td className="px-3 py-3 whitespace-nowrap text-md text-left text-black 2xl:w-[500px] xl:w-[450px] min-w-[200px]">
+                  {editIndex === index ? (
+                    <input
+                      type="text"
+                      value={row.category}
+                      onChange={(e) => handleInputChange(e, index)}
+                      className="w-full px-2 py-1 border rounded-md focus:outline-none focus:border-blue-500"
+                    />
+                  ) : (
+                    row.category
+                  )}
+                </td>
+                <td className="px-6 py-3 whitespace-nowrap text-md text-right text-black flex-grow">
                   <button
-                    onClick={() => handleStatusToggle(startIndex + index)}
+                  onClick={() =>
+                    handleStatusToggle({ id: row.id, isActive: row.isActive })
+                  }
                     className="px-2 py-1 rounded-full"
                   >
-                    <div className='flex space-x-2'>
-                      <span className={row.status === 'active' ? 'text-green-600 w-20' : 'text-gray-300 w-20'}>
-                        {row.status === 'active' ? 'Active' : 'In-Active'}
+                    <div className="flex space-x-2">
+                      <span
+                        className={
+                          row.isActive === true
+                            ? "text-green-600 w-20"
+                            : "text-gray-300 w-20"
+                        }
+                      >
+                        {row.isActive === true ? "Active" : "In-Active"}
                       </span>
-                      <img src={row.status === 'active' ? toggleActiveIcon : toggleInactiveIcon} alt="Toggle Status" />
+                      <img
+                        src={
+                          row.isActive === true
+                            ? toggleActiveIcon
+                            : toggleInactiveIcon
+                        }
+                        alt="Toggle Status"
+                      />
                     </div>
                   </button>
                 </td>
-                <td className="px-2 py-3 whitespace-nowrap text-md text-center text-black w-16">
-                  {editIndex === startIndex + index ? (
-                    <button onClick={() => handleUpdateClick(startIndex + index)} className="bg-green-200 border border-green-500 px-2 py-1 rounded-lg flex">
-                      <img src={tickIcon} alt="" className='mt-1 mr-2' />
-                      <span className='text-xs'>Update</span>
+                <td className="px-3 py-3 whitespace-nowrap text-md text-center text-black w-40">
+                  {editIndex === index ? (
+                    <button
+                      onClick={() => handleUpdateClick(index)}
+                      className="text-green-500"
+                    >
+                      <img src={tickIcon} alt="Update" className="h-5 w-5" />
                     </button>
                   ) : (
-                    <button onClick={() => handleEditClick(startIndex + index)} className="text-blue-500 text-center">
-                      <img src={editIcon} alt="Edit" className="h-6 w-6" />
+                    <button
+                      onClick={() => handleEditClick(index)}
+                      className="text-blue-500"
+                    >
+                      <img src={editIcon} alt="Edit" className="h-5 w-5" />
                     </button>
                   )}
                 </td>
-                <td className="px-2 py-3 whitespace-nowrap w-12 text-center">
+                <td className="px-3 py-3 whitespace-nowrap text-md text-center text-black w-40">
                   <input
                     type="checkbox"
                     className="form-checkbox"
-                    checked={checkedIds.includes(row.id)}
                     onChange={() => handleCheckboxChange(row.id)}
+                    checked={checkedIds.includes(row.id)}
                   />
                 </td>
-                <td></td>
+                <td className="px-3 py-3 whitespace-nowrap text-md text-center text-black w-40">
+                  <button onClick={() => handleDelete(row.id)}>
+                    <img src={deleteIconRed} alt="Delete" className="h-5 w-5" />
+                  </button>
+                </td>
               </tr>
             ))}
           </tbody>
         </table>
-      </div>
-      <div className="flex justify-between items-center mt-4">
-        <div>
-          <span className="text-md text-black">{recordsPerPage} records per page</span>
+
+        <div className="pagination flex justify-between items-center px-4 py-3">
+          <div>
+            <label htmlFor="recordsPerPage" className="text-md text-black">
+              Records per page:
+            </label>
+            <select
+              id="recordsPerPage"
+              value={recordsPerPage}
+              onChange={handleRecordsPerPageChange}
+              className="mx-2 border rounded-md focus:outline-none focus:border-blue-500"
+            >
+              <option value="5">5</option>
+              <option value="10">10</option>
+              <option value="20">20</option>
+            </select>
+          </div>
+
+          <div className="flex items-center">
+            <button
+              onClick={() => handlePageChange("prev")}
+              className="mx-1 p-1 border rounded-md focus:outline-none focus:border-blue-500"
+            >
+              <img src={leftArrowIcon} alt="Previous" className="h-5 w-5" />
+            </button>
+            <span className="text-md text-black">{`Page ${currentPage} of ${Math.ceil(
+              data.length / recordsPerPage
+            )}`}</span>
+            <button
+              onClick={() => handlePageChange("next")}
+              className="mx-1 p-1 border rounded-md focus:outline-none focus:border-blue-500"
+            >
+              <img src={rightArrowIcon} alt="Next" className="h-5 w-5" />
+            </button>
+          </div>
         </div>
-        <div className="flex items-center space-x-2">
-          <select value={recordsPerPage} onChange={handleRecordsPerPageChange} className="border border-gray-300 rounded-md px-3 py-2">
-            <option value={5}>Records per page: 5</option>
-            <option value={10}>Records per page: 10</option>
-            <option value={15}>Records per page: 15</option>
-          </select>
-          <button onClick={() => handlePageChange('prev')} className="px-2 py-1 text-md rounded-md">
-            <img src={leftArrowIcon} alt="Previous" />
-          </button>
-          <span className="text-md text-black">{currentPage}/{Math.ceil(data.length / recordsPerPage)}</span>
-          <button onClick={() => handlePageChange('next')} className="px-2 py-1 text-md rounded-md">
-            <img src={rightArrowIcon} alt="Next" />
-          </button>
-        </div>
       </div>
+
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div
-            className="fixed inset-0 bg-black opacity-50"
-            onClick={onClose}
-          >
-          </div>
-          <div className="relative bg-white rounded-lg shadow-lg w-full max-w-[30vw] h-screen max-h-[35vh] overflow-y-auto lg:overflow-hidden">
-            <div className="py-2 flex flex-col justify-between h-full">
-              <div>
-                <div className="flex justify-center">
-                  {/* Centering the title */}
-                  <h2 className="text-lg font-bold">Add Measurement Chart</h2>
-                  <button
-                    className="absolute right-5 cursor-pointer"
-                    onClick={onClose}
-                  >
-                    <img src={closeIcon} alt="Close" className="mt-2" />
-                  </button>
-                </div>
-                <hr className="w-full mt-3" />
-              </div>
-              <div className="flex flex-col justify-between items-center flex-grow">
-                <div className="h-full flex flex-row items-center">
-                  <button
-                    className="bg-sky-600 w-40 py-3 text-white rounded-lg font-bold"
-                    onClick={() => setIsSecondModalOpen(true)}
-                  >
-                    T shirt
-                  </button>
-                  <span className='p-3 text-lg'>(or)</span>
-                  <button className="bg-sky-600 w-40 py-3 text-white rounded-lg font-bold">
-                    Pant
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-      {isSecondModalOpen && (
-        <MesasurementModal onClose={() => setIsSecondModalOpen(false)} />
+        <MesasurementModal
+          isOpen={isModalOpen}
+          onClose={onClose}
+          handleSubmit={handleSubmit}
+          setTypeName={setTypeName}
+          name={name}
+          setCategory={setCategory} // Pass setCategory to the modal
+          category={category} // Pass category to the modal
+          handleAddSizeField={handleAddSizeField}
+          handleSizeChange={handleSizeChange}
+          handleRemoveSizeField={handleRemoveSizeField}
+          sizes={sizes}
+          handleImageChange={handleImageChange}
+          imagePreview={imagePreview}
+          handleImageRemove={handleImageRemove}
+        />
       )}
     </div>
   );

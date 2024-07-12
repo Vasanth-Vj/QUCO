@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import editIcon from "../../../assets/edit-icon.svg";
 import deleteIcon from "../../../assets/delete-icon.svg";
 import leftArrowIcon from "../../../assets/left-arrow-icon.svg";
@@ -6,60 +6,11 @@ import rightArrowIcon from "../../../assets/right-arrow-icon.svg";
 import TopLayer from "../../shared/TopLayer"; // Make sure to import TopLayer
 import EditStockInModal from "./editStockInModal";
 import SuccessAlert from "./SuccessAlert";
-import AddStockModal from "./AddStockModal";
+import AddStockModal from "./AddStockModal"; 
+import apiService from "../../../apiService";
 
 const StockIn = ({ searchQuery }) => {
-  const [initialData, setInitialData] = useState([
-    {
-      id: 1,
-      styleNo: "A123",
-      date: "12/5/24",
-      size: "M",
-      description: "Size A",
-      quantity: "2",
-    },
-    {
-      id: 2,
-      styleNo: "B456",
-      date: "12/5/24",
-      size: "L",
-      description: "Size A",
-      quantity: "2",
-    },
-    {
-      id: 3,
-      styleNo: "C789",
-      date: "12/5/24",
-      size: "XL",
-      description: "Size A",
-      quantity: "2",
-    },
-    {
-      id: 4,
-      styleNo: "D012",
-      date: "12/5/24",
-      size: "M",
-      description: "Size A",
-      quantity: "2",
-    },
-    {
-      id: 5,
-      styleNo: "E345",
-      date: "12/5/24",
-      size: "L",
-      description: "Size A",
-      quantity: "2",
-    },
-    {
-      id: 6,
-      styleNo: "F678",
-      date: "12/5/24",
-      size: "XL",
-      description: "Size A",
-      quantity: "2",
-    },
-  ]);
-
+  const [initialData, setInitialData] = useState([]);
   const [filteredData, setFilteredData] = useState(initialData);
   const [editIndex, setEditIndex] = useState(null);
   const [checkedIds, setCheckedIds] = useState([]);
@@ -67,6 +18,26 @@ const StockIn = ({ searchQuery }) => {
   const [recordsPerPage, setRecordsPerPage] = useState(5);
   const [showModal, setShowModal] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
+
+  useEffect(() => {
+    fetchStockIn();
+  }, []);
+
+  // handle fetch stockIn
+  const fetchStockIn = async () => {
+    try {
+      const response = await apiService.get("/stocks/stockIn/all", {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      console.log(response.data);
+      setInitialData(response.data);
+      setFilteredData(response.data); 
+    } catch (error) {
+      console.error("Error fetching stockIn:", error);
+    }
+  };
 
   const handleSearch = (searchValue) => {
     const filtered = initialData.filter((item) =>
@@ -139,7 +110,7 @@ const StockIn = ({ searchQuery }) => {
             setCurrentPage(1); // Reset to first page on new filter
           }}
           isAddButton={true}
-          addButtonText="Add Product"
+          addButtonText="Add Stocks"
           onAddButtonClick={() => setShowAddModal(true)}
         />
         <div className=" mx-auto p-4 bg-white mt-5">
@@ -191,7 +162,7 @@ const StockIn = ({ searchQuery }) => {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {currentData.map((row, index) => (
+                {currentData?.map((row, index) => (
                   <tr key={row.id} style={{ maxHeight: "50px" }}>
                     <td className="px-2 py-3 whitespace-nowrap text-md text-center text-black w-12">
                       {startIndex + index + 1}

@@ -20,6 +20,8 @@ const StitchDetails = ({ searchQuery, isModalOpen, onClose }) => {
   const [inputValue, setInputValue] = useState("");
   const [addedStyles, setAddedStyles] = useState([]);
   const [singleStitch, setSinglestitch] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
 
   useEffect(() => {
     fetchAllStitch();
@@ -27,7 +29,11 @@ const StitchDetails = ({ searchQuery, isModalOpen, onClose }) => {
 
   const fetchAllStitch = async () => {
     try {
-      const response = await apiService.get("/stitchDetails/getall");
+      const response = await apiService.get("/stitchDetails/getall", {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
       console.log(response.data);
       setData(response.data); // Assuming response.data contains an array of brands
     } catch (error) {
@@ -38,9 +44,17 @@ const StitchDetails = ({ searchQuery, isModalOpen, onClose }) => {
   // handle toggle button click
   const handleStatusToggle = async ({ id, isActive }) => {
     try {
-      const response = await apiService.put(`/stitchDetails/${id}`, {
-        isActive: !isActive,
-      });
+      const response = await apiService.put(
+        `/stitchDetails/${id}`,
+        {
+          isActive: !isActive,
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
       if (response.status === 200) {
         fetchAllStitch();
       }
@@ -67,9 +81,17 @@ const StitchDetails = ({ searchQuery, isModalOpen, onClose }) => {
   // handle save button click
   const handleSaveClick = async (index, id) => {
     try {
-      const response = await apiService.put(`/stitchDetails/${id}`, {
-        stictchDetail: editedStitch,
-      });
+      const response = await apiService.put(
+        `/stitchDetails/${id}`,
+        {
+          stictchDetail: editedStitch,
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
       if (response.status === 200) {
         fetchAllStitch();
         setEditIndex(null);
@@ -89,7 +111,11 @@ const StitchDetails = ({ searchQuery, isModalOpen, onClose }) => {
   // handle delete button click
   const handleDelete = async (id) => {
     try {
-      const response = await apiService.delete(`/stitchDetails/${id}`);
+      const response = await apiService.delete(`/stitchDetails/${id}`, {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
       console.log(response);
       if (response.status === 202) {
         fetchAllStitch();
@@ -122,18 +148,52 @@ const StitchDetails = ({ searchQuery, isModalOpen, onClose }) => {
 
   const handleSingleStitch = async () => {
     try {
-      const response = await apiService.post("/stitchDetails/create", {
-        stictchDetail: singleStitch,
-      });
+      const response = await apiService.post(
+        "/stitchDetails/create",
+        {
+          stictchDetail: singleStitch,
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
 
       if (response.status === 201) {
         setSinglestitch("");
+        setSuccessMessage("Stitch Detail added successfully.");
+        setErrorMessage("");
         fetchAllStitch();
+
+        // Clear messages after 5 seconds
+        setTimeout(() => {
+          setSuccessMessage("");
+          setErrorMessage("");
+        }, 5000);
       }
     } catch (error) {
-      console.error("Error adding stictch Detail:", error);
+      if (error.response && error.response.status === 500) {
+        setErrorMessage("Stitch Detail already exists.");
+
+        // Clear messages after 5 seconds
+        setTimeout(() => {
+          setSuccessMessage("");
+          setErrorMessage("");
+        }, 5000);
+      } else {
+        setErrorMessage("Error adding Stitch Detail.");
+
+        // Clear messages after 5 seconds
+        setTimeout(() => {
+          setSuccessMessage("");
+          setErrorMessage("");
+        }, 5000);
+      }
+      setSuccessMessage("");
     }
   };
+
   const handleAddStyle = () => {
     if (inputValue.trim() !== "") {
       setAddedStyles([...addedStyles, inputValue.trim()]);
@@ -242,7 +302,7 @@ const StitchDetails = ({ searchQuery, isModalOpen, onClose }) => {
                 <td className="px-2 py-3 whitespace-nowrap text-md text-center text-black w-16">
                   {editIndex === row.id ? (
                     <button
-                    onClick={() => handleSaveClick(index, row.id)}
+                      onClick={() => handleSaveClick(index, row.id)}
                       className="bg-green-200 border border-green-500 px-2 py-1 rounded-lg flex"
                     >
                       <img src={tickIcon} alt="" className="mt-1 mr-2" />
@@ -250,12 +310,12 @@ const StitchDetails = ({ searchQuery, isModalOpen, onClose }) => {
                     </button>
                   ) : (
                     <button
-                    onClick={() =>
-                      handleEditClick({
-                        id: row.id,
-                        stictchDetail: row.stictchDetail,
-                      })
-                    }
+                      onClick={() =>
+                        handleEditClick({
+                          id: row.id,
+                          stictchDetail: row.stictchDetail,
+                        })
+                      }
                       className="text-blue-500 text-center"
                     >
                       <img src={editIcon} alt="Edit" className="h-6 w-6" />
@@ -348,6 +408,16 @@ const StitchDetails = ({ searchQuery, isModalOpen, onClose }) => {
                   value={singleStitch}
                   onChange={(e) => setSinglestitch(e.target.value)}
                 />
+                {successMessage && (
+                  <div className="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 my-4">
+                    <p>{successMessage}</p>
+                  </div>
+                )}
+                {errorMessage && (
+                  <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 my-4">
+                    <p>{errorMessage}</p>
+                  </div>
+                )}
                 <button
                   className="bg-sky-600 w-80 py-3 text-white rounded-lg font-bold text-lg mt-3"
                   onClick={handleSingleStitch}
@@ -364,7 +434,6 @@ const StitchDetails = ({ searchQuery, isModalOpen, onClose }) => {
                     </span>
                   </p>
                 </div>
-              
               </div>
             </div>
           </div>

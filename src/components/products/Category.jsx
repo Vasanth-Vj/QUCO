@@ -18,8 +18,9 @@ const Category = ({ searchQuery, isModalOpen, onClose }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [recordsPerPage, setRecordsPerPage] = useState(5);
   const [inputValue, setInputValue] = useState("");
-
   const [singleCategory, setSingleCategory] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
 
   useEffect(() => {
     fetchAllCategorys();
@@ -27,9 +28,13 @@ const Category = ({ searchQuery, isModalOpen, onClose }) => {
 
   const fetchAllCategorys = async () => {
     try {
-      const response = await apiService.get("/categories/getall");
+      const response = await apiService.get("/categories/getall", {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
       console.log(response.data);
-      setData(response.data); 
+      setData(response.data);
     } catch (error) {
       console.error("Error fetching Categorys:", error);
     }
@@ -38,9 +43,17 @@ const Category = ({ searchQuery, isModalOpen, onClose }) => {
   // handle toggle button click
   const handleStatusToggle = async ({ id, isActive }) => {
     try {
-      const response = await apiService.put(`/categories/${id}`, {
-        isActive: !isActive,
-      });
+      const response = await apiService.put(
+        `/categories/${id}`,
+        {
+          isActive: !isActive,
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
       if (response.status === 200) {
         fetchAllCategorys();
       }
@@ -64,9 +77,17 @@ const Category = ({ searchQuery, isModalOpen, onClose }) => {
   // handle save button click
   const handleSaveClick = async (index, id) => {
     try {
-      const response = await apiService.put(`/categories/${id}`, {
-        categoryName: editedCategoryName,
-      });
+      const response = await apiService.put(
+        `/categories/${id}`,
+        {
+          categoryName: editedCategoryName,
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
       if (response.status === 200) {
         fetchAllCategorys();
         setEditIndex(null);
@@ -86,7 +107,11 @@ const Category = ({ searchQuery, isModalOpen, onClose }) => {
   // handle delete button click
   const handleDelete = async (id) => {
     try {
-      const response = await apiService.delete(`/categories/${id}`);
+      const response = await apiService.delete(`/categories/${id}`, {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
       console.log(response);
       if (response.status === 202) {
         fetchAllCategorys();
@@ -115,20 +140,51 @@ const Category = ({ searchQuery, isModalOpen, onClose }) => {
 
   const handleSingleCategory = async () => {
     try {
-      const response = await apiService.post("/categories/create", {
-        categoryName: singleCategory,
-      });
+      const response = await apiService.post(
+        "/categories/create",
+        {
+          categoryName: singleCategory,
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
 
       if (response.status === 201) {
         setSingleCategory("");
+        setSuccessMessage("Category added successfully.");
+        setErrorMessage("");
         fetchAllCategorys();
+
+        // Clear messages after 5 seconds
+        setTimeout(() => {
+          setSuccessMessage("");
+          setErrorMessage("");
+        }, 5000);
       }
     } catch (error) {
-      console.error("Error adding category:", error);
+      if (error.response && error.response.status === 500) {
+        setErrorMessage("Category already exists.");
+
+        // Clear messages after 5 seconds
+        setTimeout(() => {
+          setSuccessMessage("");
+          setErrorMessage("");
+        }, 5000);
+      } else {
+        setErrorMessage("Error adding category.");
+
+        // Clear messages after 5 seconds
+        setTimeout(() => {
+          setSuccessMessage("");
+          setErrorMessage("");
+        }, 5000);
+      }
+      setSuccessMessage("");
     }
   };
-
- 
 
   const filteredData = data.filter(
     (item) =>
@@ -331,6 +387,16 @@ const Category = ({ searchQuery, isModalOpen, onClose }) => {
                   value={singleCategory}
                   onChange={(e) => setSingleCategory(e.target.value)}
                 />
+                {successMessage && (
+                  <div className="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 my-4">
+                    <p>{successMessage}</p>
+                  </div>
+                )}
+                {errorMessage && (
+                  <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 my-4">
+                    <p>{errorMessage}</p>
+                  </div>
+                )}
                 <button
                   className="bg-sky-600 w-80 py-3 text-white rounded-lg font-bold text-lg mt-3"
                   onClick={() => handleSingleCategory()}

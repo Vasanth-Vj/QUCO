@@ -19,6 +19,8 @@ const PrintOrEmb = ({ searchQuery, isModalOpen, onClose }) => {
   const [recordsPerPage, setRecordsPerPage] = useState(5);
   const [inputValue, setInputValue] = useState("");
   const [singlePrints, setSinglePrints] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
 
   useEffect(() => {
     fetchAllPrints();
@@ -26,7 +28,11 @@ const PrintOrEmb = ({ searchQuery, isModalOpen, onClose }) => {
 
   const fetchAllPrints = async () => {
     try {
-      const response = await apiService.get("/printEmb/getall");
+      const response = await apiService.get("/printEmb/getall", {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
       console.log(response.data);
       setData(response.data); // Assuming response.data contains an array of brands
     } catch (error) {
@@ -37,14 +43,25 @@ const PrintOrEmb = ({ searchQuery, isModalOpen, onClose }) => {
   // handle toggle button click
   const handleStatusToggle = async ({ id, isActive }) => {
     try {
-      const response = await apiService.put(`/printEmb/${id}`, {
-        isActive: !isActive,
-      });
+      const response = await apiService.put(
+        `/printEmb/${id}`,
+        {
+          isActive: !isActive,
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
       if (response.status === 200) {
         fetchAllPrints();
       }
     } catch (error) {
-      console.error(`Error toggling status for Print or Emb with ID ${id}:`, error);
+      console.error(
+        `Error toggling status for Print or Emb with ID ${id}:`,
+        error
+      );
       // Handle error as needed
     }
   };
@@ -63,9 +80,17 @@ const PrintOrEmb = ({ searchQuery, isModalOpen, onClose }) => {
   // handle save button click
   const handleSaveClick = async (index, id) => {
     try {
-      const response = await apiService.put(`/printEmb/${id}`, {
-        printType: editedPrint,
-      });
+      const response = await apiService.put(
+        `/printEmb/${id}`,
+        {
+          printType: editedPrint,
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
       if (response.status === 200) {
         fetchAllPrints();
         setEditIndex(null);
@@ -85,7 +110,11 @@ const PrintOrEmb = ({ searchQuery, isModalOpen, onClose }) => {
   // handle delete button click
   const handleDelete = async (id) => {
     try {
-      const response = await apiService.delete(`/printEmb/${id}`);
+      const response = await apiService.delete(`/printEmb/${id}`, {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
       console.log(response);
       if (response.status === 202) {
         fetchAllPrints();
@@ -114,19 +143,50 @@ const PrintOrEmb = ({ searchQuery, isModalOpen, onClose }) => {
 
   const handleSinglePrint = async () => {
     try {
-      const response = await apiService.post("/printEmb/create", {
-        printType: singlePrints,
-      });
+      const response = await apiService.post(
+        "/printEmb/create",
+        {
+          printType: singlePrints,
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
 
       if (response.status === 201) {
         setSinglePrints("");
-        fetchAllPrints();
+        setSuccessMessage("Print or Emb added successfully.");
+        setErrorMessage("");
+
+        // Clear messages after 5 seconds
+        setTimeout(() => {
+          setSuccessMessage("");
+          setErrorMessage("");
+        }, 5000);
       }
     } catch (error) {
-      console.error("Error adding Print or Emb:", error);
+      if (error.response && error.response.status === 500) {
+        setErrorMessage("Print or Emb already exists.");
+
+        // Clear messages after 5 seconds
+        setTimeout(() => {
+          setSuccessMessage("");
+          setErrorMessage("");
+        }, 5000);
+      } else {
+        setErrorMessage("Error adding print or emb.");
+
+        // Clear messages after 5 seconds
+        setTimeout(() => {
+          setSuccessMessage("");
+          setErrorMessage("");
+        }, 5000);
+      }
+      setSuccessMessage("");
     }
   };
-
 
   const filteredData = data.filter(
     (item) =>
@@ -329,6 +389,16 @@ const PrintOrEmb = ({ searchQuery, isModalOpen, onClose }) => {
                   value={singlePrints}
                   onChange={(e) => setSinglePrints(e.target.value)}
                 />
+                {successMessage && (
+                  <div className="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 my-4">
+                    <p>{successMessage}</p>
+                  </div>
+                )}
+                {errorMessage && (
+                  <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 my-4">
+                    <p>{errorMessage}</p>
+                  </div>
+                )}
                 <button
                   className="bg-sky-600 w-80 py-3 text-white rounded-lg font-bold text-lg mt-3"
                   onClick={() => handleSinglePrint()}

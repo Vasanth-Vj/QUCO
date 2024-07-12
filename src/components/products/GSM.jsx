@@ -20,6 +20,8 @@ const GSM = ({ searchQuery, isModalOpen, onClose }) => {
   const [inputValue, setInputValue] = useState("");
   const [addedgsms, setAddedgsms] = useState([]);
   const [singleGsms, setSingleGsms] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
 
   useEffect(() => {
     fetchAllgsms();
@@ -27,7 +29,11 @@ const GSM = ({ searchQuery, isModalOpen, onClose }) => {
 
   const fetchAllgsms = async () => {
     try {
-      const response = await apiService.get("/gsms/getall");
+      const response = await apiService.get("/gsms/getall", {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
       setData(response.data); // Assuming response.data contains an array of brands
     } catch (error) {
       console.error("Error fetching gsms:", error);
@@ -37,9 +43,17 @@ const GSM = ({ searchQuery, isModalOpen, onClose }) => {
   // handle toggle button click
   const handleStatusToggle = async ({ id, isActive }) => {
     try {
-      const response = await apiService.put(`/gsms/${id}`, {
-        isActive: !isActive,
-      });
+      const response = await apiService.put(
+        `/gsms/${id}`,
+        {
+          isActive: !isActive,
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
       if (response.status === 200) {
         fetchAllgsms();
       }
@@ -63,9 +77,17 @@ const GSM = ({ searchQuery, isModalOpen, onClose }) => {
   // handle save button click
   const handleSaveClick = async (index, id) => {
     try {
-      const response = await apiService.put(`/gsms/${id}`, {
-        gsmValue: editedGsmName,
-      });
+      const response = await apiService.put(
+        `/gsms/${id}`,
+        {
+          gsmValue: editedGsmName,
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
       if (response.status === 200) {
         fetchAllgsms();
         setEditIndex(null);
@@ -84,7 +106,11 @@ const GSM = ({ searchQuery, isModalOpen, onClose }) => {
 
   const handleDelete = async (id) => {
     try {
-      const response = await apiService.delete(`/gsms/${id}`);
+      const response = await apiService.delete(`/gsms/${id}`, {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
       console.log(response);
       if (response.status === 202) {
         fetchAllgsms();
@@ -113,16 +139,48 @@ const GSM = ({ searchQuery, isModalOpen, onClose }) => {
 
   const handleSingleGsm = async () => {
     try {
-      const response = await apiService.post("/gsms/create", {
-        gsmValue: singleGsms,
-      });
+      const response = await apiService.post(
+        "/gsms/create",
+        {
+          gsmValue: singleGsms,
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
 
       if (response.status === 201) {
         setSingleGsms("");
+        setSuccessMessage("GSM added successfully.");
+        setErrorMessage("");
         fetchAllgsms();
+        // Clear messages after 5 seconds
+        setTimeout(() => {
+          setSuccessMessage("");
+          setErrorMessage("");
+        }, 5000);
       }
     } catch (error) {
-      console.error("Error adding gsm:", error);
+      if (error.response && error.response.status === 500) {
+        setErrorMessage("GSM already exists.");
+
+        // Clear messages after 5 seconds
+        setTimeout(() => {
+          setSuccessMessage("");
+          setErrorMessage("");
+        }, 5000);
+      } else {
+        setErrorMessage("Error adding gsm.");
+
+        // Clear messages after 5 seconds
+        setTimeout(() => {
+          setSuccessMessage("");
+          setErrorMessage("");
+        }, 5000);
+      }
+      setSuccessMessage("");
     }
   };
 
@@ -345,6 +403,16 @@ const GSM = ({ searchQuery, isModalOpen, onClose }) => {
                   value={singleGsms}
                   onChange={(e) => setSingleGsms(e.target.value)}
                 />
+                {successMessage && (
+                  <div className="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 my-4">
+                    <p>{successMessage}</p>
+                  </div>
+                )}
+                {errorMessage && (
+                  <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 my-4">
+                    <p>{errorMessage}</p>
+                  </div>
+                )}
                 <button
                   className="bg-sky-600 w-80 py-3 text-white rounded-lg font-bold text-lg mt-3"
                   onClick={() => handleSingleGsm()}

@@ -19,8 +19,7 @@ import Storms from "./Storms";
 import Length from "./Length";
 import MeasurementChart from "./MeasurementChart";
 import PackingMethod from "./PackingMethod";
-import PiecesPerInner from "./PiecesPerInner";
-import PiecesPerCarton from "./PiecesPerCarton";
+
 import Sleeve from "./Sleeve";
 import searchIcon from "../../assets/search-icon.svg";
 import addIcon from "../../assets/add-icon.svg";
@@ -77,21 +76,11 @@ const ProductsTopLayer = ({
       label: "Packing method",
       component: PackingMethod,
     },
+  
+   
     {
       id: "pr17",
       value: "17",
-      label: "No of pieces per inner",
-      component: PiecesPerInner,
-    },
-    {
-      id: "pr18",
-      value: "18",
-      label: "No of pieces per outer carton",
-      component: PiecesPerCarton,
-    },
-    {
-      id: "pr19",
-      value: "19",
       label: "Category",
       component: Category,
     },

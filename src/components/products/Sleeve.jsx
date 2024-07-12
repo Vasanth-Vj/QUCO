@@ -11,7 +11,6 @@ import excelIcon from "../../assets/excel-icon.svg";
 import apiService from "../../apiService";
 
 const Sleeve = ({ searchQuery, isModalOpen, onClose }) => {
-
   const [data, setData] = useState([]);
   const [editedSleeveName, setEditedSleeveName] = useState("");
   const [editIndex, setEditIndex] = useState(null);
@@ -21,6 +20,8 @@ const Sleeve = ({ searchQuery, isModalOpen, onClose }) => {
   const [inputValue, setInputValue] = useState("");
   const [addedStyles, setAddedStyles] = useState([]);
   const [singleSleeves, setSingleSleeves] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
 
   useEffect(() => {
     fetchAllSleeves();
@@ -28,21 +29,32 @@ const Sleeve = ({ searchQuery, isModalOpen, onClose }) => {
 
   const fetchAllSleeves = async () => {
     try {
-      const response = await apiService.get("/sleeves/getall");
+      const response = await apiService.get("/sleeves/getall", {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
       console.log(response.data);
       setData(response.data); // Assuming response.data contains an array of brands
     } catch (error) {
       console.error("Error fetching sleeves:", error);
-
     }
   };
 
-    // handle toggle button click
+  // handle toggle button click
   const handleStatusToggle = async ({ id, isActive }) => {
     try {
-      const response = await apiService.put(`/sleeves/${id}`, {
-        isActive: !isActive,
-      });
+      const response = await apiService.put(
+        `/sleeves/${id}`,
+        {
+          isActive: !isActive,
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
       if (response.status === 200) {
         fetchAllSleeves();
       }
@@ -52,24 +64,31 @@ const Sleeve = ({ searchQuery, isModalOpen, onClose }) => {
     }
   };
 
-// handle edit button click
-const handleEditClick = ({ id, sleeveName }) => {
-  setEditIndex(id);
-  setEditedSleeveName(sleeveName);
-};
+  // handle edit button click
+  const handleEditClick = ({ id, sleeveName }) => {
+    setEditIndex(id);
+    setEditedSleeveName(sleeveName);
+  };
 
   // handle input change
   const handleInputChange = (e) => {
     setEditedSleeveName(e.target.value);
   };
 
-
-   // handle save button click
-   const handleSaveClick = async (index, id) => {
+  // handle save button click
+  const handleSaveClick = async (index, id) => {
     try {
-      const response = await apiService.put(`/sleeves/${id}`, {
-        sleeveName: editedSleeveName,
-      });
+      const response = await apiService.put(
+        `/sleeves/${id}`,
+        {
+          sleeveName: editedSleeveName,
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
       if (response.status === 200) {
         fetchAllSleeves();
         setEditIndex(null);
@@ -80,18 +99,20 @@ const handleEditClick = ({ id, sleeveName }) => {
     }
   };
 
- ;
-
   const handleCheckboxChange = (id) => {
     setCheckedIds((prev) =>
       prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
     );
   };
 
-   // handle delete button click
-   const handleDelete = async (id) => {
+  // handle delete button click
+  const handleDelete = async (id) => {
     try {
-      const response = await apiService.delete(`/sleeves/${id}`);
+      const response = await apiService.delete(`/sleeves/${id}`, {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
       console.log(response);
       if (response.status === 202) {
         fetchAllSleeves();
@@ -117,21 +138,54 @@ const handleEditClick = ({ id, sleeveName }) => {
     setCurrentPage(1);
   };
 
-
   const handleSingleSleeve = async () => {
     try {
-      const response = await apiService.post("/sleeves/create", {
-        sleeveName: singleSleeves,
-      });
+      const response = await apiService.post(
+        "/sleeves/create",
+        {
+          sleeveName: singleSleeves,
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
 
       if (response.status === 201) {
         setSingleSleeves("");
+        setSuccessMessage("Sleeve added successfully.");
+        setErrorMessage("");
         fetchAllSleeves();
+
+        // Clear messages after 5 seconds
+        setTimeout(() => {
+          setSuccessMessage("");
+          setErrorMessage("");
+        }, 5000);
       }
     } catch (error) {
-      console.error("Error adding sleeve:", error);
+      if (error.response && error.response.status === 500) {
+        setErrorMessage("Sleeve already exists.");
+
+        // Clear messages after 5 seconds
+        setTimeout(() => {
+          setSuccessMessage("");
+          setErrorMessage("");
+        }, 5000);
+      } else {
+        setErrorMessage("Error adding sleeve.");
+
+        // Clear messages after 5 seconds
+        setTimeout(() => {
+          setSuccessMessage("");
+          setErrorMessage("");
+        }, 5000);
+      }
+      setSuccessMessage("");
     }
   };
+  
   const handleAddStyle = () => {
     if (inputValue.trim() !== "") {
       setAddedStyles([...addedStyles, inputValue.trim()]);
@@ -248,12 +302,12 @@ const handleEditClick = ({ id, sleeveName }) => {
                     </button>
                   ) : (
                     <button
-                    onClick={() =>
-                      handleEditClick({
-                        id: row.id,
-                        sleeveName: row.sleeveName,
-                      })
-                    }
+                      onClick={() =>
+                        handleEditClick({
+                          id: row.id,
+                          sleeveName: row.sleeveName,
+                        })
+                      }
                       className="text-blue-500 text-center"
                     >
                       <img src={editIcon} alt="Edit" className="h-6 w-6" />
@@ -345,6 +399,16 @@ const handleEditClick = ({ id, sleeveName }) => {
                   value={singleSleeves}
                   onChange={(e) => setSingleSleeves(e.target.value)}
                 />
+                {successMessage && (
+                  <div className="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 my-4">
+                    <p>{successMessage}</p>
+                  </div>
+                )}
+                {errorMessage && (
+                  <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 my-4">
+                    <p>{errorMessage}</p>
+                  </div>
+                )}
                 <button
                   className="bg-sky-600 w-80 py-3 text-white rounded-lg font-bold text-lg mt-3"
                   onClick={() => handleSingleSleeve()}

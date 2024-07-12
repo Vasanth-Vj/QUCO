@@ -11,7 +11,6 @@ import excelIcon from "../../assets/excel-icon.svg";
 import apiService from "../../apiService";
 
 const Length = ({ searchQuery, isModalOpen, onClose }) => {
-
   const [data, setData] = useState([]);
   const [editedLength, setEditedLength] = useState("");
   const [editIndex, setEditIndex] = useState(null);
@@ -21,6 +20,8 @@ const Length = ({ searchQuery, isModalOpen, onClose }) => {
   const [inputValue, setInputValue] = useState("");
   const [addedStyles, setAddedStyles] = useState([]);
   const [singleLength, setSingleLength] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
 
   useEffect(() => {
     fetchAllLengths();
@@ -28,21 +29,32 @@ const Length = ({ searchQuery, isModalOpen, onClose }) => {
 
   const fetchAllLengths = async () => {
     try {
-      let response = await apiService.get("/lengths/getall");
+      let response = await apiService.get("/lengths/getall", {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
       console.log(response.data);
       setData(response.data);
     } catch (err) {
       console.log("Error Fetching Length", err);
-
     }
   };
 
   // handle toggle button click
   const handleStatusToggle = async ({ id, isActive }) => {
     try {
-      const response = await apiService.put(`/lengths/${id}`, {
-        isActive: !isActive,
-      });
+      const response = await apiService.put(
+        `/lengths/${id}`,
+        {
+          isActive: !isActive,
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
       if (response.status === 200) {
         fetchAllLengths();
       }
@@ -52,33 +64,39 @@ const Length = ({ searchQuery, isModalOpen, onClose }) => {
     }
   };
 
-   // handle edit button click
-   const handleEditClick = ({ id, lengthType }) => {
+  // handle edit button click
+  const handleEditClick = ({ id, lengthType }) => {
     setEditIndex(id);
     setEditedLength(lengthType);
   };
-   // handle input change
-   const handleInputChange = (e) => {
+  // handle input change
+  const handleInputChange = (e) => {
     setEditedLength(e.target.value);
   };
 
-
- // handle save button click
- const handleSaveClick = async (index, id) => {
-  try {
-    const response = await apiService.put(`/lengths/${id}`, {
-      lengthType: editedLength,
-    });
-    if (response.status === 200) {
-      fetchAllLengths();
-      setEditIndex(null);
+  // handle save button click
+  const handleSaveClick = async (index, id) => {
+    try {
+      const response = await apiService.put(
+        `/lengths/${id}`,
+        {
+          lengthType: editedLength,
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      if (response.status === 200) {
+        fetchAllLengths();
+        setEditIndex(null);
+      }
+    } catch (error) {
+      console.error(`Error saving length with ID ${id}:`, error);
+      // Handle error as needed
     }
-  } catch (error) {
-    console.error(`Error saving length with ID ${id}:`, error);
-    // Handle error as needed
-  }
-};
- 
+  };
 
   const handleCheckboxChange = (id) => {
     setCheckedIds((prev) =>
@@ -89,7 +107,11 @@ const Length = ({ searchQuery, isModalOpen, onClose }) => {
   // handle delete button click
   const handleDelete = async (id) => {
     try {
-      const response = await apiService.delete(`/lengths/${id}`);
+      const response = await apiService.delete(`/lengths/${id}`, {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
       console.log(response);
       if (response.status === 202) {
         fetchAllLengths();
@@ -99,7 +121,6 @@ const Length = ({ searchQuery, isModalOpen, onClose }) => {
       // Handle error as needed
     }
   };
-
 
   const handlePageChange = (direction) => {
     if (direction === "prev" && currentPage > 1) {
@@ -117,21 +138,53 @@ const Length = ({ searchQuery, isModalOpen, onClose }) => {
     setCurrentPage(1);
   };
 
-
   const handleSingleLength = async () => {
     try {
-      const response = await apiService.post("/lengths/create", {
-        lengthType: singleLength,
-      });
+      const response = await apiService.post(
+        "/lengths/create",
+        {
+          lengthType: singleLength,
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
 
       if (response.status === 201) {
         setSingleLength("");
+        setSuccessMessage("Length added successfully.");
+        setErrorMessage("");
         fetchAllLengths();
+        // Clear messages after 5 seconds
+        setTimeout(() => {
+          setSuccessMessage("");
+          setErrorMessage("");
+        }, 5000);
       }
     } catch (error) {
-      console.error("Error adding length:", error);
+      if (error.response && error.response.status === 500) {
+        setErrorMessage("Length already exists.");
+
+        // Clear messages after 5 seconds
+        setTimeout(() => {
+          setSuccessMessage("");
+          setErrorMessage("");
+        }, 5000);
+      } else {
+        setErrorMessage("Error adding length.");
+
+        // Clear messages after 5 seconds
+        setTimeout(() => {
+          setSuccessMessage("");
+          setErrorMessage("");
+        }, 5000);
+      }
+      setSuccessMessage("");
     }
   };
+
   const handleAddStyle = () => {
     if (inputValue.trim() !== "") {
       setAddedStyles([...addedStyles, inputValue.trim()]);
@@ -212,9 +265,9 @@ const Length = ({ searchQuery, isModalOpen, onClose }) => {
                 </td>
                 <td className="px-6 py-3 whitespace-nowrap text-md text-center text-black flex-grow">
                   <button
-                  onClick={() =>
-                    handleStatusToggle({ id: row.id, isActive: row.isActive })
-                  }
+                    onClick={() =>
+                      handleStatusToggle({ id: row.id, isActive: row.isActive })
+                    }
                     className="px-2 py-1 rounded-full"
                   >
                     <div className="flex space-x-2">
@@ -249,12 +302,12 @@ const Length = ({ searchQuery, isModalOpen, onClose }) => {
                     </button>
                   ) : (
                     <button
-                    onClick={() =>
-                      handleEditClick({
-                        id: row.id,
-                        lengthType: row.lengthType,
-                      })
-                    }
+                      onClick={() =>
+                        handleEditClick({
+                          id: row.id,
+                          lengthType: row.lengthType,
+                        })
+                      }
                       className="text-blue-500 text-center"
                     >
                       <img src={editIcon} alt="Edit" className="h-6 w-6" />
@@ -344,6 +397,16 @@ const Length = ({ searchQuery, isModalOpen, onClose }) => {
                   value={singleLength}
                   onChange={(e) => setSingleLength(e.target.value)}
                 />
+                {successMessage && (
+                  <div className="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 my-4">
+                    <p>{successMessage}</p>
+                  </div>
+                )}
+                {errorMessage && (
+                  <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 my-4">
+                    <p>{errorMessage}</p>
+                  </div>
+                )}
                 <button
                   className="bg-sky-600 w-80 py-3 text-white rounded-lg font-bold text-lg mt-3"
                   onClick={() => handleSingleLength()}

@@ -25,6 +25,8 @@ const StyleNo = ({ searchQuery, isModalOpen, onClose }) => {
   const [singleStyle, setSingleStyle] = useState("");
   const [oneShortDescreption, setOneShortDescreption] = useState("");
   const [oneLongDescription, setOneLongDescription] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
 
   useEffect(() => {
     fetchAllStyles();
@@ -32,7 +34,11 @@ const StyleNo = ({ searchQuery, isModalOpen, onClose }) => {
 
   const fetchAllStyles = async () => {
     try {
-      const response = await apiService.get("/styles/getall");
+      const response = await apiService.get("/styles/getall", {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
       console.log(response.data);
       setData(response.data);
     } catch (error) {
@@ -43,29 +49,70 @@ const StyleNo = ({ searchQuery, isModalOpen, onClose }) => {
   // handle single style
   const handleSingleStyle = async () => {
     try {
-      const response = await apiService.post("/styles/create", {
-        style_no: singleStyle,
-        short_description: oneShortDescreption,
-        full_description: oneLongDescription,
-      });
+      const response = await apiService.post(
+        "/styles/create",
+        {
+          style_no: singleStyle,
+          short_description: oneShortDescreption,
+          full_description: oneLongDescription,
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
 
       if (response.status === 201) {
         fetchAllStyles();
+        setSuccessMessage("Style Number added successfully.");
+        setErrorMessage("");
         setSingleStyle("");
         setOneShortDescreption("");
         setOneLongDescription("");
+
+        // Clear messages after 5 seconds
+        setTimeout(() => {
+          setSuccessMessage("");
+          setErrorMessage("");
+        }, 5000);
       }
     } catch (error) {
-      console.error("Error adding Style:", error);
+      if (error.response && error.response.status === 500) {
+        setErrorMessage("Style Number already exists.");
+
+        // Clear messages after 5 seconds
+        setTimeout(() => {
+          setSuccessMessage("");
+          setErrorMessage("");
+        }, 5000);
+      } else {
+        setErrorMessage("Error adding Style Number.");
+
+        // Clear messages after 5 seconds
+        setTimeout(() => {
+          setSuccessMessage("");
+          setErrorMessage("");
+        }, 5000);
+      }
+      setSuccessMessage("");
     }
   };
 
   const handleStatusToggle = async ({ id, isActive, styleNo }) => {
     try {
-      const response = await apiService.put(`/styles/${id}`, {
-        isActive: !isActive,
-        style_no: styleNo,
-      });
+      const response = await apiService.put(
+        `/styles/${id}`,
+        {
+          isActive: !isActive,
+          style_no: styleNo,
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
       if (response.status === 200) {
         fetchAllStyles();
       }
@@ -88,11 +135,19 @@ const StyleNo = ({ searchQuery, isModalOpen, onClose }) => {
 
   const handleSaveClick = async (index, id) => {
     try {
-      const response = await apiService.put(`/styles/${id}`, {
-        style_no: editedStyleNo,
-        short_description: editedShortDescription,
-        full_description: editedLongDescription,
-      });
+      const response = await apiService.put(
+        `/styles/${id}`,
+        {
+          style_no: editedStyleNo,
+          short_description: editedShortDescription,
+          full_description: editedLongDescription,
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
       if (response.status === 200) {
         fetchAllStyles();
         setEditIndex(null);
@@ -111,7 +166,11 @@ const StyleNo = ({ searchQuery, isModalOpen, onClose }) => {
 
   const handleDelete = async (id) => {
     try {
-      const response = await apiService.delete(`/styles/${id}`);
+      const response = await apiService.delete(`/styles/${id}`, {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
       console.log(response);
       if (response.status === 202) {
         fetchAllStyles();
@@ -141,7 +200,15 @@ const StyleNo = ({ searchQuery, isModalOpen, onClose }) => {
   const handleAddBrand = async () => {
     try {
       if (inputValue.trim() !== "") {
-        await apiService.post("/brands/create", { Brand: inputValue.trim() });
+        await apiService.post(
+          "/brands/create",
+          { Brand: inputValue.trim() },
+          {
+            headers: {
+              "Content-Type": "application/json",
+            },
+          }
+        );
         setAddedBrands([...addedBrands, inputValue.trim()]); // Assuming response returns the created brand object with a property like `brandName`
         setInputValue("");
       }
@@ -233,7 +300,9 @@ const StyleNo = ({ searchQuery, isModalOpen, onClose }) => {
                     <input
                       type="text"
                       value={editedShortDescription}
-                      onChange={(e) => setEditedShortDescription(e.target.value)}
+                      onChange={(e) =>
+                        setEditedShortDescription(e.target.value)
+                      }
                       className="border border-gray-300 rounded-md w-28 px-2 py-2"
                     />
                   ) : (
@@ -241,7 +310,7 @@ const StyleNo = ({ searchQuery, isModalOpen, onClose }) => {
                   )}
                 </td>
                 <td className="px-2 py-3 whitespace-nowrap text-md text-center text-black w-28">
-                  {editIndex ===  row.id ? (
+                  {editIndex === row.id ? (
                     <input
                       type="text"
                       value={editedLongDescription}
@@ -255,7 +324,11 @@ const StyleNo = ({ searchQuery, isModalOpen, onClose }) => {
                 <td className="px-6 py-3 whitespace-nowrap text-md text-center text-black flex-grow">
                   <button
                     onClick={() =>
-                      handleStatusToggle({ id: row.id, isActive: row.isActive, styleNo: row.style_no})
+                      handleStatusToggle({
+                        id: row.id,
+                        isActive: row.isActive,
+                        styleNo: row.style_no,
+                      })
                     }
                     className="px-2 py-1 rounded-full"
                   >
@@ -403,6 +476,16 @@ const StyleNo = ({ searchQuery, isModalOpen, onClose }) => {
                   value={oneLongDescription}
                   onChange={(e) => setOneLongDescription(e.target.value)}
                 />
+                {successMessage && (
+                  <div className="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 my-4">
+                    <p>{successMessage}</p>
+                  </div>
+                )}
+                {errorMessage && (
+                  <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 my-4">
+                    <p>{errorMessage}</p>
+                  </div>
+                )}
                 <button
                   className="bg-sky-600 w-80 py-3 text-white rounded-lg font-bold text-lg mt-3"
                   onClick={() => handleSingleStyle()}
