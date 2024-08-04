@@ -30,30 +30,27 @@ const Fabric = ({ searchQuery, isModalOpen, onClose }) => {
   const fetchAllfabrics = async () => {
     try {
       const response = await apiService.get("/fabrics/getall", {
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers:{
+          'Content-Type': 'application/json',
+        }
       });
       console.log(response.data);
       setData(response.data); // Assuming response.data contains an array of brands
     } catch (error) {
       console.error("Error fetching fabrics:", error);
+  
     }
   };
 
   const handleStatusToggle = async ({ id, isActive }) => {
     try {
-      const response = await apiService.put(
-        `/fabrics/${id}`,
-        {
-          isActive: !isActive,
-        },
-        {
-          headers: {
-            "Content-Type": "application/json",
-          },
+      const response = await apiService.put(`/fabrics/${id}`, {
+        isActive: !isActive,
+      }, {
+        headers:{
+          'Content-Type': 'application/json',
         }
-      );
+      });
       if (response.status === 200) {
         fetchAllfabrics();
       }
@@ -63,31 +60,28 @@ const Fabric = ({ searchQuery, isModalOpen, onClose }) => {
     }
   };
 
+
   // handle edit button click
   const handleEditClick = ({ id, fabricName }) => {
     setEditIndex(id);
     setEditedFabricName(fabricName);
   };
 
-  // handle input change
-  const handleInputChange = (e) => {
-    setEditedFabricName(e.target.value);
-  };
+    // handle input change
+    const handleInputChange = (e) => {
+      setEditedFabricName(e.target.value);
+    };
 
   // handle save button click
   const handleSaveClick = async (index, id) => {
     try {
-      const response = await apiService.put(
-        `/fabrics/${id}`,
-        {
-          fabricName: editedFabricName,
-        },
-        {
-          headers: {
-            "Content-Type": "application/json",
-          },
+      const response = await apiService.put(`/fabrics/${id}`, {
+        fabricName: editedFabricName,
+      }, {
+        headers:{
+          'Content-Type': 'application/json',
         }
-      );
+      });
       if (response.status === 200) {
         fetchAllfabrics();
         setEditIndex(null);
@@ -97,31 +91,31 @@ const Fabric = ({ searchQuery, isModalOpen, onClose }) => {
       // Handle error as needed
     }
   };
-
+ 
   const handleCheckboxChange = (id) => {
     setCheckedIds((prev) =>
       prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
     );
   };
 
-  // handle delete button click
-  const handleDelete = async (id) => {
-    try {
-      const response = await apiService.delete(`/fabrics/${id}`, {
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
-      console.log(response);
-      if (response.status === 202) {
-        fetchAllfabrics();
+    // handle delete button click
+    const handleDelete = async (id) => {
+      try {
+        const response = await apiService.delete(`/fabrics/${id}`, {
+          headers:{
+            'Content-Type': 'application/json',
+          }
+        });
+        console.log(response);
+        if (response.status === 202) {
+          fetchAllfabrics();
+        }
+      } catch (error) {
+        console.error("Error deleting fabrics:", error);
+        // Handle error as needed
       }
-    } catch (error) {
-      console.error("Error deleting fabrics:", error);
-      // Handle error as needed
-    }
-  };
-
+    };
+  
   const handlePageChange = (direction) => {
     if (direction === "prev" && currentPage > 1) {
       setCurrentPage(currentPage - 1);
@@ -138,32 +132,30 @@ const Fabric = ({ searchQuery, isModalOpen, onClose }) => {
     setCurrentPage(1);
   };
 
+
   const handleSingleFabric = async () => {
     try {
-      const response = await apiService.post(
-        "/fabrics/create",
-        {
-          fabricName: singleFabrics,
-        },
-        {
-          headers: {
-            "Content-Type": "application/json",
-          },
+      const response = await apiService.post("/fabrics/create", {
+        fabricName: singleFabrics,
+      }, {
+        headers:{
+          'Content-Type': 'application/json',
         }
-      );
+      });
       if (response.status === 201) {
         setSingleFabrics("");
         setSuccessMessage("Fabric added successfully.");
         setErrorMessage("");
         fetchAllfabrics();
-        // Clear messages after 5 seconds
-        setTimeout(() => {
+
+         // Clear messages after 5 seconds
+         setTimeout(() => {
           setSuccessMessage("");
           setErrorMessage("");
         }, 5000);
       }
     } catch (error) {
-      if (error.response && error.response.status === 500) {
+      if (error.response && error.response.status === 409) {
         setErrorMessage("Fabric already exists.");
 
         // Clear messages after 5 seconds
@@ -183,6 +175,7 @@ const Fabric = ({ searchQuery, isModalOpen, onClose }) => {
       setSuccessMessage("");
     }
   };
+
   const handleAddFabric = async () => {
     try {
       if (inputValue.trim() !== "") {
@@ -211,8 +204,14 @@ const Fabric = ({ searchQuery, isModalOpen, onClose }) => {
   const endIndex = startIndex + recordsPerPage;
   const currentData = filteredData.slice(startIndex, endIndex);
 
+  const handleModalClose = () => {
+    setSingleFabrics(""); 
+    onClose(); 
+  };
+
+
   return (
-    <div className=" mx-auto p-4 bg-white">
+    <div  className="px-4 py-2 sm:px-6 lg:px-8">
       <div className="min-h-[60vh] max-h-[60vh] overflow-y-auto">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50 w-full">
@@ -305,12 +304,12 @@ const Fabric = ({ searchQuery, isModalOpen, onClose }) => {
                     </button>
                   ) : (
                     <button
-                      onClick={() =>
-                        handleEditClick({
-                          id: row.id,
-                          fabricName: row.fabricName,
-                        })
-                      }
+                    onClick={() =>
+                      handleEditClick({
+                        id: row.id,
+                        fabricName: row.fabricName,
+                      })
+                    }
                       className="text-blue-500 text-center"
                     >
                       <img src={editIcon} alt="Edit" className="h-6 w-6" />
@@ -384,7 +383,7 @@ const Fabric = ({ searchQuery, isModalOpen, onClose }) => {
                   <h2 className="text-2xl font-bold">Add Fabric</h2>
                   <button
                     className="absolute right-5 cursor-pointer"
-                    onClick={onClose}
+                    onClick={handleModalClose}
                   >
                     <img src={closeIcon} alt="Close" className="mt-2" />
                   </button>
@@ -403,15 +402,15 @@ const Fabric = ({ searchQuery, isModalOpen, onClose }) => {
                   onChange={(e) => setSingleFabrics(e.target.value)}
                 />
                 {successMessage && (
-                  <div className="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 my-4">
-                    <p>{successMessage}</p>
-                  </div>
-                )}
-                {errorMessage && (
-                  <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 my-4">
-                    <p>{errorMessage}</p>
-                  </div>
-                )}
+              <div className="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 my-4">
+                <p>{successMessage}</p>
+              </div>
+            )}
+            {errorMessage && (
+              <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 my-4">
+                <p>{errorMessage}</p>
+              </div>
+            )}
                 <button
                   className="bg-sky-600 w-80 py-3 text-white rounded-lg font-bold text-lg mt-3"
                   onClick={handleSingleFabric}

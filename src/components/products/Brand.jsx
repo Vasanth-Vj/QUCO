@@ -22,8 +22,8 @@ const Brand = ({ searchQuery, isModalOpen, onClose }) => {
   const [singleBrands, setSingleBrands] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
- 
-  useEffect(() => { 
+
+  useEffect(() => {
     fetchAllBrands();
   }, []);
 
@@ -197,6 +197,7 @@ const Brand = ({ searchQuery, isModalOpen, onClose }) => {
     newAddedBrands.splice(index, 1);
     setAddedBrands(newAddedBrands);
   };
+  
 
   const filteredData = data.filter(
     (item) =>
@@ -208,8 +209,13 @@ const Brand = ({ searchQuery, isModalOpen, onClose }) => {
   const endIndex = startIndex + recordsPerPage;
   const currentData = filteredData.slice(startIndex, endIndex);
 
+  const handleModalClose = () => {
+    setSingleBrands(""); 
+    onClose(); 
+  };
+
   return (
-    <div className=" mx-auto p-4 bg-white">
+    <div  className="px-4 py-2 sm:px-6 lg:px-8">
       <div className="min-h-[60vh] max-h-[60vh] overflow-y-auto">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50 w-full">
@@ -355,7 +361,7 @@ const Brand = ({ searchQuery, isModalOpen, onClose }) => {
             onClick={() => handlePageChange("prev")}
             className="px-2 py-1 text-md rounded-md"
           >
-            <img src={leftArrowIcon} alt="Previous" /> 
+            <img src={leftArrowIcon} alt="Previous" />
           </button>
           <span className="text-md text-black">
             {currentPage}/{Math.ceil(data.length / recordsPerPage)}
@@ -375,13 +381,13 @@ const Brand = ({ searchQuery, isModalOpen, onClose }) => {
             onClick={onClose}
           ></div>
           <div className="relative bg-white rounded-lg shadow-lg w-full max-w-[35vw] h-screen max-h-[40vh] overflow-y-auto lg:overflow-hidden">
-            <div className="py-2 flex flex-col">
+            <div className="p-5 flex flex-col">
               <div>
                 <div className="flex justify-center">
                   <h2 className="text-2xl font-bold">Add Brand</h2>
                   <button
                     className="absolute right-5 cursor-pointer"
-                    onClick={onClose}
+                    onClick={handleModalClose}
                   >
                     <img src={closeIcon} alt="Close" className="mt-2" />
                   </button>
@@ -394,7 +400,7 @@ const Brand = ({ searchQuery, isModalOpen, onClose }) => {
                   type="text"
                   placeholder="Enter brand name"
                   value={singleBrands}
-                  onChange={(e) => setSingleBrands(e.target.value)} 
+                  onChange={(e) => setSingleBrands(e.target.value)}
                 />
                 {successMessage && (
               <div className="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 my-4">

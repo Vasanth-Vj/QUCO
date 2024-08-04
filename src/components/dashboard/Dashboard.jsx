@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import totalOrderQuantity from "../../assets/total-order-quantity.png";
 import totalProduct from "../../assets/total-product.png";
-import apiService, { token } from "../../apiService";
+import apiService from "../../apiService";
 
 const Dashboard = () => {
   const [totalProducts, setTotalProducts] = useState(0);
@@ -15,7 +15,6 @@ const Dashboard = () => {
         const response = await apiService.get("/products/getall", {
           headers: {
             'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
           },
         });
         console.log(response.data); // Log response data to verify
@@ -32,7 +31,6 @@ const Dashboard = () => {
         const response = await apiService.get("/purchases/all", {
           headers: {
             'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
           },
         });
         console.log(response.data); // Log response data to verify
@@ -48,7 +46,6 @@ const Dashboard = () => {
           const response = await apiService.get("/reports/overallStock", {
             headers: {
               'Content-Type': 'application/json',
-              Authorization: `Bearer ${token}`,
             },
           });
           console.log(response.data);
@@ -67,7 +64,7 @@ const Dashboard = () => {
   }, [totalProducts]);
 
   return (
-    <div className="grid grid-rows-4 h-screen">
+    <div className="grid grid-rows-4 h-screen ">
       <div className="grid-rows-1">
         <div className="col-span-1 p-4">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

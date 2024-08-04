@@ -10,26 +10,26 @@ import closeIcon from "../../assets/close-modal-icon.svg";
 import excelIcon from "../../assets/excel-icon.svg";
 import apiService from "../../apiService";
 
-const KnitType = ({ searchQuery, isModalOpen, onClose }) => {
+const PiecesPerOuterCarton = ({ searchQuery, isModalOpen, onClose }) => {
   const [data, setData] = useState([]);
-  const [editedKnitName, setEditedKnitName] = useState("");
+  const [editedCarton, setEditedCarton] = useState("");
   const [editIndex, setEditIndex] = useState(null);
   const [checkedIds, setCheckedIds] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [recordsPerPage, setRecordsPerPage] = useState(5);
   const [inputValue, setInputValue] = useState("");
   const [addedStyles, setAddedStyles] = useState([]);
-  const [singleKints, setSingleKints] = useState("");
+  const [singleCarton, setSingleCarton] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
 
   useEffect(() => {
-    fetchAllKints();
+    fetchAllCarton();
   }, []);
 
-  const fetchAllKints = async () => {
+  const fetchAllCarton = async () => {
     try {
-      const response = await apiService.get("/knitTypes/getall", {
+      const response = await apiService.get("/outerCortons/getall", {
         headers:{
           'Content-Type': 'application/json',
         }
@@ -37,15 +37,14 @@ const KnitType = ({ searchQuery, isModalOpen, onClose }) => {
       console.log(response.data);
       setData(response.data); // Assuming response.data contains an array of brands
     } catch (error) {
-      console.error("Error fetching knitTypes:", error);
-   
+      console.error("Error fetching Pieces Per Carton:", error);
     }
   };
 
   // handle toggle button click
   const handleStatusToggle = async ({ id, isActive }) => {
     try {
-      const response = await apiService.put(`/knitTypes/${id}`, {
+      const response = await apiService.put(`/outerCortons/${id}`, {
         isActive: !isActive,
       }, {
         headers:{
@@ -53,46 +52,47 @@ const KnitType = ({ searchQuery, isModalOpen, onClose }) => {
         }
       });
       if (response.status === 200) {
-        fetchAllKints();
+        fetchAllCarton();
       }
     } catch (error) {
-      console.error(`Error toggling status for knit Types with ID ${id}:`, error);
+      console.error(
+        `Error toggling status for Pieces Per Carton with ID ${id}:`,
+        error
+      );
       // Handle error as needed
     }
   };
 
-   // handle edit button click
-   const handleEditClick = ({ id, knitType }) => {
+  // handle edit button click
+  const handleEditClick = ({ id, number_of_pcs }) => {
     setEditIndex(id);
-    setEditedKnitName(knitType);
+    setEditedCarton(number_of_pcs);
   };
 
-   // handle input change
-   const handleInputChange = (e) => {
-    setEditedKnitName(e.target.value);
+  // handle input change
+  const handleInputChange = (e) => {
+    setEditedCarton(e.target.value);
   };
 
-
-   // handle save button click
-   const handleSaveClick = async (index, id) => {
+  // handle save button click
+  const handleSaveClick = async (index, id) => {
     try {
-      const response = await apiService.put(`/knitTypes/${id}`, {
-        knitType: editedKnitName,
+      const response = await apiService.put(`/outerCortons/${id}`, {
+        number_of_pcs: editedCarton,
       }, {
         headers:{
           'Content-Type': 'application/json',
         }
       });
       if (response.status === 200) {
-        fetchAllKints();
+        fetchAllCarton();
         setEditIndex(null);
       }
     } catch (error) {
-      console.error(`Error saving knit Types with ID ${id}:`, error);
+      console.error(`Error saving Pieces Per Caeron with ID ${id}:`, error);
       // Handle error as needed
     }
   };
- 
 
   const handleCheckboxChange = (id) => {
     setCheckedIds((prev) =>
@@ -100,24 +100,31 @@ const KnitType = ({ searchQuery, isModalOpen, onClose }) => {
     );
   };
 
+  const handleHeaderCheckboxChange = (e) => {
+    if (e.target.checked) {
+      setCheckedIds(data.map((row) => row.id));
+    } else {
+      setCheckedIds([]);
+    }
+  };
+
   // handle delete button click
   const handleDelete = async (id) => {
     try {
-      const response = await apiService.delete(`/knitTypes/${id}`, {
+      const response = await apiService.delete(`/outerCortons/${id}`, {
         headers:{
           'Content-Type': 'application/json',
         }
       });
       console.log(response);
       if (response.status === 202) {
-        fetchAllKints();
+        fetchAllCarton();
       }
     } catch (error) {
-      console.error("Error deleting knit Type:", error);
+      console.error("Error deleting Pieces Per Caeron:", error);
       // Handle error as needed
     }
   };
-
   const handlePageChange = (direction) => {
     if (direction === "prev" && currentPage > 1) {
       setCurrentPage(currentPage - 1);
@@ -134,12 +141,10 @@ const KnitType = ({ searchQuery, isModalOpen, onClose }) => {
     setCurrentPage(1);
   };
 
-
-
-  const handleSingleKnit= async () => {
+  const handleSingleCerton = async () => {
     try {
-      const response = await apiService.post("/knitTypes/create", {
-        knitType: singleKints,
+      const response = await apiService.post("/outerCortons/create", {
+        number_of_pcs: singleCarton,
       }, {
         headers:{
           'Content-Type': 'application/json',
@@ -147,36 +152,11 @@ const KnitType = ({ searchQuery, isModalOpen, onClose }) => {
       });
 
       if (response.status === 201) {
-        setSingleKints("");
-        setSuccessMessage("Knit Type added successfully.");
-        setErrorMessage("");
-        fetchAllKints();
-
-         // Clear messages after 5 seconds
-         setTimeout(() => {
-          setSuccessMessage("");
-          setErrorMessage("");
-        }, 5000);
+        setSingleCarton("");
+        fetchAllCarton();
       }
     } catch (error) {
-      if (error.response && error.response.status === 409) {
-        setErrorMessage("Knit type already exists.");
-
-        // Clear messages after 5 seconds
-        setTimeout(() => {
-          setSuccessMessage("");
-          setErrorMessage("");
-        }, 5000);
-      } else {
-        setErrorMessage("Error adding knit type.");
-
-        // Clear messages after 5 seconds
-        setTimeout(() => {
-          setSuccessMessage("");
-          setErrorMessage("");
-        }, 5000);
-      }
-      setSuccessMessage("");
+      console.error("Error adding Pieces Per Caeron:", error);
     }
   };
 
@@ -193,33 +173,29 @@ const KnitType = ({ searchQuery, isModalOpen, onClose }) => {
     setAddedStyles(newAddedStyles);
   };
 
-  const filteredData = data.filter(
-    (item) =>
-      item.knitType &&
-      item.knitType.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredData = data.filter((item) => {
+    const number_of_pcs = item.number_of_pcs.toString().toLowerCase();
+    return number_of_pcs.includes(searchQuery.toLowerCase());
+  });
 
   const startIndex = (currentPage - 1) * recordsPerPage;
   const endIndex = startIndex + recordsPerPage;
   const currentData = filteredData.slice(startIndex, endIndex);
 
-  const handleModalClose = () => {
-    setSingleKints(""); 
-    onClose(); 
-  };
-
+  const isHeaderCheckboxChecked =
+    checkedIds.length > 0 && checkedIds.length === data.length;
 
   return (
-    <div  className="px-4 py-2 sm:px-6 lg:px-8">
+    <div className=" mx-auto p-4 bg-white">
       <div className="min-h-[60vh] max-h-[60vh] overflow-y-auto">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50 w-full">
             <tr>
-              <th className="px-2 py-3 text-center text-md font-bold text-black uppercase w-28">
+              <th className="px-2 py-3 text-center text-md font-bold text-black uppercase w-40">
                 Si No
               </th>
-              <th className="px-2 py-3 text-center text-md font-bold text-black uppercase w-40">
-                Knit Type
+              <th className="px-2 py-3 text-left text-md font-bold text-black 2xl:w-[500px] xl:w-[450px] min-w-[200px]">
+                No of pcs per outer carton
               </th>
               <th className="px-6 py-3 text-center text-md font-bold text-black uppercase flex-grow">
                 Status
@@ -231,17 +207,17 @@ const KnitType = ({ searchQuery, isModalOpen, onClose }) => {
                 <input
                   type="checkbox"
                   className="form-checkbox"
-                  onChange={(e) =>
-                    setCheckedIds(
-                      e.target.checked ? data.map((row) => row.id) : []
-                    )
-                  }
-                  checked={checkedIds.length === data.length}
+                  onChange={handleHeaderCheckboxChange}
+                  checked={isHeaderCheckboxChecked}
                 />
               </th>
               <th className="px-2 py-3 text-center text-md font-bold text-black uppercase w-8">
                 <button onClick={handleDelete} className="text-red-500">
-                  <img src={deleteIcon} alt="Delete" className="h-6 w-6" />
+                  <img
+                    src={deleteIcon}
+                    alt="Delete"
+                    className="min-h-5 min-w-5"
+                  />
                 </button>
               </th>
             </tr>
@@ -249,27 +225,27 @@ const KnitType = ({ searchQuery, isModalOpen, onClose }) => {
           <tbody className="bg-white divide-y divide-gray-200">
             {currentData?.map((row, index) => (
               <tr key={row.id} style={{ maxHeight: "50px" }}>
-                <td className="px-2 py-3 whitespace-nowrap text-md text-center text-black w-12">
+                <td className="px-3 py-3 whitespace-nowrap text-md text-center text-black w-40">
                   {startIndex + index + 1}
                 </td>
-                <td className="px-2 py-3 whitespace-nowrap text-md text-center text-black w-28">
+                <td className="px-3 py-3 whitespace-nowrap text-md text-left text-black 2xl:w-[500px] xl:w-[450px] min-w-[200px]">
                   {editIndex === row.id ? (
                     <input
-                      type="text"
-                      value={editedKnitName}
+                      type="number"
+                      value={editedCarton}
                       onChange={handleInputChange}
-                      className="border border-gray-300 rounded-md w-28 px-2 py-2"
+                      className="border border-gray-300 rounded-md px-2 py-2 text-left 2xl:w-[500px] xl:w-[450px] min-w-[200px]"
                     />
                   ) : (
-                    row.knitType
+                    row.number_of_pcs
                   )}
                 </td>
                 <td className="px-6 py-3 whitespace-nowrap text-md text-center text-black flex-grow">
                   <button
-                  onClick={() =>
+                   onClick={() =>
                     handleStatusToggle({ id: row.id, isActive: row.isActive })
                   }
-                  className="px-2 py-1 rounded-full"
+                    className="px-2 py-1 rounded-full"
                   >
                     <div className="flex space-x-2">
                       <span
@@ -279,7 +255,7 @@ const KnitType = ({ searchQuery, isModalOpen, onClose }) => {
                             : "text-gray-300 w-20"
                         }
                       >
-                        { row.isActive === true? "Active" : "In-Active"}
+                        { row.isActive === true ? "Active" : "In-Active"}
                       </span>
                       <img
                         src={
@@ -295,7 +271,7 @@ const KnitType = ({ searchQuery, isModalOpen, onClose }) => {
                 <td className="px-2 py-3 whitespace-nowrap text-md text-center text-black w-16">
                   {editIndex === row.id ? (
                     <button
-                      onClick={() => handleSaveClick(index, row.id)}
+                    onClick={() => handleSaveClick(index, row.id)}
                       className="bg-green-200 border border-green-500 px-2 py-1 rounded-lg flex"
                     >
                       <img src={tickIcon} alt="" className="mt-1 mr-2" />
@@ -306,7 +282,7 @@ const KnitType = ({ searchQuery, isModalOpen, onClose }) => {
                     onClick={() =>
                       handleEditClick({
                         id: row.id,
-                        knitType: row.knitType,
+                        number_of_pcs: row.number_of_pcs,
                       })
                     }
                       className="text-blue-500 text-center"
@@ -379,10 +355,10 @@ const KnitType = ({ searchQuery, isModalOpen, onClose }) => {
             <div className="py-2 flex flex-col">
               <div>
                 <div className="flex justify-center">
-                  <h2 className="text-2xl font-bold">Add knit Type</h2>
+                  <h2 className="text-2xl font-bold">No of Pcs Per Carton</h2>
                   <button
                     className="absolute right-5 cursor-pointer"
-                    onClick={handleModalClose}
+                    onClick={onClose}
                   >
                     <img src={closeIcon} alt="Close" className="mt-2" />
                   </button>
@@ -391,28 +367,19 @@ const KnitType = ({ searchQuery, isModalOpen, onClose }) => {
               </div>
               <div className="flex flex-col items-center">
                 {/* <p className="text-gray-400 font-bold mt-10">
-                  *For multiple “Knit type” feed use enter after each values
+                  *For multiple “Pcs Per Carton” feed use enter after each
+                  values
                 </p> */}
                 <input
                   className="bg-gray-200 rounded w-80 py-3 px-4 text-gray-700 focus:outline-none focus:shadow-outline mt-5 text-lg text-center"
                   type="text"
-                  placeholder="Enter knit type"
-                  value={singleKints}
-                  onChange={(e) => setSingleKints(e.target.value)}
+                  placeholder="Enter no of pcs"
+                  value={singleCarton}
+                  onChange={(e) => setSingleCarton(e.target.value)}
                 />
-                {successMessage && (
-              <div className="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 my-4">
-                <p>{successMessage}</p>
-              </div>
-            )}
-            {errorMessage && (
-              <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 my-4">
-                <p>{errorMessage}</p>
-              </div>
-            )}
                 <button
                   className="bg-sky-600 w-80 py-3 text-white rounded-lg font-bold text-lg mt-3"
-                  onClick={() => handleSingleKnit()}
+                  onClick={() => handleSingleCerton()}
                 >
                   Update
                 </button>
@@ -436,4 +403,4 @@ const KnitType = ({ searchQuery, isModalOpen, onClose }) => {
   );
 };
 
-export default KnitType;
+export default PiecesPerOuterCarton;

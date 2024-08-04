@@ -30,9 +30,9 @@ const GSM = ({ searchQuery, isModalOpen, onClose }) => {
   const fetchAllgsms = async () => {
     try {
       const response = await apiService.get("/gsms/getall", {
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers:{
+          'Content-Type': 'application/json',
+        }
       });
       setData(response.data); // Assuming response.data contains an array of brands
     } catch (error) {
@@ -43,17 +43,13 @@ const GSM = ({ searchQuery, isModalOpen, onClose }) => {
   // handle toggle button click
   const handleStatusToggle = async ({ id, isActive }) => {
     try {
-      const response = await apiService.put(
-        `/gsms/${id}`,
-        {
-          isActive: !isActive,
-        },
-        {
-          headers: {
-            "Content-Type": "application/json",
-          },
+      const response = await apiService.put(`/gsms/${id}`, {
+        isActive: !isActive,
+      }, {
+        headers:{
+          'Content-Type': 'application/json',
         }
-      );
+      });
       if (response.status === 200) {
         fetchAllgsms();
       }
@@ -77,17 +73,13 @@ const GSM = ({ searchQuery, isModalOpen, onClose }) => {
   // handle save button click
   const handleSaveClick = async (index, id) => {
     try {
-      const response = await apiService.put(
-        `/gsms/${id}`,
-        {
-          gsmValue: editedGsmName,
-        },
-        {
-          headers: {
-            "Content-Type": "application/json",
-          },
+      const response = await apiService.put(`/gsms/${id}`, {
+        gsmValue: editedGsmName,
+      }, {
+        headers:{
+          'Content-Type': 'application/json',
         }
-      );
+      });
       if (response.status === 200) {
         fetchAllgsms();
         setEditIndex(null);
@@ -107,9 +99,9 @@ const GSM = ({ searchQuery, isModalOpen, onClose }) => {
   const handleDelete = async (id) => {
     try {
       const response = await apiService.delete(`/gsms/${id}`, {
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers:{
+          'Content-Type': 'application/json',
+        }
       });
       console.log(response);
       if (response.status === 202) {
@@ -139,31 +131,28 @@ const GSM = ({ searchQuery, isModalOpen, onClose }) => {
 
   const handleSingleGsm = async () => {
     try {
-      const response = await apiService.post(
-        "/gsms/create",
-        {
-          gsmValue: singleGsms,
-        },
-        {
-          headers: {
-            "Content-Type": "application/json",
-          },
+      const response = await apiService.post("/gsms/create", {
+        gsmValue: singleGsms,
+      }, {
+        headers:{
+          'Content-Type': 'application/json',
         }
-      );
+      });
 
       if (response.status === 201) {
         setSingleGsms("");
         setSuccessMessage("GSM added successfully.");
         setErrorMessage("");
         fetchAllgsms();
-        // Clear messages after 5 seconds
-        setTimeout(() => {
+
+         // Clear messages after 5 seconds
+         setTimeout(() => {
           setSuccessMessage("");
           setErrorMessage("");
         }, 5000);
       }
     } catch (error) {
-      if (error.response && error.response.status === 500) {
+      if (error.response && error.response.status === 409) {
         setErrorMessage("GSM already exists.");
 
         // Clear messages after 5 seconds
@@ -172,7 +161,7 @@ const GSM = ({ searchQuery, isModalOpen, onClose }) => {
           setErrorMessage("");
         }, 5000);
       } else {
-        setErrorMessage("Error adding gsm.");
+        setErrorMessage("Error adding GSM.");
 
         // Clear messages after 5 seconds
         setTimeout(() => {
@@ -212,8 +201,14 @@ const GSM = ({ searchQuery, isModalOpen, onClose }) => {
   const endIndex = startIndex + recordsPerPage;
   const currentData = filteredData.slice(startIndex, endIndex);
 
+  const handleModalClose = () => {
+    setSingleGsms(""); 
+    onClose(); 
+  };
+
+
   return (
-    <div className=" mx-auto p-4 bg-white">
+    <div className="px-4 py-2 sm:px-6 lg:px-8">
       <div className="min-h-[60vh] max-h-[60vh] overflow-y-auto">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50 w-full">
@@ -385,7 +380,7 @@ const GSM = ({ searchQuery, isModalOpen, onClose }) => {
                   <h2 className="text-2xl font-bold">Add GSM</h2>
                   <button
                     className="absolute right-5 cursor-pointer"
-                    onClick={onClose}
+                    onClick={handleModalClose}
                   >
                     <img src={closeIcon} alt="Close" className="mt-2" />
                   </button>
@@ -404,15 +399,15 @@ const GSM = ({ searchQuery, isModalOpen, onClose }) => {
                   onChange={(e) => setSingleGsms(e.target.value)}
                 />
                 {successMessage && (
-                  <div className="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 my-4">
-                    <p>{successMessage}</p>
-                  </div>
-                )}
-                {errorMessage && (
-                  <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 my-4">
-                    <p>{errorMessage}</p>
-                  </div>
-                )}
+              <div className="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 my-4">
+                <p>{successMessage}</p>
+              </div>
+            )}
+            {errorMessage && (
+              <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 my-4">
+                <p>{errorMessage}</p>
+              </div>
+            )}
                 <button
                   className="bg-sky-600 w-80 py-3 text-white rounded-lg font-bold text-lg mt-3"
                   onClick={() => handleSingleGsm()}

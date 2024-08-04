@@ -11,16 +11,7 @@ import apiService from "../../../apiService";
 // import UploadMeasurementChartModal from "./UploadMeasurementChartModal";
 
 const AddProducts = ({ searchQuery }) => {
-  const [initialData, setInitialData] = useState([
-    { id: 1, styleNo: 'A123', product: 'Shirt', brand: 'BrandA', fabric: 'Cotton', color: 'Red', size: 'M', status: 'active' },
-    { id: 2, styleNo: 'B456', product: 'Pants', brand: 'BrandB', fabric: 'Denim', color: 'Blue', size: 'L', status: 'inactive' },
-    { id: 3, styleNo: 'C789', product: 'Jacket', brand: 'BrandC', fabric: 'Leather', color: 'Black', size: 'XL', status: 'active' },
-    { id: 4, styleNo: 'D012', product: 'Shirt', brand: 'BrandA', fabric: 'Cotton', color: 'Red', size: 'M', status: 'active' },
-    { id: 5, styleNo: 'E345', product: 'Pants', brand: 'BrandB', fabric: 'Denim', color: 'Blue', size: 'L', status: 'inactive' },
-    { id: 6, styleNo: 'F678', product: 'Jacket', brand: 'BrandC', fabric: 'Leather', color: 'Black', size: 'XL', status: 'active' },
-    // Add more unique items as needed
-  ]);
-  // const [initialData, setInitialData] = useState([]);
+  const [initialData, setInitialData] = useState([]);
   const [filteredData, setFilteredData] = useState(initialData);
   const [editIndex, setEditIndex] = useState(null);
   const [checkedIds, setCheckedIds] = useState([]);
@@ -29,12 +20,17 @@ const AddProducts = ({ searchQuery }) => {
   const [showModal, setShowModal] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
   const [selectedProductId, setSelectedProductId] = useState(null);
+ 
 
 
   // Function to fetch all products
   const getAllProducts = async () => {
     try {
-      const response = await apiService.get(`/products/getall`);
+      const response = await apiService.get(`/products/getall`, {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
       setInitialData(response.data);
       setFilteredData(response.data);
     } catch (error) {
@@ -59,6 +55,7 @@ const AddProducts = ({ searchQuery }) => {
     setSelectedProductId(id);
     setShowModal(true);
   };
+  
 
   // const handleSaveClick = () => {
   //   setEditIndex(null);
@@ -91,27 +88,27 @@ const AddProducts = ({ searchQuery }) => {
     );
   };
 
-  // const handleDelete = () => {
-  //   const newData = initialData.filter((row) => !checkedIds.includes(row.id));
-  //   setInitialData(newData);
-  //   setFilteredData(newData); // Also update filtered data
-  //   setCheckedIds([]);
-  // };
+  const handleDelete = () => {
+    const newData = initialData.filter((row) => !checkedIds.includes(row.id));
+    setInitialData(newData);
+    setFilteredData(newData); // Also update filtered data
+    setCheckedIds([]);
+  };
 
-  const handleDelete = async () => {
-    try {
-      // Assuming checkedIds contains IDs to delete
-      const promises = checkedIds.map(id =>
-        apiService.delete(`/products/${id}`)
-      );
-      await Promise.all(promises);
-      console.log('Products deleted successfully');
-      getAllProducts(); // Refresh the product list
-      setCheckedIds([]); // Clear checked IDs after deletion
-    } catch (error) {
-      console.error('Error deleting products:', error);
-    }
-  };  
+  // const handleDelete = async () => {
+  //   try {
+  //     // Assuming checkedIds contains IDs to delete
+  //     const promises = checkedIds.map(id =>
+  //       apiService.delete(`/products/${id}`)
+  //     );
+  //     await Promise.all(promises);
+  //     console.log('Products deleted successfully');
+  //     getAllProducts(); // Refresh the product list
+  //     setCheckedIds([]); // Clear checked IDs after deletion
+  //   } catch (error) {
+  //     console.error('Error deleting products:', error);
+  //   }
+  // };  
   
 
   const handlePageChange = (direction) => {
@@ -135,8 +132,14 @@ const AddProducts = ({ searchQuery }) => {
     setSelectedProductId(null);
   };
 
+  const handleOpenModal = (productId) => {
+    setSelectedProductId(productId);
+    setShowModal(true);
+  };
+
   const handleAddModalClose = () => {
     setShowAddModal(false);
+    getAllProducts();
   };
 
   const startIndex = (currentPage - 1) * recordsPerPage;
@@ -220,45 +223,35 @@ const AddProducts = ({ searchQuery }) => {
               <tbody className="bg-white divide-y divide-gray-200">
                 {currentData.map((row, index) => (
                   <tr key={row.id} style={{ maxHeight: "50px" }}>
-                    <td className="px-2 py-3 whitespace-nowrap text-md text-center text-black w-12">
+                    <td className="px-2 py-3 whitespace-nowrap text-md text-center text-black w-10">
                       {startIndex + index + 1}
                     </td>
                     <td className="px-2 py-3 whitespace-nowrap text-md text-center text-black w-28">
                       <div className="flex justify-center items-center">
                         <img
-                          src={`https://via.placeholder.com/50`}
+                          src={row.images[0]}
                           alt="Product"
+                          className="h-28"
                         />
                       </div>
                     </td>
-                    <td className="px-6 py-3 whitespace-nowrap text-md text-center text-black flex-grow">
-                      {row.styleNo}
+                    <td className="px-6 py-3 whitespace-nowrap text-md text-center text-black w-32">
+                      {row.style_no}
+                    </td>
+                    <td className="px-2 py-3 whitespace-nowrap text-md text-center text-black w-32">
+                      {row.ProductType.product}
+                    </td>
+                    <td className="px-6 py-3 whitespace-nowrap text-md text-center text-black w-32">
+                      {row.Brand.brandName}
+                    </td>
+                    <td className="px-6 py-3 whitespace-nowrap text-md text-center text-black w-32">
+                      {row.Fabric.fabricName}
                     </td>
                     <td className="px-2 py-3 whitespace-nowrap text-md text-center text-black w-28">
-                      {row.product}
-                    </td>
-                    <td className="px-2 py-3 whitespace-nowrap text-md text-center text-black w-40">
-                      {editIndex === startIndex + index ? (
-                        <input
-                          type="text"
-                          value={row.brand}
-                          onChange={(e) =>
-                            handleInputChange(e, startIndex + index)
-                          }
-                          className="border border-gray-300 rounded-md w-28 px-2 py-2"
-                        />
-                      ) : (
-                        row.brand
-                      )}
-                    </td>
-                    <td className="px-6 py-3 whitespace-nowrap text-md text-center text-black flex-grow">
-                      {row.fabric}
+                      {row.Color.colorName}
                     </td>
                     <td className="px-2 py-3 whitespace-nowrap text-md text-center text-black w-28">
-                      {row.color}
-                    </td>
-                    <td className="px-2 py-3 whitespace-nowrap text-md text-center text-black w-28">
-                      {row.size}
+                      {row.Size.sizes.join(", ")}
                     </td>
                     <td className="px-2 py-3 whitespace-nowrap text-md text-center text-black w-16">
                       {editIndex === startIndex + index ? (
@@ -272,7 +265,7 @@ const AddProducts = ({ searchQuery }) => {
                       ) : (
                         <button
                           onClick={() => handleEditClick(row.id)}
-                          className="text-blue-500 text-center"
+                          className="text-blue-500 text-center w-16"
                         >
                           <img src={editIcon} alt="Edit" className="h-6 w-6" />
                         </button>
@@ -293,6 +286,14 @@ const AddProducts = ({ searchQuery }) => {
                         }}
                       />
                     </td>
+                    <td className="px-2 py-3 whitespace-nowrap text-md text-center text-black w-8">
+                  <button
+                    onClick={() => handleDelete(row.id)}
+                    className="text-red-500"
+                  >
+                    <img src={deleteIcon} alt="Delete" className="h-5 w-5" />
+                  </button>
+                </td>
                   </tr>
                 ))}
               </tbody>
@@ -333,12 +334,15 @@ const AddProducts = ({ searchQuery }) => {
           </div>
         </div>
       </div>
-      <EditProductModal
-        show={showModal}
-        onClose={handleCloseModal}
-        productId={selectedProductId}
-      />
-      <AddProductModal show={showAddModal} onClose={handleAddModalClose} />
+      {showModal && (
+        <EditProductModal
+          show={showModal}
+          onClose={handleCloseModal}
+          productId={selectedProductId}
+          
+        />
+      )}
+      {showAddModal && <AddProductModal show={showAddModal} onClose={handleAddModalClose} />}
     </>
   );
 };

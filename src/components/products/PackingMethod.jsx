@@ -22,7 +22,6 @@ const PackingMethod = ({ searchQuery, isModalOpen, onClose }) => {
   const [singlePacking, setSinglePacking] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
- 
 
   useEffect(() => {
     fetchAllPacking();
@@ -155,36 +154,37 @@ const PackingMethod = ({ searchQuery, isModalOpen, onClose }) => {
 
       if (response.status === 201) {
         setSinglePacking("");
-        setSuccessMessage("PackingbMethod added successfully.");
+        setSuccessMessage("Packing Method added successfully.");
         setErrorMessage("");
         fetchAllPacking();
-      // Clear messages after 5 seconds
-      setTimeout(() => {
-        setSuccessMessage("");
-        setErrorMessage("");
-      }, 5000);
-    }
-  } catch (error) {
-    if (error.response && error.response.status === 500) {
-      setErrorMessage("Packing Method already exists.");
 
-      // Clear messages after 5 seconds
-      setTimeout(() => {
-        setSuccessMessage("");
-        setErrorMessage("");
-      }, 5000);
-    } else {
-      setErrorMessage("Error adding packing method.");
+         // Clear messages after 5 seconds
+         setTimeout(() => {
+          setSuccessMessage("");
+          setErrorMessage("");
+        }, 5000);
+      }
+    } catch (error) {
+      if (error.response && error.response.status === 409) {
+        setErrorMessage("Packing method already exists.");
 
-      // Clear messages after 5 seconds
-      setTimeout(() => {
-        setSuccessMessage("");
-        setErrorMessage("");
-      }, 5000);
+        // Clear messages after 5 seconds
+        setTimeout(() => {
+          setSuccessMessage("");
+          setErrorMessage("");
+        }, 5000);
+      } else {
+        setErrorMessage("Error adding packing method.");
+
+        // Clear messages after 5 seconds
+        setTimeout(() => {
+          setSuccessMessage("");
+          setErrorMessage("");
+        }, 5000);
+      }
+      setSuccessMessage("");
     }
-    setSuccessMessage("");
-  }
-};
+  };
 
   const handleAddStyle = () => {
     if (inputValue.trim() !== "") {
@@ -211,8 +211,14 @@ const PackingMethod = ({ searchQuery, isModalOpen, onClose }) => {
   const isHeaderCheckboxChecked =
     checkedIds.length > 0 && checkedIds.length === data.length;
 
+    const handleModalClose = () => {
+      setSinglePacking(""); 
+      onClose(); 
+    };
+  
+
   return (
-    <div className=" mx-auto p-4 bg-white">
+    <div   className="px-4 py-2 sm:px-6 lg:px-8">
       <div className="min-h-[60vh] max-h-[60vh] overflow-y-auto">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50 w-full">
@@ -384,7 +390,7 @@ const PackingMethod = ({ searchQuery, isModalOpen, onClose }) => {
                   <h2 className="text-2xl font-bold">Add Packing Method</h2>
                   <button
                     className="absolute right-5 cursor-pointer"
-                    onClick={onClose}
+                    onClick={handleModalClose}
                   >
                     <img src={closeIcon} alt="Close" className="mt-2" />
                   </button>
@@ -403,7 +409,7 @@ const PackingMethod = ({ searchQuery, isModalOpen, onClose }) => {
                   value={singlePacking}
                   onChange={(e) => setSinglePacking(e.target.value)}
                 />
-                 {successMessage && (
+                {successMessage && (
               <div className="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 my-4">
                 <p>{successMessage}</p>
               </div>

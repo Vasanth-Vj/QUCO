@@ -6,10 +6,13 @@ import leftArrowIcon from "../../../assets/left-arrow-icon.svg";
 import rightArrowIcon from "../../../assets/right-arrow-icon.svg";
 import tickIcon from "../../../assets/tick-icon.svg";
 import EditStockOutModel from "./EditstockOutModel";
+import AddStockOutModel from "./AddStockOutModel";
 import apiService from "../../../apiService";
+import StockSelectOptionModel from "./StockSelectOptionModel";
 
 const StockOut = () => {
   const [initialData, setInitialData] = useState([]);
+
   const [filteredData, setFilteredData] = useState(initialData);
   const [editIndex, setEditIndex] = useState(null);
   const [checkedIds, setCheckedIds] = useState([]);
@@ -19,33 +22,38 @@ const StockOut = () => {
   const [showAddModal, setShowAddModal] = useState(false);
   const [selectedProductId, setSelectedProductId] = useState(null);
 
-
-  useEffect(() => {
-    fetchStockOut();
-  },[])
-
-  // handle fetch stockIn
   const fetchStockOut = async () => {
     try {
-      const response = await apiService.get("/stockOut/get/all", {
+      const response = await apiService.get(`/stockOut/get/all`, {
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
       });
-      console.log(response.data);
-      setInitialData(response.data);
-      setFilteredData(response.data); 
+      // Format the created_at date
+      const formattedData = response.data.map((stock) => ({
+        ...stock,
+        created_at: new Date(stock.created_at).toLocaleDateString("en-GB"),
+      }));
+      console.log(formattedData);
+      setInitialData(formattedData);
+      setFilteredData(formattedData);
     } catch (error) {
-      console.error("Error fetching stockOut:", error);
+      console.error(error);
     }
   };
 
+  useEffect(() => {
+    fetchStockOut();
+  }, []);
+
   const handleSearch = (searchValue) => {
     const filtered = initialData.filter((item) =>
-      item.brand.toLowerCase().includes(searchValue.toLowerCase())
+      item.purchase_order_number
+        .toLowerCase()
+        .includes(searchValue.toLowerCase())
     );
     setFilteredData(filtered);
-    setCurrentPage(1); // Reset to first page on new search
+    setCurrentPage(1);
   };
 
   const handleEditClick = (id) => {
@@ -116,6 +124,8 @@ const StockOut = () => {
             setFilteredData(filtered);
             setCurrentPage(1);
           }}
+          isAddButton={true}
+          addButtonText="Add Stock Out"
           onAddButtonClick={() => setShowAddModal(true)}
         />
         <div className=" mx-auto p-4 bg-white mt-5">
@@ -127,25 +137,25 @@ const StockOut = () => {
                     SL No
                   </th>
                   <th className="px-2 py-3 text-center text-md font-bold text-black uppercase w-40">
-                    PO No
+                    Date
                   </th>
                   <th className="px-6 py-3 text-center text-md font-bold text-black uppercase">
-                    Buyer
+                    (W)PO
                   </th>
                   <th className="px-2 py-3 text-center text-md font-bold text-black uppercase w-28">
-                    Brand
+                    Buyer
                   </th>
                   <th className="px-6 py-3 text-center text-md font-bold text-black uppercase">
-                    Fabric
-                  </th>
-                  <th className="px-6 py-3 text-center text-md font-bold text-black uppercase">
-                    GSM
-                  </th>
-                  <th className="px-6 py-3 text-center text-md font-bold text-black uppercase w-40">
-                    Style No
+                    Style NO
                   </th>
                   <th className="px-6 py-3 text-center text-md font-bold text-black uppercase">
                     Ref No
+                  </th>
+                  <th className="px-6 py-3 text-center text-md font-bold text-black uppercase w-40">
+                    Stock Out Bundle
+                  </th>
+                  <th className="px-6 py-3 text-center text-md font-bold text-black uppercase">
+                    Total Stock Out Pcs
                   </th>
                   <th className="px-2 py-3 text-center text-md font-bold text-black uppercase w-28">
                     Action
@@ -178,25 +188,27 @@ const StockOut = () => {
                       {startIndex + index + 1}
                     </td>
                     <td className="px-2 py-3 whitespace-nowrap text-md text-center text-black w-28">
-                      {row.PO}
+                      {" "}
+                      {row.created_at}
                     </td>
                     <td className="px-6 py-3 whitespace-nowrap text-md text-center text-black flex-grow">
-                      {row.buyer}
+                      {row.PurchaseOrder.purchase_order_number}
                     </td>
                     <td className="px-2 py-3 whitespace-nowrap text-md text-center text-black w-28">
-                      {row.brand}
+                      {row.PurchaseOrder.Buyer.name},{" "}
+                      {row.PurchaseOrder.Buyer.location}
                     </td>
                     <td className="px-2 py-3 whitespace-nowrap text-md text-center text-black w-40">
-                      {row.fabric}
+                      {row.Stock.Product.style_no}
                     </td>
                     <td className="px-6 py-3 whitespace-nowrap text-md text-center text-black flex-grow">
-                      {row.GSM}
+                      {row.Stock.Product.Reference.reference_no}
                     </td>
                     <td className="px-2 py-3 whitespace-nowrap text-md text-center text-black w-28">
-                      {row.styleNo}
+                      {row.stockOut_bundle}
                     </td>
                     <td className="px-2 py-3 whitespace-nowrap text-md text-center text-black w-28">
-                      {row.refNo}
+                      {row.total_stockOut_pcs}
                     </td>
                     <td className="px-2 py-3 whitespace-nowrap text-md text-center text-black w-16">
                       {editIndex === startIndex + index ? (
@@ -269,6 +281,8 @@ const StockOut = () => {
         onClose={handleCloseModal}
         productId={selectedProductId}
       />
+      {/* <AddStockOutModel show={showAddModal} onClose={handleAddModalClose} fetchStockOut={fetchStockOut}/> */}
+      <StockSelectOptionModel show={showAddModal} onClose={handleAddModalClose} fetchStockOut={fetchStockOut}/>
     </>
   );
 };

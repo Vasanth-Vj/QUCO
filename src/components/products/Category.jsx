@@ -17,10 +17,10 @@ const Category = ({ searchQuery, isModalOpen, onClose }) => {
   const [checkedIds, setCheckedIds] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [recordsPerPage, setRecordsPerPage] = useState(5);
-  const [inputValue, setInputValue] = useState("");
-  const [singleCategory, setSingleCategory] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
+
+  const [singleCategory, setSingleCategory] = useState("");
 
   useEffect(() => {
     fetchAllCategorys();
@@ -30,11 +30,11 @@ const Category = ({ searchQuery, isModalOpen, onClose }) => {
     try {
       const response = await apiService.get("/categories/getall", {
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
       });
       console.log(response.data);
-      setData(response.data);
+      setData(response.data); 
     } catch (error) {
       console.error("Error fetching Categorys:", error);
     }
@@ -43,17 +43,13 @@ const Category = ({ searchQuery, isModalOpen, onClose }) => {
   // handle toggle button click
   const handleStatusToggle = async ({ id, isActive }) => {
     try {
-      const response = await apiService.put(
-        `/categories/${id}`,
-        {
-          isActive: !isActive,
+      const response = await apiService.put(`/categories/${id}`, {
+        isActive: !isActive,
+      }, {
+        headers: {
+          'Content-Type': 'application/json',
         },
-        {
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      );
+      });
       if (response.status === 200) {
         fetchAllCategorys();
       }
@@ -77,17 +73,13 @@ const Category = ({ searchQuery, isModalOpen, onClose }) => {
   // handle save button click
   const handleSaveClick = async (index, id) => {
     try {
-      const response = await apiService.put(
-        `/categories/${id}`,
-        {
-          categoryName: editedCategoryName,
+      const response = await apiService.put(`/categories/${id}`, {
+        categoryName: editedCategoryName,
+      }, {
+        headers: {
+          'Content-Type': 'application/json',
         },
-        {
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      );
+      });
       if (response.status === 200) {
         fetchAllCategorys();
         setEditIndex(null);
@@ -109,7 +101,7 @@ const Category = ({ searchQuery, isModalOpen, onClose }) => {
     try {
       const response = await apiService.delete(`/categories/${id}`, {
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
       });
       console.log(response);
@@ -140,17 +132,13 @@ const Category = ({ searchQuery, isModalOpen, onClose }) => {
 
   const handleSingleCategory = async () => {
     try {
-      const response = await apiService.post(
-        "/categories/create",
-        {
-          categoryName: singleCategory,
+      const response = await apiService.post("/categories/create", {
+        categoryName: singleCategory,
+      }, {
+        headers: {
+          'Content-Type': 'application/json',
         },
-        {
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      );
+      });
 
       if (response.status === 201) {
         setSingleCategory("");
@@ -158,16 +146,16 @@ const Category = ({ searchQuery, isModalOpen, onClose }) => {
         setErrorMessage("");
         fetchAllCategorys();
 
-        // Clear messages after 5 seconds
-        setTimeout(() => {
+         // Clear messages after 5 seconds
+         setTimeout(() => {
           setSuccessMessage("");
           setErrorMessage("");
         }, 5000);
       }
     } catch (error) {
-      if (error.response && error.response.status === 500) {
+      if (error.response && error.response.status === 409) {
         setErrorMessage("Category already exists.");
-
+        
         // Clear messages after 5 seconds
         setTimeout(() => {
           setSuccessMessage("");
@@ -186,6 +174,8 @@ const Category = ({ searchQuery, isModalOpen, onClose }) => {
     }
   };
 
+ 
+
   const filteredData = data.filter(
     (item) =>
       item.categoryName &&
@@ -196,8 +186,13 @@ const Category = ({ searchQuery, isModalOpen, onClose }) => {
   const endIndex = startIndex + recordsPerPage;
   const currentData = filteredData.slice(startIndex, endIndex);
 
+  const handleModalClose = () => {
+    setSingleCategory(""); 
+    onClose(); 
+  };
+
   return (
-    <div className=" mx-auto p-4 bg-white">
+    <div  className="px-4 py-2 sm:px-6 lg:px-8">
       <div className="min-h-[60vh] max-h-[60vh] overflow-y-auto">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50 w-full">
@@ -369,7 +364,7 @@ const Category = ({ searchQuery, isModalOpen, onClose }) => {
                   <h2 className="text-2xl font-bold">Add Category</h2>
                   <button
                     className="absolute right-5 cursor-pointer"
-                    onClick={onClose}
+                    onClick={handleModalClose}
                   >
                     <img src={closeIcon} alt="Close" className="mt-2" />
                   </button>
@@ -388,15 +383,15 @@ const Category = ({ searchQuery, isModalOpen, onClose }) => {
                   onChange={(e) => setSingleCategory(e.target.value)}
                 />
                 {successMessage && (
-                  <div className="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 my-4">
-                    <p>{successMessage}</p>
-                  </div>
-                )}
-                {errorMessage && (
-                  <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 my-4">
-                    <p>{errorMessage}</p>
-                  </div>
-                )}
+              <div className="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 my-4">
+                <p>{successMessage}</p>
+              </div>
+            )}
+            {errorMessage && (
+              <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 my-4">
+                <p>{errorMessage}</p>
+              </div>
+            )}
                 <button
                   className="bg-sky-600 w-80 py-3 text-white rounded-lg font-bold text-lg mt-3"
                   onClick={() => handleSingleCategory()}

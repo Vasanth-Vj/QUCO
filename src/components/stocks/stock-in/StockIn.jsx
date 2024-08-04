@@ -6,11 +6,12 @@ import rightArrowIcon from "../../../assets/right-arrow-icon.svg";
 import TopLayer from "../../shared/TopLayer"; // Make sure to import TopLayer
 import EditStockInModal from "./editStockInModal";
 import SuccessAlert from "./SuccessAlert";
-import AddStockModal from "./AddStockModal"; 
+import AddStockModal from "./AddStockModal";
 import apiService from "../../../apiService";
 
 const StockIn = ({ searchQuery }) => {
   const [initialData, setInitialData] = useState([]);
+
   const [filteredData, setFilteredData] = useState(initialData);
   const [editIndex, setEditIndex] = useState(null);
   const [checkedIds, setCheckedIds] = useState([]);
@@ -19,25 +20,32 @@ const StockIn = ({ searchQuery }) => {
   const [showModal, setShowModal] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
 
-  useEffect(() => {
-    fetchStockIn();
-  }, []);
-
-  // handle fetch stockIn
-  const fetchStockIn = async () => {
+  // Function to fetch all products
+  const getAllStocks = async () => {
     try {
-      const response = await apiService.get("/stocks/stockIn/all", {
+      const response = await apiService.get(`/stocks/stockIn/all`, {
         headers: {
           'Content-Type': 'application/json',
         },
       });
-      console.log(response.data);
-      setInitialData(response.data);
-      setFilteredData(response.data); 
+      // Format the created_at date
+    const formattedData = response.data.map(stock => ({
+      ...stock,
+      created_at: new Date(stock.created_at).toLocaleDateString('en-GB')
+    }));
+
+    console.log(formattedData);
+    setInitialData(formattedData);
+    setFilteredData(formattedData);
     } catch (error) {
-      console.error("Error fetching stockIn:", error);
+      console.error('Error fetching products:', error);
     }
   };
+
+  useEffect(() => {
+    getAllStocks();
+  }, []);
+
 
   const handleSearch = (searchValue) => {
     const filtered = initialData.filter((item) =>
@@ -57,12 +65,20 @@ const StockIn = ({ searchQuery }) => {
     );
   };
 
-  const handleDelete = () => {
-    const newData = initialData.filter((row) => !checkedIds.includes(row.id));
-    setInitialData(newData);
-    setFilteredData(newData); // Also update filtered data
-    setCheckedIds([]);
-  };
+  const handleDelete = async () => {
+    try {
+      // Assuming checkedIds contains IDs to delete
+      const promises = checkedIds.map(id =>
+        apiService.delete(`/stocks/stockIn/${id}`)
+      );
+      await Promise.all(promises);
+      console.log('Products deleted successfully');
+      getAllStocks(); // Refresh the product list
+      setCheckedIds([]); // Clear checked IDs after deletion
+    } catch (error) {
+      console.error('Error deleting products:', error);
+    }
+  }; 
 
   const handlePageChange = (direction) => {
     if (direction === "prev" && currentPage > 1) {
@@ -110,8 +126,8 @@ const StockIn = ({ searchQuery }) => {
             setCurrentPage(1); // Reset to first page on new filter
           }}
           isAddButton={true}
-          addButtonText="Add Stocks"
-          onAddButtonClick={() => setShowAddModal(true)}
+          addButtonText="Add Stock"
+          onAddButtonClick={() => setShowAddModal(true)} 
         />
         <div className=" mx-auto p-4 bg-white mt-5">
           <div className="min-h-[60vh] max-h-[60vh] overflow-y-auto">
@@ -131,13 +147,13 @@ const StockIn = ({ searchQuery }) => {
                     Style No
                   </th>
                   <th className="px-2 py-3 text-center text-md font-bold text-black uppercase w-32">
-                    Description
+                    Reference No
                   </th>
                   <th className="px-2 py-3 text-center text-md font-bold text-black uppercase w-16">
                     Size
                   </th>
                   <th className="px-2 py-3 text-center text-md font-bold text-black uppercase w-16">
-                    Qty
+                    Bundles
                   </th>
                   <th className="px-2 py-3 text-center text-md font-bold text-black uppercase w-20">
                     Action
@@ -162,7 +178,7 @@ const StockIn = ({ searchQuery }) => {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {currentData?.map((row, index) => (
+                {currentData.map((row, index) => (
                   <tr key={row.id} style={{ maxHeight: "50px" }}>
                     <td className="px-2 py-3 whitespace-nowrap text-md text-center text-black w-12">
                       {startIndex + index + 1}
@@ -170,25 +186,26 @@ const StockIn = ({ searchQuery }) => {
                     <td className="px-2 py-3 whitespace-nowrap text-md text-center text-black w-20">
                       <div className="flex justify-center items-center">
                         <img
-                          src={`https://via.placeholder.com/50`}
-                          alt="Product"
+                          src={row.Product.images[0] || 'https://img.freepik.com/free-vector/illustration-gallery-icon_53876-27002.jpg?t=st=1722163869~exp=1722167469~hmac=37361beb0ca1a1c652d36c9ca94818f793a54d21822edab80e80c6e43a9b7b37&w=740'}
+                          alt='Stock'
+                          className="h-28"
                         />
                       </div>
                     </td>
                     <td className="px-2 py-3 whitespace-nowrap text-md text-center text-black flex-grow">
-                      {row.date}
+                      {row.created_at}
                     </td>
                     <td className="px-2 py-3 whitespace-nowrap text-md text-center text-black w-36">
-                      {row.styleNo}
+                      {row.Product.style_no}
                     </td>
                     <td className="px-2 py-3 whitespace-nowrap text-md text-center text-black w-32">
-                      {row.description}
+                      {row.Product.Reference.reference_no}
                     </td>
                     <td className="px-2 py-3 whitespace-nowrap text-md text-center text-black w-16">
-                      {row.size}
+                      {row.Product.Size.sizes.join(", ")}
                     </td>
                     <td className="px-2 py-3 whitespace-nowrap text-md text-center text-black w-16">
-                      {row.quantity}
+                      {row.no_bundles}
                     </td>
                     <td className="px-2 py-3 whitespace-nowrap text-md text-center text-black w-20">
                       <button
@@ -206,6 +223,14 @@ const StockIn = ({ searchQuery }) => {
                         onChange={() => handleCheckboxChange(row.id)}
                       />
                     </td>
+                    <td className="px-2 py-3 whitespace-nowrap text-md text-center text-black w-8">
+                  <button
+                    onClick={() => handleDelete(row.id)}
+                    className="text-red-500"
+                  >
+                    <img src={deleteIcon} alt="Delete" className="h-5 w-5" />
+                  </button>
+                </td>
                   </tr>
                 ))}
               </tbody>
@@ -248,7 +273,7 @@ const StockIn = ({ searchQuery }) => {
       </div>
       <EditStockInModal showModal={showModal} close={handleCloseModal} />
       {/* <SuccessAlert show={showModal} onClose={handleCloseModal} /> */}
-      {/* <AddStockModal show={showAddModal} onClose={handleAddModalClose}  /> */}
+      <AddStockModal show={showAddModal} onClose={handleAddModalClose} getAllStocks={getAllStocks} />
     </>
   );
 };

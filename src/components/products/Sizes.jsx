@@ -21,6 +21,8 @@ const Sizes = ({ searchQuery, isModalOpen, onClose }) => {
   const [inputValue, setInputValue] = useState("");
   const [singleSize, setSingleSize] = useState("");
   const [typeName, setTypeName] = useState('');
+  const [successMessage, setSuccessMessage] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
 
   useEffect(() => {
     fetchAllSizes();
@@ -73,24 +75,56 @@ const Sizes = ({ searchQuery, isModalOpen, onClose }) => {
         },
       })
       if (response.status === 201) {
+        setTypeName("");
+        setSizes([{ size: "" }]);
+        setSuccessMessage("Size added successfully.");
+        setErrorMessage("");
         fetchAllSizes();
+
+         // Clear messages after 5 seconds
+         setTimeout(() => {
+          setSuccessMessage("");
+          setErrorMessage("");
+        }, 5000);
       }
     } catch (error) {
-      console.error('Error creating sizes:', error);
-    }
+      if (error.response && error.response.status === 409) {
+        setErrorMessage("Size already exists.");
 
+        // Clear messages after 5 seconds
+        setTimeout(() => {
+          setSuccessMessage("");
+          setErrorMessage("");
+        }, 5000);
+      } else {
+        setErrorMessage("Error adding size.");
+
+        // Clear messages after 5 seconds
+        setTimeout(() => {
+          setSuccessMessage("");
+          setErrorMessage("");
+        }, 5000);
+      }
+      setSuccessMessage("");
+    }
 
     const newSizes = sizes
-      .map((size) => size.size.trim())
-      .filter((size) => size !== "");
-    if (newSizes.length > 0) {
-      setData([
-        ...data,
-        { id: data.length + 1, sizes: newSizes, status: "active" },
-      ]);
-      setSizes([{ size: "" }]);
-      onClose();
-    }
+    .map((sizeObj) => {
+      if (sizeObj && typeof sizeObj.size === 'string') {
+        return sizeObj.size.trim();
+      }
+      return ""; // Return an empty string if sizeObj is not valid
+    })
+    .filter((size) => size !== "");
+
+  if (newSizes.length > 0) {
+    setData((prevData) => [
+      ...prevData,
+      { id: prevData.length + 1, sizes: newSizes, status: "active" },
+    ]);
+    setSizes([{ size: "" }]);
+    onClose();
+  }
   };
 
   // handle toggle button click
@@ -191,8 +225,16 @@ const Sizes = ({ searchQuery, isModalOpen, onClose }) => {
   const endIndex = startIndex + recordsPerPage;
   const currentData = filteredData.slice(startIndex, endIndex);
 
+  const handleModalClose = () => {
+    setSingleSize(""); 
+    setTypeName("");
+    setSizes([{ size: "" }]);
+    onClose(); 
+  };
+
+
   return (
-    <div className=" mx-auto p-4 bg-white">
+    <div  className="px-4 py-2 sm:px-6 lg:px-8">
       <div className="min-h-[60vh] max-h-[60vh] overflow-y-auto">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50 w-full">
@@ -379,7 +421,7 @@ const Sizes = ({ searchQuery, isModalOpen, onClose }) => {
                   <h2 className="text-2xl font-bold">Add Sizes</h2>
                   <button
                     className="absolute right-5 cursor-pointer"
-                    onClick={onClose}
+                    onClick={handleModalClose}
                   >
                     <img src={closeIcon} alt="Close" className="mt-2" />
                   </button>
@@ -416,6 +458,18 @@ const Sizes = ({ searchQuery, isModalOpen, onClose }) => {
                     )}
                   </div>
                 ))}
+                <div>
+                {successMessage && (
+              <div className="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 my-4">
+                <p>{successMessage}</p>
+              </div>
+            )}
+            {errorMessage && (
+              <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 my-4">
+                <p>{errorMessage}</p>
+              </div>
+            )}
+            </div>
                 <button
                   className="text-blue-600 px-2 py-2 font-bold text-md mt-3"
                   onClick={handleAddSizeField}

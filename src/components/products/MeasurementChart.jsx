@@ -20,14 +20,13 @@ const MeasurementChart = ({ searchQuery, isModalOpen, onClose }) => {
   const [recordsPerPage, setRecordsPerPage] = useState(5);
   const [name, setTypeName] = useState("");
   const [category, setCategory] = useState(""); // New state for category
-  const [addedStyles, setAddedStyles] = useState([]);
-  const [isSecondModalOpen, setIsSecondModalOpen] = useState(false);
   const [sizes, setSizes] = useState([{ key: '', value: '' }]);
   const [image, setImage] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
+  const [isSecondModalOpen, setIsSecondModalOpen] = useState(false);
+  const [currentEditId, setCurrentEditId] = useState(null); 
   const [successMessage, setSuccessMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
-
 
   useEffect(() => {
     fetchAllMeasurements();
@@ -41,7 +40,7 @@ const MeasurementChart = ({ searchQuery, isModalOpen, onClose }) => {
         },
       });
       console.log(response.data);
-      if(response.status === 200) {
+      if (response.status === 200) {
         setData(response.data);
       }
     } catch (error) {
@@ -71,7 +70,7 @@ const MeasurementChart = ({ searchQuery, isModalOpen, onClose }) => {
     setSizes(newSizes);
   };
 
-  //handle single mesurement chart entry
+  //handle single measurement chart entry
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
@@ -101,36 +100,12 @@ const MeasurementChart = ({ searchQuery, isModalOpen, onClose }) => {
 
       if (response.status === 201) {
         fetchAllMeasurements();
-        setSuccessMessage("Measurement chart added successfully.");
-        setErrorMessage("");
         onClose();
-       // Clear messages after 5 seconds
-       setTimeout(() => {
-        setSuccessMessage("");
-        setErrorMessage("");
-      }, 5000);
+      }
+    } catch (error) {
+      console.error("Error adding measurement chart:", error);
     }
-  } catch (error) {
-    if (error.response && error.response.status === 500) {
-      setErrorMessage("Measurement chart already exists.");
-
-      // Clear messages after 5 seconds
-      setTimeout(() => {
-        setSuccessMessage("");
-        setErrorMessage("");
-      }, 5000);
-    } else {
-      setErrorMessage("Error adding measurement chart.");
-
-      // Clear messages after 5 seconds
-      setTimeout(() => {
-        setSuccessMessage("");
-        setErrorMessage("");
-      }, 5000);
-    }
-    setSuccessMessage("");
-  }
-};
+  };
 
   // handle toggle button click
   const handleStatusToggle = async ({ id, isActive }) => {
@@ -152,11 +127,81 @@ const MeasurementChart = ({ searchQuery, isModalOpen, onClose }) => {
   };
 
   const handleEditClick = (index) => {
+    const selectedData = data[index];
+    setCurrentEditId(selectedData.id);
     setEditIndex(index);
+    setTypeName(selectedData.name);
+    setCategory(selectedData.category);
+    setSizes(Object.entries(selectedData.sizes).map(([key, value]) => ({ key, value })));
+    setImagePreview(selectedData.sample_size_file);
+    setIsSecondModalOpen(true); // Open the modal for editing
   };
 
-  const handleUpdateClick = (index) => {
-    setEditIndex(null);
+  const handleUpdateClick = async (e) => {
+    e.preventDefault();
+    try {
+      const formattedSizes = sizes.reduce((acc, size) => {
+        acc[size.key] = size.value;
+        return acc;
+      }, {});
+      
+      const formData = new FormData();
+      formData.append("name", name);
+      formData.append("category", category);
+      formData.append('sizes', JSON.stringify(formattedSizes));
+      if (image) {
+        formData.append("sample_size_file", image);
+      }
+
+      const response = await apiService.put(
+        `/mesurementCharts/${currentEditId}`,
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+      console.log(response);
+
+      if (response.status === 201) {
+        setTypeName("");
+        setCategory("");
+        setSizes([{ key: '', value: '' }]);
+        handleImageRemove();
+        setSuccessMessage("Measurement Chart added successfully.");
+        setErrorMessage("");
+        fetchAllMeasurements();
+        setIsSecondModalOpen(false);
+        setEditIndex(null);
+        setCurrentEditId(null);
+
+         // Clear messages after 5 seconds
+         setTimeout(() => {
+          setSuccessMessage("");
+          setErrorMessage("");
+        }, 5000);
+      }
+    } catch (error) {
+      if (error.response && error.response.status === 409) {
+        setErrorMessage("Measurement chart already exists.");
+
+        // Clear messages after 5 seconds
+        setTimeout(() => {
+          setSuccessMessage("");
+          setErrorMessage("");
+        }, 5000);
+      } else {
+        setErrorMessage("Error adding measurement chart.");
+
+        // Clear messages after 5 seconds
+        setTimeout(() => {
+          setSuccessMessage("");
+          setErrorMessage("");
+        }, 5000);
+      }
+      setSuccessMessage("");
+    }
   };
 
   const handleInputChange = (e, index) => {
@@ -191,7 +236,7 @@ const MeasurementChart = ({ searchQuery, isModalOpen, onClose }) => {
         fetchAllMeasurements();
       }
     } catch (error) {
-      console.error("Error deleting length:", error);
+      console.error("Error deleting measurement chart:", error);
       // Handle error as needed
     }
   };
@@ -236,6 +281,17 @@ const MeasurementChart = ({ searchQuery, isModalOpen, onClose }) => {
   const isHeaderCheckboxChecked =
     checkedIds.length > 0 && checkedIds.length === data.length;
 
+    const handleModalClose = () => {
+      setTypeName("");
+      setCategory("");
+      setSizes([{ key: '', value: '' }]);
+      setImagePreview(null);
+    
+
+      onClose(); 
+    };
+  
+
   return (
     <div className="px-4 py-2 sm:px-6 lg:px-8">
       <div className="shadow border-b border-gray-200 sm:rounded-lg overflow-hidden">
@@ -245,8 +301,11 @@ const MeasurementChart = ({ searchQuery, isModalOpen, onClose }) => {
               <th className="px-2 py-3 text-center text-md font-bold text-black uppercase w-1/12">
                 Si No
               </th>
-              <th className="px-2 py-3 text-left text-md font-bold text-black uppercase w-1/4">
+              <th className="px-2 py-3 text-left text-md font-bold text-black uppercase w-2/12">
                 Measurement Chart
+              </th>
+              <th className="px-2 py-3 text-left text-md font-bold text-black uppercase w-1/12">
+                Chart name
               </th>
               <th className="px-2 py-3 text-left text-md font-bold text-black uppercase w-1/4">
                 Sizes
@@ -268,7 +327,7 @@ const MeasurementChart = ({ searchQuery, isModalOpen, onClose }) => {
                   checked={checkedIds.length === data.length}
                 />
               </th>
-              <th className="px-2 py-3 text-center text-md font-bold text-black uppercase w-8">
+              <th className="px-2 py-3 text-center text-md font-bold text-black uppercase">
                 <button onClick={handleDelete} className="text-red-500">
                   <img src={deleteIcon} alt="Delete" className="h-5 w-5" />
                 </button>
@@ -278,43 +337,34 @@ const MeasurementChart = ({ searchQuery, isModalOpen, onClose }) => {
           <tbody className="bg-white divide-y divide-gray-200">
             {currentData.map((row, index) => (
               <tr key={row.id} style={{ maxHeight: "50px" }}>
-                <td className="px-3 py-3 whitespace-nowrap text-md text-center text-black w-40">
+                <td className="px-3 py-3 whitespace-nowrap text-md text-center text-black">
                   {startIndex + index + 1}
                 </td>
-                <td className="px-3 py-3 whitespace-nowrap text-md text-left text-black 2xl:w-[500px] xl:w-[450px] min-w-[200px]">
-                  {editIndex === index ? (
-                    <input
-                      type="text"
-                      value={row.name}
-                      onChange={(e) => handleInputChange(e, index)}
-                      className="w-full px-2 py-1 border rounded-md focus:outline-none focus:border-blue-500"
-                    />
-                  ) : (
-                    row.name
-                  )}
+                <td className="px-2 py-3 whitespace-nowrap text-md text-left text-black">
+                      <div className="flex justify-left items-center">
+                        <img
+                          src={row.sample_size_file}
+                          alt="Product"
+                          className="h-32"
+                        />
+                      </div>
+                    </td>
+                <td className="px-3 py-3 whitespace-nowrap text-md text-left text-black">
+                  {row.name}
                 </td>
-                <td className="px-3 py-3 whitespace-nowrap text-md text-left text-black w-40">
+                <td className="px-3 py-3 whitespace-nowrap text-md text-left text-black">
                   {row.sizes ? Object.keys(row.sizes).map((key) => (
                     <span key={key}>{key}: {row.sizes[key]}, </span>
                   )) : null}
                 </td>
-                <td className="px-3 py-3 whitespace-nowrap text-md text-left text-black 2xl:w-[500px] xl:w-[450px] min-w-[200px]">
-                  {editIndex === index ? (
-                    <input
-                      type="text"
-                      value={row.category}
-                      onChange={(e) => handleInputChange(e, index)}
-                      className="w-full px-2 py-1 border rounded-md focus:outline-none focus:border-blue-500"
-                    />
-                  ) : (
-                    row.category
-                  )}
+                <td className="px-3 py-3 whitespace-nowrap text-md text-left text-black">
+                  {row.category}
                 </td>
                 <td className="px-6 py-3 whitespace-nowrap text-md text-right text-black flex-grow">
                   <button
-                  onClick={() =>
-                    handleStatusToggle({ id: row.id, isActive: row.isActive })
-                  }
+                    onClick={() =>
+                      handleStatusToggle({ id: row.id, isActive: row.isActive })
+                    }
                     className="px-2 py-1 rounded-full"
                   >
                     <div className="flex space-x-2">
@@ -338,24 +388,15 @@ const MeasurementChart = ({ searchQuery, isModalOpen, onClose }) => {
                     </div>
                   </button>
                 </td>
-                <td className="px-3 py-3 whitespace-nowrap text-md text-center text-black w-40">
-                  {editIndex === index ? (
-                    <button
-                      onClick={() => handleUpdateClick(index)}
-                      className="text-green-500"
-                    >
-                      <img src={tickIcon} alt="Update" className="h-5 w-5" />
-                    </button>
-                  ) : (
-                    <button
-                      onClick={() => handleEditClick(index)}
-                      className="text-blue-500"
-                    >
-                      <img src={editIcon} alt="Edit" className="h-5 w-5" />
-                    </button>
-                  )}
+                <td className="px-3 py-3 whitespace-nowrap text-md text-center text-black w-32">
+                  <button
+                    onClick={() => handleEditClick(index)}
+                    className="text-blue-500"
+                  >
+                    <img src={editIcon} alt="Edit" className="h-5 w-5" />
+                  </button>
                 </td>
-                <td className="px-3 py-3 whitespace-nowrap text-md text-center text-black w-40">
+                <td className="px-3 py-3 whitespace-nowrap text-md text-center text-black w-32">
                   <input
                     type="checkbox"
                     className="form-checkbox"
@@ -363,7 +404,7 @@ const MeasurementChart = ({ searchQuery, isModalOpen, onClose }) => {
                     checked={checkedIds.includes(row.id)}
                   />
                 </td>
-                <td className="px-3 py-3 whitespace-nowrap text-md text-center text-black w-40">
+                <td className="px-3 py-3 whitespace-nowrap text-md text-center text-black w-32">
                   <button onClick={() => handleDelete(row.id)}>
                     <img src={deleteIconRed} alt="Delete" className="h-5 w-5" />
                   </button>
@@ -413,12 +454,12 @@ const MeasurementChart = ({ searchQuery, isModalOpen, onClose }) => {
       {isModalOpen && (
         <MesasurementModal
           isOpen={isModalOpen}
-          onClose={onClose}
+          onClose={handleModalClose}
           handleSubmit={handleSubmit}
           setTypeName={setTypeName}
           name={name}
-          setCategory={setCategory} // Pass setCategory to the modal
-          category={category} // Pass category to the modal
+          setCategory={setCategory}
+          category={category}
           handleAddSizeField={handleAddSizeField}
           handleSizeChange={handleSizeChange}
           handleRemoveSizeField={handleRemoveSizeField}
@@ -426,6 +467,27 @@ const MeasurementChart = ({ searchQuery, isModalOpen, onClose }) => {
           handleImageChange={handleImageChange}
           imagePreview={imagePreview}
           handleImageRemove={handleImageRemove}
+        />
+      )}
+
+      {isSecondModalOpen && (
+        <MesasurementModal
+          isOpen={isSecondModalOpen}
+          onClose={() => setIsSecondModalOpen(false)}
+          handleSubmit={handleUpdateClick}
+          setTypeName={setTypeName}
+          name={name}
+          setCategory={setCategory}
+          category={category}
+          handleAddSizeField={handleAddSizeField}
+          handleSizeChange={handleSizeChange}
+          handleRemoveSizeField={handleRemoveSizeField}
+          sizes={sizes}
+          handleImageChange={handleImageChange}
+          imagePreview={imagePreview}
+          handleImageRemove={handleImageRemove}
+          successMessage={successMessage}
+          errorMessage={errorMessage}
         />
       )}
     </div>
