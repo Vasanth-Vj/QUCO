@@ -286,7 +286,7 @@ const EditProductModal = ({ show, onClose, productId }) => {
   };
 
   const handleAddNewRef = () => {
-    // Implement the logic to add a new buyer here
+    // Implement the logic to add a new buyer here  
     console.log("Adding new reference NO:", productData.Reference.reference_no);
     // Close the dropdown after adding the buyer
     setRefDropdown(false);
@@ -1170,7 +1170,7 @@ const EditProductModal = ({ show, onClose, productId }) => {
     });
   };
 
-
+ 
 
  
 
@@ -1208,19 +1208,7 @@ const EditProductModal = ({ show, onClose, productId }) => {
     return <div>No data available</div>;
   }
 
-  // const handleChange = (e) => {
-  //   setValues({ ...values, [e.target.name]: e.target.value });
-  // };
-
-  // const handleUpdate = async () => {
-  //   try {
-  //     const response = await apiService.put(/products/${values.id}, values);
-  //     console.log('Product updated successfully:', response.data);
-  //     onClose();
-  //   } catch (error) {
-  //     console.error('Error updating product:', error);
-  //   }
-  // };
+ 
 
   if (!show) {
     return null;

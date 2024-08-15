@@ -17,7 +17,7 @@ const Sizes = ({ searchQuery, isModalOpen, onClose }) => {
   const [checkedIds, setCheckedIds] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [recordsPerPage, setRecordsPerPage] = useState(5);
-  const [sizes, setSizes] = useState([""]);
+  const [sizes, setSizes] = useState([]);
   const [inputValue, setInputValue] = useState("");
   const [singleSize, setSingleSize] = useState("");
   const [typeName, setTypeName] = useState('');
@@ -48,8 +48,8 @@ const Sizes = ({ searchQuery, isModalOpen, onClose }) => {
   );
 
   const handleAddSizeField = () => {
-    setSizes([...sizes, []]);
-  };
+    setSizes([...sizes, ['']]);
+  };  
 
   const handleRemoveSizeField = (index) => {
     const newSizes = sizes.filter((_, i) => i !== index);
@@ -76,7 +76,7 @@ const Sizes = ({ searchQuery, isModalOpen, onClose }) => {
       })
       if (response.status === 201) {
         setTypeName("");
-        setSizes([{ size: "" }]);
+        setSizes([]);
         setSuccessMessage("Size added successfully.");
         setErrorMessage("");
         fetchAllSizes();
@@ -108,23 +108,18 @@ const Sizes = ({ searchQuery, isModalOpen, onClose }) => {
       setSuccessMessage("");
     }
 
-    const newSizes = sizes
-    .map((sizeObj) => {
-      if (sizeObj && typeof sizeObj.size === 'string') {
-        return sizeObj.size.trim();
-      }
-      return ""; // Return an empty string if sizeObj is not valid
-    })
-    .filter((size) => size !== "");
 
-  if (newSizes.length > 0) {
-    setData((prevData) => [
-      ...prevData,
-      { id: prevData.length + 1, sizes: newSizes, status: "active" },
-    ]);
-    setSizes([{ size: "" }]);
-    onClose();
-  }
+    const newSizes = sizes
+      .map((size) => size.size.trim())
+      .filter((size) => size !== "");
+    if (newSizes.length > 0) {
+      setData([
+        ...data,
+        { id: data.length + 1, sizes: newSizes, status: "active" },
+      ]);
+      setSizes([]);
+      onClose();
+    }
   };
 
   // handle toggle button click
@@ -218,23 +213,12 @@ const Sizes = ({ searchQuery, isModalOpen, onClose }) => {
     setCurrentPage(1);
   };
 
-
-
-
   const startIndex = (currentPage - 1) * recordsPerPage;
   const endIndex = startIndex + recordsPerPage;
   const currentData = filteredData.slice(startIndex, endIndex);
 
-  const handleModalClose = () => {
-    setSingleSize(""); 
-    setTypeName("");
-    setSizes([{ size: "" }]);
-    onClose(); 
-  };
-
-
   return (
-    <div  className="px-4 py-2 sm:px-6 lg:px-8">
+    <div className=" mx-auto p-4 bg-white">
       <div className="min-h-[60vh] max-h-[60vh] overflow-y-auto">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50 w-full">
@@ -414,14 +398,14 @@ const Sizes = ({ searchQuery, isModalOpen, onClose }) => {
             className="fixed inset-0 bg-black opacity-50"
             onClick={onClose}
           ></div>
-          <div className="relative bg-white rounded-lg shadow-lg w-full max-w-[35vw] h-screen overflow-y-auto lg:overflow-hidden">
+          <div className="relative bg-white rounded-lg shadow-lg w-full max-w-[35vw] py-6 px-10 h-fit overflow-y-auto lg:overflow-hidden">
             <div className="py-2 flex flex-col">
               <div>
                 <div className="flex justify-center">
                   <h2 className="text-2xl font-bold">Add Sizes</h2>
                   <button
                     className="absolute right-5 cursor-pointer"
-                    onClick={handleModalClose}
+                    onClick={onClose}
                   >
                     <img src={closeIcon} alt="Close" className="mt-2" />
                   </button>

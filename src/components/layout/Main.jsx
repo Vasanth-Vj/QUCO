@@ -1,10 +1,10 @@
 import React, { useState } from "react";
 import { Outlet, useLocation } from "react-router-dom";
-import SideNav from "./SideNav";
-import TopNav from "./TopNav";
+import HorizontalNavbar from "./HorizontalNavbar";
+import VerticalNavbar from "./VerticalNavbar";
 
 const Main = () => {
-  const [sideNavOpen, setSideNavOpen] = useState(true); // State to manage SideNav visibility
+  const [sideNavOpen, setSideNavOpen] = useState(true);
   const location = useLocation();
 
   const formattedRoute =
@@ -19,7 +19,7 @@ const Main = () => {
       <div
         className={`fixed h-full bg-gray-200 duration-300 ${sideNavOpen ? "w-56" : "w-20"}`}
       >
-        <SideNav isOpen={sideNavOpen} toggleSideNav={() => setSideNavOpen(!sideNavOpen)} />
+        <VerticalNavbar isOpen={sideNavOpen} toggleSideNav={() => setSideNavOpen(!sideNavOpen)} />
       </div>
 
       {/* Content Area */}
@@ -27,15 +27,10 @@ const Main = () => {
         className={`flex flex-col flex-grow duration-300 ${sideNavOpen ? "ml-56" : "ml-20"}`}
       >
         {/* Horizontal Navbar */}
-        <TopNav />
-
-        {/* Route Breadcrumb */}
-        <span className="p-4 text-sm text-start font-light">
-          {formattedRoute.substring(2)}
-        </span>
+        <HorizontalNavbar />
 
         {/* Main Content */}
-        <main className="flex-grow overflow-y-auto pb-5">
+        <main className="flex-grow overflow-y-auto pt-2">
           {/* Outlet for nested routes */}
           <Outlet />
         </main>

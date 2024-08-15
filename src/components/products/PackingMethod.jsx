@@ -211,14 +211,8 @@ const PackingMethod = ({ searchQuery, isModalOpen, onClose }) => {
   const isHeaderCheckboxChecked =
     checkedIds.length > 0 && checkedIds.length === data.length;
 
-    const handleModalClose = () => {
-      setSinglePacking(""); 
-      onClose(); 
-    };
-  
-
   return (
-    <div   className="px-4 py-2 sm:px-6 lg:px-8">
+    <div className=" mx-auto p-4 bg-white">
       <div className="min-h-[60vh] max-h-[60vh] overflow-y-auto">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50 w-full">
@@ -390,7 +384,7 @@ const PackingMethod = ({ searchQuery, isModalOpen, onClose }) => {
                   <h2 className="text-2xl font-bold">Add Packing Method</h2>
                   <button
                     className="absolute right-5 cursor-pointer"
-                    onClick={handleModalClose}
+                    onClick={onClose}
                   >
                     <img src={closeIcon} alt="Close" className="mt-2" />
                   </button>

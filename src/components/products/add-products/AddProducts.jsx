@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import editIcon from "../../../assets/edit-icon.svg";
+import editIcon from "../../../assets/edit-icon.svg"; 
 import deleteIcon from "../../../assets/delete-icon.svg";
 import leftArrowIcon from "../../../assets/left-arrow-icon.svg";
 import rightArrowIcon from "../../../assets/right-arrow-icon.svg";
@@ -20,7 +20,6 @@ const AddProducts = ({ searchQuery }) => {
   const [showModal, setShowModal] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
   const [selectedProductId, setSelectedProductId] = useState(null);
- 
 
 
   // Function to fetch all products
@@ -39,7 +38,7 @@ const AddProducts = ({ searchQuery }) => {
   };
 
   useEffect(() => {
-    getAllProducts();
+    getAllProducts(); 
   }, []);
 
 
@@ -55,7 +54,6 @@ const AddProducts = ({ searchQuery }) => {
     setSelectedProductId(id);
     setShowModal(true);
   };
-  
 
   // const handleSaveClick = () => {
   //   setEditIndex(null);
@@ -88,27 +86,27 @@ const AddProducts = ({ searchQuery }) => {
     );
   };
 
-  const handleDelete = () => {
-    const newData = initialData.filter((row) => !checkedIds.includes(row.id));
-    setInitialData(newData);
-    setFilteredData(newData); // Also update filtered data
-    setCheckedIds([]);
-  };
+  // const handleDelete = () => {
+  //   const newData = initialData.filter((row) => !checkedIds.includes(row.id));
+  //   setInitialData(newData);
+  //   setFilteredData(newData); // Also update filtered data
+  //   setCheckedIds([]);
+  // };
 
-  // const handleDelete = async () => {
-  //   try {
-  //     // Assuming checkedIds contains IDs to delete
-  //     const promises = checkedIds.map(id =>
-  //       apiService.delete(`/products/${id}`)
-  //     );
-  //     await Promise.all(promises);
-  //     console.log('Products deleted successfully');
-  //     getAllProducts(); // Refresh the product list
-  //     setCheckedIds([]); // Clear checked IDs after deletion
-  //   } catch (error) {
-  //     console.error('Error deleting products:', error);
-  //   }
-  // };  
+  const handleDelete = async () => {
+    try {
+      // Assuming checkedIds contains IDs to delete
+      const promises = checkedIds.map(id =>
+        apiService.delete(`/products/${id}`)
+      );
+      await Promise.all(promises);
+      console.log('Products deleted successfully');
+      getAllProducts(); // Refresh the product list
+      setCheckedIds([]); // Clear checked IDs after deletion
+    } catch (error) {
+      console.error('Error deleting products:', error);
+    }
+  };  
   
 
   const handlePageChange = (direction) => {
@@ -130,11 +128,6 @@ const AddProducts = ({ searchQuery }) => {
   const handleCloseModal = () => {
     setShowModal(false);
     setSelectedProductId(null);
-  };
-
-  const handleOpenModal = (productId) => {
-    setSelectedProductId(productId);
-    setShowModal(true);
   };
 
   const handleAddModalClose = () => {
@@ -335,14 +328,13 @@ const AddProducts = ({ searchQuery }) => {
         </div>
       </div>
       {showModal && (
-        <EditProductModal
-          show={showModal}
-          onClose={handleCloseModal}
-          productId={selectedProductId}
-          
-        />
+      <EditProductModal
+        show={showModal}
+        onClose={handleCloseModal}
+        productId={selectedProductId}
+      />
       )}
-      {showAddModal && <AddProductModal show={showAddModal} onClose={handleAddModalClose} />}
+      <AddProductModal show={showAddModal} onClose={handleAddModalClose} />
     </>
   );
 };

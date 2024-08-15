@@ -201,14 +201,8 @@ const handleEditClick = ({ id, sleeveName }) => {
   const endIndex = startIndex + recordsPerPage;
   const currentData = filteredData.slice(startIndex, endIndex);
 
-  const handleModalClose = () => {
-    setSingleSleeves(""); 
-    onClose(); 
-  };
-
-
   return (
-    <div  className="px-4 py-2 sm:px-6 lg:px-8">
+    <div className=" mx-auto p-4 bg-white">
       <div className="min-h-[60vh] max-h-[60vh] overflow-y-auto">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50 w-full">
@@ -380,7 +374,7 @@ const handleEditClick = ({ id, sleeveName }) => {
                   <h2 className="text-2xl font-bold">Add Sleeve</h2>
                   <button
                     className="absolute right-5 cursor-pointer"
-                    onClick={handleModalClose}
+                    onClick={onClose}
                   >
                     <img src={closeIcon} alt="Close" className="mt-2" />
                   </button>
@@ -388,9 +382,6 @@ const handleEditClick = ({ id, sleeveName }) => {
                 <hr className="w-full mt-3" />
               </div>
               <div className="flex flex-col items-center">
-                <p className="text-gray-400 font-bold mt-10">
-                  *For multiple “Sleeve” feed use enter after each values
-                </p>
                 <input
                   className="bg-gray-200 rounded w-80 py-3 px-4 text-gray-700 focus:outline-none focus:shadow-outline mt-5 text-lg text-center"
                   type="text"

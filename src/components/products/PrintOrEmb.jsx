@@ -184,14 +184,8 @@ const PrintOrEmb = ({ searchQuery, isModalOpen, onClose }) => {
   const endIndex = startIndex + recordsPerPage;
   const currentData = filteredData.slice(startIndex, endIndex);
 
-  const handleModalClose = () => {
-    setSinglePrints(""); 
-    onClose(); 
-  };
-
-
   return (
-    <div c className="px-4 py-2 sm:px-6 lg:px-8">
+    <div className=" mx-auto p-4 bg-white">
       <div className="min-h-[60vh] max-h-[60vh] overflow-y-auto">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50 w-full">
@@ -363,7 +357,7 @@ const PrintOrEmb = ({ searchQuery, isModalOpen, onClose }) => {
                   <h2 className="text-2xl font-bold">Add Print or Emb</h2>
                   <button
                     className="absolute right-5 cursor-pointer"
-                    onClick={handleModalClose}
+                    onClick={onClose}
                   >
                     <img src={closeIcon} alt="Close" className="mt-2" />
                   </button>
@@ -377,7 +371,7 @@ const PrintOrEmb = ({ searchQuery, isModalOpen, onClose }) => {
                 <input
                   className="bg-gray-200 rounded w-80 py-3 px-4 text-gray-700 focus:outline-none focus:shadow-outline mt-5 text-lg text-center"
                   type="text"
-                  placeholder="Enter Print Or Emb Name"
+                  placeholder="Enter Print or Emb"
                   value={singlePrints}
                   onChange={(e) => setSinglePrints(e.target.value)}
                 />

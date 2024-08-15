@@ -5,7 +5,7 @@ import { DragDropContext, Draggable, Droppable } from "react-beautiful-dnd";
 
 const AddProductModal = ({ show, onClose }) => {
   const [styleNo, setStyleNo] = useState("");
-  const [referenceNo, setReferenceNo] = useState(""); 
+  const [referenceNo, setReferenceNo] = useState("");
   const [brand, setBrand] = useState("");
   const [fabric, setFabric] = useState("");
   const [fabricFinish, setFabricFinish] = useState("");
@@ -22,7 +22,7 @@ const AddProductModal = ({ show, onClose }) => {
   const [measurementChart, setMeasurementChart] = useState("");
   const [selectedMeasurementImage, setSelectedMeasurementImage] = useState(null);
   const [packingMethod, setPackingMethod] = useState("");
-  const [categorie, setCategorie] = useState("");
+  const [category, setCategory] = useState("");
   const [productTypes, setProductTypes] = useState("");
   const [innerPcs, setInnerPcs] = useState(null);
   const [shortDescription, setShortDescription] = useState("");
@@ -40,10 +40,10 @@ const AddProductModal = ({ show, onClose }) => {
   const [fabricSuggestions, setFabricSuggestions] = useState([]);
   const [selectedFabricId, setSelectedFabricId] = useState(null);
 
-  //suggestion refNo states
-  const [refDropdown, setRefDropdown] = useState(false);
-  const [refSuggestions, setRefSuggestions] = useState([]);
-  const [selectedRefId, setSelectedRefId] = useState(null);
+  //suggestion reference No states
+  const [referenceDropdown, setReferenceDropdown] = useState(false);
+  const [referenceSuggestions, setReferenceSuggestions] = useState([]);
+  const [selectedReferenceId, setSelectedReferenceId] = useState(null);
 
   //suggestion Fabric Finish states
   const [fabricFinishDropdown, setFabricFinishDropdown] = useState(false);
@@ -75,7 +75,7 @@ const AddProductModal = ({ show, onClose }) => {
   const [decorationSuggestions, setDecorationSuggestions] = useState([]);
   const [selecteDecorationId, setSelectedDecorationId] = useState(null);
 
-  //suggestion brand states
+  //suggestion print states
   const [printDropdown, setPrintDropdown] = useState(false);
   const [printSuggestions, setPrintSuggestions] = useState([]);
   const [selectedPrintId, setSelectedPrintId] = useState(null);
@@ -111,10 +111,10 @@ const AddProductModal = ({ show, onClose }) => {
   const [selectedMesurementId, setSelectedMesurementId] = useState(null);
   const [selectedMesurement, setSelectedMesurement] = useState(null);
 
-  //suggestion categorie states
-  const [categorieDropdown, setCategorieDropdown] = useState(false);
-  const [categorieSuggestions, setCategorieSuggestions] = useState([]);
-  const [selectedCategorieId, setSelectedCategorieId] = useState(null);
+  //suggestion category states
+  const [categoryDropdown, setCategoryDropdown] = useState(false);
+  const [categorySuggestions, setCategorySuggestions] = useState([]);
+  const [selectedCategoryId, setSelectedCategoryId] = useState(null);
 
   //suggestion productTypes states
   const [productTypesDropdown, setProductTypesDropdown] = useState(false);
@@ -164,42 +164,42 @@ const AddProductModal = ({ show, onClose }) => {
     setBrandDropdown(false);
   };
 
-  // fetch refNo
-  const fetchRefSuggestions = async (refInput) => {
+  // fetch reference no
+  const fetchReferenceSuggestions = async (referenceInput) => {
     try {
-      if (refInput.length > 0) {
+      if (referenceInput.length > 0) {
         const response = await apiService.get("/references/getall");
-        const filteredRef = response.data.filter((b) =>
-          b.reference_no.toLowerCase().startsWith(refInput.toLowerCase())
+        const filteredReference = response.data.filter((b) =>
+          b.reference_no.toLowerCase().startsWith(referenceInput.toLowerCase())
         );
-        setRefSuggestions(filteredRef);
+        setReferenceSuggestions(filteredReference);
       } else {
-        setRefSuggestions([]);
+        setReferenceSuggestions([]);
       }
     } catch (error) {
-      console.error("Error fetching RefNo:", error);
+      console.error("Error fetching Reference No:", error);
     }
   };
 
-  const handleRefChange = (e) => {
-    const refInput = e.target.value;
-    setReferenceNo(refInput);
-    setRefDropdown(true);
-    fetchRefSuggestions(refInput);
+  const handleReferenceChange = (e) => {
+    const referenceInput = e.target.value;
+    setReferenceNo(referenceInput);
+    setReferenceDropdown(true);
+    fetchReferenceSuggestions(referenceInput);
   };
 
-  const handleRefSelect = (ref) => {
+  const handleReferenceSelect = (ref) => {
     setReferenceNo(ref.reference_no);
-    setSelectedRefId(ref.id);
-    setRefSuggestions([]);
-    setRefDropdown(false);
+    setSelectedReferenceId(ref.id);
+    setReferenceSuggestions([]);
+    setReferenceDropdown(false);
   };
 
-  const handleAddNewRef = () => {
+  const handleAddNewReference = () => {
     // Implement the logic to add a new buyer here
     console.log("Adding new reference NO:", referenceNo);
     // Close the dropdown after adding the buyer
-    setRefDropdown(false);
+    setReferenceDropdown(false);
   };
 
   // fetch fabric
@@ -744,45 +744,45 @@ const AddProductModal = ({ show, onClose }) => {
   };
 
   // fetch categorie
-  const fetchCategorieSuggestions = async (categorieInput) => {
+  const fetchCategorySuggestions = async (categoryInput) => {
     try {
-      if (categorieInput.length > 0) {
+      if (categoryInput.length > 0) {
         const response = await apiService.get("/categories/getall");
         const filteredCategories = response.data.filter((b) =>
-          b.categoryName.toLowerCase().startsWith(categorieInput.toLowerCase())
+          b.categoryName.toLowerCase().startsWith(categoryInput.toLowerCase())
         );
-        setCategorieSuggestions(filteredCategories);
+        setCategorySuggestions(filteredCategories);
       } else {
-        setCategorieSuggestions([]);
+        setCategorySuggestions([]);
       }
     } catch (error) {
       console.error("Error fetching categories:", error);
     }
   };
 
-  const handleCategorieChange = (e) => {
-    const categorieInput = e.target.value;
-    setCategorie(categorieInput);
-    setCategorieDropdown(true);
-    fetchCategorieSuggestions(categorieInput);
+  const handleCategoryChange = (e) => {
+    const categoryInput = e.target.value;
+    setCategory(categoryInput);
+    setCategoryDropdown(true);
+    fetchCategorySuggestions(categoryInput);
   };
 
-  const handleCategorieSelect = (categorie) => {
-    setCategorie(categorie.categoryName);
-    setSelectedCategorieId(categorie.id);
-    setCategorieSuggestions([]);
-    setCategorieDropdown(false);
+  const handleCategorySelect = (category) => {
+    setCategory(category.categoryName);
+    setSelectedCategoryId(category.id);
+    setCategorySuggestions([]);
+    setCategoryDropdown(false);
   };
 
   const handleAddNewCategory = () => {
     // Implement the logic to add a new buyer here
-    console.log("Adding new category:", categorie);
+    console.log("Adding new category:", category);
     // Close the dropdown after adding the buyer
-    categorieDropdown(false);
+    setCategoryDropdown(false);
   };
 
-  // fetch product types
-  const fetchProductTypesSuggestions = async (productTypesInput) => {
+   // fetch product types
+   const fetchProductTypesSuggestions = async (productTypesInput) => {
     try {
       if (productTypesInput.length > 0) {
         const response = await apiService.get("/productTypes/getall");
@@ -817,18 +817,6 @@ const AddProductModal = ({ show, onClose }) => {
     console.log("Adding new product types:", productTypes);
     // Close the dropdown after adding the buyer
     setProductTypesDropdown(false);
-  };
-
-  const handleShortDescriptionChange = (e) => {
-    const shortDescriptionInput = e.target.value;
-    setShortDescription(shortDescriptionInput);
-  
-  };
-
-  const handleFullDescriptionChange = (e) => {
-    const fullDescriptionInput = e.target.value;
-    setFullDescription(fullDescriptionInput);
-  
   };
 
   // Image uploader
@@ -877,20 +865,21 @@ const AddProductModal = ({ show, onClose }) => {
     setPreviews(newPreviews);
   };
 
+  
   const handleSubmit = async () => {
     setLoading(true);
 
-    // Ensure primary image is first
-    const updatedImages = [...images];
-    if (updatedImages[0] !== images[0]) {
-      const primaryImage = updatedImages.splice(images.indexOf(images[0]), 1);
-      updatedImages.unshift(primaryImage[0]);
-    }
+     // Ensure primary image is first
+     const updatedImages = [...images];
+     if (updatedImages[0] !== images[0]) {
+       const primaryImage = updatedImages.splice(images.indexOf(images[0]), 1);
+       updatedImages.unshift(primaryImage[0]);
+     }
 
     const formData = new FormData();
     formData.append("style_no", styleNo);
-    formData.append("reference_id", selectedRefId);
-    formData.append("category_id", selectedCategorieId);
+    formData.append("reference_id", selectedReferenceId);
+    formData.append("category_id", selectedCategoryId);
     formData.append("productType_id", selectedProductTypesId);
     formData.append("brand_id", selectedBrandId);
     formData.append("fabric_id", selectedFabricId);
@@ -910,11 +899,10 @@ const AddProductModal = ({ show, onClose }) => {
     formData.append("measurement_chart_id", selectedMesurementId);
     formData.append("short_description", shortDescription);
     formData.append("full_description", fullDescription);
-
     images.forEach((image) => {
-      formData.append("images", image);
+      formData.append("images", image); 
     });
-
+  
     try {
       const response = await apiService.post("/products/create", formData, {
         headers: {
@@ -959,14 +947,14 @@ const AddProductModal = ({ show, onClose }) => {
       setLoading(false);
     }
   };
-
+  
   if (!show) return null;
 
   const handleModalClose = () => {
     setPreviews([]);
     setStyleNo("");
     setReferenceNo("");
-    setCategorie("");
+    setCategory("");
     setProductTypes("");
     setBrand("");
     setFabric("");
@@ -988,14 +976,16 @@ const AddProductModal = ({ show, onClose }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center overflow-auto bg-black bg-opacity-50">
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div
         className="fixed inset-0 bg-black opacity-50"
         onClick={onClose}
       ></div>
-      <div className="relative bg-white rounded-lg shadow-lg w-full max-w-[80vw] h-screen max-h-[90vh] overflow-y-auto">
+      <div className="relative bg-white rounded-lg shadow-lg w-full max-w-[80vw] h-screen max-h-[90vh] overflow-y-auto lg:overflow-auto">
         <div className="px-10 py-5">
           <div className="flex justify-center">
+            {" "}
+            {/* Centering the title */}
             <h2 className="text-lg font-bold">Add Product</h2>
             <button
               className="absolute right-5 cursor-pointer"
@@ -1006,118 +996,111 @@ const AddProductModal = ({ show, onClose }) => {
           </div>
           <hr className="my-2" />
           <div className="px-40">
-            <div className="flex flex-col gap-3 mt-10">
-              <div className="flex gap-4">
-                <h1 className="font-bold">Product Images</h1>
-                <span className="text-sm text-gray-400 mt-1 relative px-2">
-                  <span className="absolute left-0 top-0 text-gray-600">*</span>
-                  Choose up to 13 images
-                </span>
-              </div>
 
-              <div className="min-h-40 bg-gray-100 flex items-center justify-center">
-                <div className="container mx-auto px-4 py-4">
-                  <div className="mb-4">
-                    <input
-                      type="file"
-                      multiple
-                      accept="image/*"
-                      onChange={handleImageChange}
-                      className="block w-full text-sm text-gray-500 file:mr-2 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-violet-50 file:text-violet-700 hover:file:bg-violet-100"
-                    />
-                  </div>
-                  <DragDropContext onDragEnd={handleDragEnd}>
-                    <Droppable droppableId="images" direction="horizontal">
+          <div className="flex flex-col gap-3 mt-10">
+      <div className="flex gap-4">
+        <h1 className="font-bold">Product Images</h1>
+        <span className="text-sm text-gray-400 mt-1 relative px-2">
+          <span className="absolute left-0 top-0 text-gray-600">*</span>
+          Choose up to 13 images
+        </span>
+      </div>
+
+      <div className="min-h-40 bg-gray-100 flex items-center justify-center">
+        <div className="container mx-auto px-4 py-4">
+          <div className="mb-4">
+            <input
+              type="file"
+              multiple
+              accept="image/*"
+              onChange={handleImageChange}
+              className="block w-full text-sm text-gray-500 file:mr-2 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-violet-50 file:text-violet-700 hover:file:bg-violet-100"
+            />
+          </div>
+          <DragDropContext onDragEnd={handleDragEnd}>
+            <Droppable droppableId="images" direction="horizontal">
+              {(provided) => (
+                <div
+                  className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-4"
+                  {...provided.droppableProps}
+                  ref={provided.innerRef}
+                >
+                  {previews.map((preview, index) => (
+                    <Draggable key={index} draggableId={index.toString()} index={index}>
                       {(provided) => (
                         <div
-                          className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-4"
-                          {...provided.droppableProps}
                           ref={provided.innerRef}
+                          {...provided.draggableProps}
+                          {...provided.dragHandleProps}
+                          className="relative cursor-pointer"
+                          onClick={() => handleSelectPrimary(index)}
                         >
-                          {previews.map((preview, index) => (
-                            <Draggable
-                              key={index}
-                              draggableId={index.toString()}
-                              index={index}
-                            >
-                              {(provided) => (
-                                <div
-                                  ref={provided.innerRef}
-                                  {...provided.draggableProps}
-                                  {...provided.dragHandleProps}
-                                  className="relative cursor-pointer"
-                                  onClick={() => handleSelectPrimary(index)}
-                                >
-                                  <img
-                                    src={preview}
-                                    alt={`Preview ${index}`}
-                                    className={`w-full h-32 object-cover rounded-lg shadow-md ${
-                                      index === 0
-                                        ? "border-4 border-blue-500"
-                                        : ""
-                                    }`}
-                                  />
-                                  {index === 0 && (
-                                    <span className="absolute -top-2 left-1/2 transform -translate-x-1/2 bg-blue-500 text-white rounded-lg px-2 py-1 text-xs">
-                                      Primary
-                                    </span>
-                                  )}
-                                  <button
-                                    type="button"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      removeImage(index);
-                                    }}
-                                    className="absolute top-2 right-2 bg-red-600 text-white rounded-full px-1.5 focus:outline-none"
-                                  >
-                                    &times;
-                                  </button>
-                                </div>
-                              )}
-                            </Draggable>
-                          ))}
-                          {provided.placeholder}
+                          <img
+                            src={preview}
+                            alt={`Preview ${index}`}
+                            className={`w-full h-32 object-cover rounded-lg shadow-md ${index === 0 ? 'border-4 border-blue-500' : ''}`}
+                          />
+                          {index === 0 && (
+                            <span className="absolute -top-2 left-1/2 transform -translate-x-1/2 bg-blue-500 text-white rounded-lg px-2 py-1 text-xs">
+                              Primary
+                            </span>
+                          )}
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              removeImage(index);
+                            }}
+                            className="absolute top-2 right-2 bg-red-600 text-white rounded-full px-1.5 focus:outline-none"
+                          >
+                            &times;
+                          </button>
                         </div>
                       )}
-                    </Droppable>
-                  </DragDropContext>
+                    </Draggable>
+                  ))}
+                  {provided.placeholder}
                 </div>
-              </div>
-            </div>
+              )}
+            </Droppable>
+          </DragDropContext>
+        </div>
+      </div>
+    </div>
             <div className="mt-10 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
               <div className="flex flex-col gap-2 relative">
-                <label className="font-semibold" htmlFor="RefNo">
-                  Style Number:
+                <label className="font-semibold" htmlFor="styleNo">
+                  Style No:
                 </label>
                 <input
                   type="text"
                   id="styleNo"
                   value={styleNo}
                   onChange={(e) => setStyleNo(e.target.value)}
-                  className="border border-gray-300 rounded-md px-2 py-2 bg-zinc-200"
-                  placeholder="Enter Style Number"
+                  className="border border-gray-300  rounded-md px-2 py-1 bg-zinc-200"
+                  placeholder="Enter Style No"
                 />
               </div>
 
               <div className="flex flex-col gap-2 relative">
-                <label className="font-semibold" htmlFor="styleNo">
+                <label className="font-semibold" htmlFor="RefNo">
                   Reference Number:
                 </label>
                 <input
                   type="text"
                   id="referenceNo"
                   value={referenceNo}
-                  onChange={handleRefChange}
-                  className="border border-gray-300  rounded-md px-2 py-2 bg-zinc-200"
-                  placeholder="Enter Ref No"
+                  onChange={handleReferenceChange}
+                  className="border border-gray-300 rounded-md px-2 py-1 bg-zinc-200"
+                  placeholder="Enter Reference Number"
                 />
-                {refDropdown && referenceNo && (
+                {referenceDropdown && referenceNo && (
                   <ul className="absolute top-full left-0 z-10 w-full bg-white border border-gray-300 rounded-md shadow-lg mt-1">
-                    {refSuggestions.length > 0 ? (
-                      refSuggestions.map((item) => (
+                    {referenceSuggestions.length > 0 ? (
+                      referenceSuggestions.map((item) => (
                         <li
                           key={item.id}
-                          onClick={() => handleRefSelect(item)}
+                          onClick={() => handleReferenceSelect(item)}
                           className="cursor-pointer px-4 py-2 hover:bg-gray-100"
                         >
                           {item.reference_no}
@@ -1126,7 +1109,7 @@ const AddProductModal = ({ show, onClose }) => {
                     ) : (
                       <li
                         className="px-4 py-2 cursor-pointer text-sm text-blue-600 hover:bg-gray-200"
-                        onClick={handleAddNewRef}
+                        onClick={handleAddNewReference}
                       >
                         Add New Buyer: "{referenceNo}"
                       </li>
@@ -1142,67 +1125,49 @@ const AddProductModal = ({ show, onClose }) => {
                 <input
                   type="text"
                   id="category"
-                  value={categorie}
-                  onChange={handleCategorieChange}
-                  className="border border-gray-300 rounded-md px-2 py-2 bg-zinc-200"
-                  placeholder="Enter Category"
+                  value={category}
+                  onChange={handleCategoryChange}
+                  className="border border-gray-300 rounded-md px-2 py-1 bg-zinc-200"
+                  placeholder="Enter Category Name"
                 />
-                {categorieDropdown && categorie && (
-                  <ul className="absolute top-full left-0 z-10 w-full bg-white border border-gray-300 rounded-md shadow-lg">
-                    {categorieSuggestions.length > 0 ? (
-                      categorieSuggestions.map((suggestion) => (
-                        <li
-                          key={suggestion.id}
-                          className="px-4 py-2 cursor-pointer hover:bg-gray-200"
-                          onClick={() => handleCategorieSelect(suggestion)}
-                        >
-                          {suggestion.categoryName}
-                        </li>
-                      ))
-                    ) : (
+                {categoryDropdown && category && (
+                  <ul className="absolute top-16 left-0 z-10 w-full bg-white border border-gray-300 rounded-md shadow-lg mt-1">
+                    {categorySuggestions.map((item) => (
                       <li
-                        className="px-4 py-2 cursor-pointer text-sm text-blue-600 hover:bg-gray-200"
-                        onClick={handleAddNewCategory}
+                        key={item.id}
+                        onClick={() => handleCategorySelect(item)}
+                        className="cursor-pointer px-4 py-2 hover:bg-gray-100"
                       >
-                        Add New category: "{categorie}"
+                        {item.categoryName}
                       </li>
-                    )}
+                    ))}
                   </ul>
                 )}
               </div>
 
               <div className="flex flex-col gap-2 relative">
-                <label className="font-semibold" htmlFor="product-type">
+                <label className="font-semibold" htmlFor="categorie">
                   Product Type:
                 </label>
                 <input
                   type="text"
-                  id="product-type"
+                  id="categorie"
                   value={productTypes}
                   onChange={handleProductTypesChange}
-                  className="border border-gray-300 rounded-md px-2 py-2 bg-zinc-200"
-                  placeholder="Enter Product Type"
+                  className="border border-gray-300 rounded-md px-2 py-1 bg-zinc-200"
+                  placeholder="Enter Category Name"
                 />
                 {productTypesDropdown && productTypes && (
-                  <ul className="absolute top-full left-0 z-10 w-full bg-white border border-gray-300 rounded-md shadow-lg">
-                    {productTypesSuggestions.length > 0 ? (
-                      productTypesSuggestions.map((suggestion) => (
-                        <li
-                          key={suggestion.id}
-                          className="px-4 py-2 cursor-pointer hover:bg-gray-200"
-                          onClick={() => handleProductTypesSelect(suggestion)}
-                        >
-                          {suggestion.product}
-                        </li>
-                      ))
-                    ) : (
+                  <ul className="absolute top-16 left-0 z-10 w-full bg-white border border-gray-300 rounded-md shadow-lg mt-1">
+                    {productTypesSuggestions.map((item) => (
                       <li
-                        className="px-4 py-2 cursor-pointer text-sm text-blue-600 hover:bg-gray-200"
-                        onClick={handleAddNewProductType}
+                        key={item.id}
+                        onClick={() => handleProductTypesSelect(item)}
+                        className="cursor-pointer px-4 py-2 hover:bg-gray-100"
                       >
-                        Add New product type: "{productTypes}"
+                        {item.product}
                       </li>
-                    )}
+                    ))}
                   </ul>
                 )}
               </div>
@@ -1212,33 +1177,24 @@ const AddProductModal = ({ show, onClose }) => {
                   Brand Name:
                 </label>
                 <input
-                  type="text" 
+                  type="text"
                   id="brand"
                   value={brand}
                   onChange={handleBrandChange}
-                  className="border border-gray-300 rounded-md px-2 py-2 bg-zinc-200"
+                  className="border border-gray-300 rounded-md px-2 py-1 bg-zinc-200"
                   placeholder="Enter Brand Name"
                 />
                 {brandDropdown && brand && (
-                  <ul className="absolute top-full left-0 z-10 w-full bg-white border border-gray-300 rounded-md shadow-lg">
-                    {brandSuggestions.length > 0 ? (
-                      brandSuggestions.map((suggestion) => (
-                        <li
-                          key={suggestion.id}
-                          className="px-4 py-2 cursor-pointer hover:bg-gray-200"
-                          onClick={() => handleBrandSelect(suggestion)}
-                        >
-                          {suggestion.brandName}
-                        </li>
-                      ))
-                    ) : (
+                  <ul className="absolute top-full left-0 z-10 w-full bg-white border border-gray-300 rounded-md shadow-lg mt-1">
+                    {brandSuggestions.map((item) => (
                       <li
-                        className="px-4 py-2 cursor-pointer text-sm text-blue-600 hover:bg-gray-200"
-                        onClick={handleAddNewBrand}
+                        key={item.id}
+                        onClick={() => handleBrandSelect(item)}
+                        className="cursor-pointer px-4 py-2 hover:bg-gray-100"
                       >
-                        Add New Brand: "{brand}"
+                        {item.brandName}
                       </li>
-                    )}
+                    ))}
                   </ul>
                 )}
               </div>
@@ -1251,33 +1207,23 @@ const AddProductModal = ({ show, onClose }) => {
                   id="fabric"
                   value={fabric}
                   onChange={handleFabricChange}
-                  className="border border-gray-300 rounded-md px-2 py-2 bg-zinc-200"
+                  className="border border-gray-300  rounded-md px-2 py-1 bg-zinc-200"
                   placeholder="Enter Fabric"
                 />
                 {fabricDropdown && fabric && (
-                  <ul className="absolute top-full left-0 z-10 w-full bg-white border border-gray-300 rounded-md shadow-lg">
-                    {fabricSuggestions.length > 0 ? (
-                      fabricSuggestions.map((suggestion) => (
-                        <li
-                          key={suggestion.id}
-                          className="px-4 py-2 cursor-pointer hover:bg-gray-200"
-                          onClick={() => handleFabricSelect(suggestion)}
-                        >
-                          {suggestion.fabricName}
-                        </li>
-                      ))
-                    ) : (
+                  <ul className="absolute top-full left-0 z-10 w-full bg-white border border-gray-300 rounded-md shadow-lg mt-1">
+                    {fabricSuggestions.map((item) => (
                       <li
-                        className="px-4 py-2 cursor-pointer text-sm text-blue-600 hover:bg-gray-200"
-                        onClick={handleAddNewFabric}
+                        key={item.id}
+                        onClick={() => handleFabricSelect(item)}
+                        className="cursor-pointer px-4 py-2 hover:bg-gray-100"
                       >
-                        Add New Fabric: "{fabric}"
+                        {item.fabricName}
                       </li>
-                    )}
+                    ))}
                   </ul>
                 )}
               </div>
-
               <div className="flex flex-col gap-2 relative">
                 <label className="font-semibold" htmlFor="fabricFinish">
                   Fabric Finish:
@@ -1287,33 +1233,23 @@ const AddProductModal = ({ show, onClose }) => {
                   id="fabricFinish"
                   value={fabricFinish}
                   onChange={handleFabricFinishChange}
-                  className="border border-gray-300 rounded-md px-2 py-2 bg-zinc-200"
+                  className="border border-gray-300  rounded-md px-2 py-1 bg-zinc-200"
                   placeholder="Enter Fabric Finish"
                 />
                 {fabricFinishDropdown && fabricFinish && (
-                  <ul className="absolute top-full left-0 z-10 w-full bg-white border border-gray-300 rounded-md shadow-lg">
-                    {fabricFinishSuggestions.length > 0 ? (
-                      fabricFinishSuggestions.map((suggestion) => (
-                        <li
-                          key={suggestion.id}
-                          className="px-4 py-2 cursor-pointer hover:bg-gray-200"
-                          onClick={() => handleFabricFinishSelect(suggestion)}
-                        >
-                          {suggestion.fabricFinishName}
-                        </li>
-                      ))
-                    ) : (
+                  <ul className="absolute top-full left-0 z-10 w-full bg-white border border-gray-300 rounded-md shadow-lg mt-1">
+                    {fabricFinishSuggestions.map((item) => (
                       <li
-                        className="px-4 py-2 cursor-pointer text-sm text-blue-600 hover:bg-gray-200"
-                        onClick={handleAddNewFabricFinish}
+                        key={item.id}
+                        onClick={() => handleFabricFinishSelect(item)}
+                        className="cursor-pointer px-4 py-2 hover:bg-gray-100"
                       >
-                        Add New Fabric finish: "{fabricFinish}"
+                        {item.fabricFinishName}
                       </li>
-                    )}
+                    ))}
                   </ul>
                 )}
               </div>
-
               <div className="flex flex-col gap-2 relative">
                 <label className="font-semibold" htmlFor="gsm">
                   GSM:
@@ -1323,33 +1259,23 @@ const AddProductModal = ({ show, onClose }) => {
                   id="gsm"
                   value={gsm}
                   onChange={handleGsmChange}
-                  className="border border-gray-300 rounded-md px-2 py-2 bg-zinc-200"
+                  className="border border-gray-300  rounded-md px-2 py-1 bg-zinc-200"
                   placeholder="Enter GSM"
                 />
                 {gsmDropdown && gsm && (
-                  <ul className="absolute top-full left-0 z-10 w-full bg-white border border-gray-300 rounded-md shadow-lg">
-                    {gsmSuggestions.length > 0 ? (
-                      gsmSuggestions.map((suggestion) => (
-                        <li
-                          key={suggestion.id}
-                          className="px-4 py-2 cursor-pointer hover:bg-gray-200"
-                          onClick={() => handleGsmSelect(suggestion)}
-                        >
-                          {suggestion.gsmValue}
-                        </li>
-                      ))
-                    ) : (
+                  <ul className="absolute top-full left-0 z-10 w-full bg-white border border-gray-300 rounded-md shadow-lg mt-1">
+                    {gsmSuggestions.map((item) => (
                       <li
-                        className="px-4 py-2 cursor-pointer text-sm text-blue-600 hover:bg-gray-200"
-                        onClick={handleAddNewGsm}
+                        key={item.id}
+                        onClick={() => handleGsmSelect(item)}
+                        className="cursor-pointer px-4 py-2 hover:bg-gray-100"
                       >
-                        Add New GSM: "{gsm}"
+                        {item.gsmValue}
                       </li>
-                    )}
+                    ))}
                   </ul>
                 )}
               </div>
-
               <div className="flex flex-col gap-2 relative">
                 <label className="font-semibold" htmlFor="knitType">
                   Knit Type:
@@ -1359,213 +1285,153 @@ const AddProductModal = ({ show, onClose }) => {
                   id="knitType"
                   value={knitType}
                   onChange={handleKnitChange}
-                  className="border border-gray-300 rounded-md px-2 py-2 bg-zinc-200"
+                  className="border border-gray-300  rounded-md px-2 py-1 bg-zinc-200"
                   placeholder="Enter Knit Type"
                 />
                 {knitDropdown && knitType && (
-                  <ul className="absolute top-full left-0 z-10 w-full bg-white border border-gray-300 rounded-md shadow-lg">
-                    {knitSuggestions.length > 0 ? (
-                      knitSuggestions.map((suggestion) => (
-                        <li
-                          key={suggestion.id}
-                          className="px-4 py-2 cursor-pointer hover:bg-gray-200"
-                          onClick={() => handleKnitSelect(suggestion)}
-                        >
-                          {suggestion.knitType}
-                        </li>
-                      ))
-                    ) : (
+                  <ul className="absolute top-full left-0 z-10 w-full bg-white border border-gray-300 rounded-md shadow-lg mt-1">
+                    {knitSuggestions.map((item) => (
                       <li
-                        className="px-4 py-2 cursor-pointer text-sm text-blue-600 hover:bg-gray-200"
-                        onClick={handleAddNewKnitType}
+                        key={item.id}
+                        onClick={() => handleKnitSelect(item)}
+                        className="cursor-pointer px-4 py-2 hover:bg-gray-100"
                       >
-                        Add New knit type: "{knitType}"
+                        {item.knitType}
                       </li>
-                    )}
+                    ))}
                   </ul>
                 )}
               </div>
-
               <div className="flex flex-col gap-2 relative">
-                <label className="font-semibold" htmlFor="color">
-                  Color:
+                <label className="font-semibold" htmlFor="colors">
+                  Colors:
                 </label>
                 <input
                   type="text"
-                  id="color"
+                  id="colors"
                   value={colors}
                   onChange={handleColorChange}
-                  className="border border-gray-300 rounded-md px-2 py-2 bg-zinc-200"
-                  placeholder="Enter Color"
+                  className="border border-gray-300  rounded-md px-2 py-1 bg-zinc-200"
+                  placeholder="Enter Colors"
                 />
                 {colorDropdown && colors && (
-                  <ul className="absolute top-full left-0 z-10 w-full bg-white border border-gray-300 rounded-md shadow-lg">
-                    {colorSuggestions.length > 0 ? (
-                      colorSuggestions.map((suggestion) => (
-                        <li
-                          key={suggestion.id}
-                          className="px-4 py-2 cursor-pointer hover:bg-gray-200"
-                          onClick={() => handleColorSelect(suggestion)}
-                        >
-                          {suggestion.colorName}
-                        </li>
-                      ))
-                    ) : (
+                  <ul className="absolute top-full left-0 z-10 w-full bg-white border border-gray-300 rounded-md shadow-lg mt-1">
+                    {colorSuggestions.map((item) => (
                       <li
-                        className="px-4 py-2 cursor-pointer text-sm text-blue-600 hover:bg-gray-200"
-                        onClick={handleAddNewColor}
+                        key={item.id}
+                        onClick={() => handleColorSelect(item)}
+                        className="cursor-pointer px-4 py-2 hover:bg-gray-100"
                       >
-                        Add New color: "{colors}"
+                        {item.colorName}
                       </li>
-                    )}
+                    ))}
                   </ul>
                 )}
               </div>
-
               <div className="flex flex-col gap-2 relative">
-                <label className="font-semibold" htmlFor="size">
-                  Size:
+                <label className="font-semibold" htmlFor="sizes">
+                  Sizes:
                 </label>
                 <input
                   type="text"
-                  id="size"
+                  id="sizes"
                   value={sizes}
                   onChange={handleSizeChange}
-                  className="border border-gray-300 rounded-md px-2 py-2 bg-zinc-200"
+                  className="border border-gray-300  rounded-md px-2 py-1 bg-zinc-200"
                   placeholder="Enter Sizes"
                 />
                 {sizeDropdown && sizes && (
-                  <ul className="absolute top-full left-0 z-10 w-full bg-white border border-gray-300 rounded-md shadow-lg">
-                    {sizeSuggestions.length > 0 ? (
-                      sizeSuggestions.map((suggestion) => (
-                        <li
-                          key={suggestion.id}
-                          className="px-4 py-2 cursor-pointer hover:bg-gray-200"
-                          onClick={() => handleSizeSelect(suggestion)}
-                        >
-                          {suggestion.type_name}
-                        </li>
-                      ))
-                    ) : (
+                  <ul className="absolute top-full left-0 z-10 w-full bg-white border border-gray-300 rounded-md shadow-lg mt-1">
+                    {sizeSuggestions.map((item) => (
                       <li
-                        className="px-4 py-2 cursor-pointer text-sm text-blue-600 hover:bg-gray-200"
-                        onClick={handleAddNewSize}
+                        key={item.id}
+                        onClick={() => handleSizeSelect(item)}
+                        className="cursor-pointer px-4 py-2 hover:bg-gray-100"
                       >
-                        Add New size: "{sizes}"
+                        {item.type_name}
                       </li>
-                    )}
+                    ))}
                   </ul>
                 )}
               </div>
-
               <div className="flex flex-col gap-2 relative">
-                <label className="font-semibold" htmlFor="decoration">
+                <label className="font-semibold" htmlFor="decorations">
                   Decorations:
                 </label>
                 <input
                   type="text"
-                  id="decoration"
+                  id="decorations"
                   value={decorations}
                   onChange={handleDecorationChange}
-                  className="border border-gray-300 rounded-md px-2 py-2 bg-zinc-200"
+                  className="border border-gray-300  rounded-md px-2 py-1 bg-zinc-200"
                   placeholder="Enter Decorations"
                 />
                 {decorationDropdown && decorations && (
-                  <ul className="absolute top-full left-0 z-10 w-full bg-white border border-gray-300 rounded-md shadow-lg">
-                    {decorationSuggestions.length > 0 ? (
-                      decorationSuggestions.map((suggestion) => (
-                        <li
-                          key={suggestion.id}
-                          className="px-4 py-2 cursor-pointer hover:bg-gray-200"
-                          onClick={() => handleDecorationSelect(suggestion)}
-                        >
-                          {suggestion.decorationName}
-                        </li>
-                      ))
-                    ) : (
+                  <ul className="absolute top-full left-0 z-10 w-full bg-white border border-gray-300 rounded-md shadow-lg mt-1">
+                    {decorationSuggestions.map((item) => (
                       <li
-                        className="px-4 py-2 cursor-pointer text-sm text-blue-600 hover:bg-gray-200"
-                        onClick={handleAddNewDecoration}
+                        key={item.id}
+                        onClick={() => handleDecorationSelect(item)}
+                        className="cursor-pointer px-4 py-2 hover:bg-gray-100"
                       >
-                        Add New decoration: "{decorations}"
+                        {item.decorationName}
                       </li>
-                    )}
+                    ))}
                   </ul>
                 )}
               </div>
-
               <div className="flex flex-col gap-2 relative">
-                <label className="font-semibold" htmlFor="print">
-                  Print or Embed:
+                <label className="font-semibold" htmlFor="printOrEmbName">
+                  Print {"("}or{")"} Emb Name:
                 </label>
                 <input
                   type="text"
-                  id="print"
+                  id="printorEmbName"
                   value={printOrEmbName}
                   onChange={handlePrintChange}
-                  className="border border-gray-300 rounded-md px-2 py-2 bg-zinc-200"
-                  placeholder="Enter Print or Embed"
+                  className="border border-gray-300 rounded-md px-2 py-1 bg-zinc-200"
+                  placeholder="Enter Print (or) Emb Name"
                 />
                 {printDropdown && printOrEmbName && (
-                  <ul className="absolute top-full left-0 z-10 w-full bg-white border border-gray-300 rounded-md shadow-lg">
-                    {printSuggestions.length > 0 ? (
-                      printSuggestions.map((suggestion) => (
-                        <li
-                          key={suggestion.id}
-                          className="px-4 py-2 cursor-pointer hover:bg-gray-200"
-                          onClick={() => handlePrintSelect(suggestion)}
-                        >
-                          {suggestion.printType}
-                        </li>
-                      ))
-                    ) : (
+                  <ul className="absolute top-full left-0 z-10 w-full bg-white border border-gray-300 rounded-md shadow-lg mt-1">
+                    {printSuggestions.map((item) => (
                       <li
-                        className="px-4 py-2 cursor-pointer text-sm text-blue-600 hover:bg-gray-200"
-                        onClick={handleAddNewPrint}
+                        key={item.id}
+                        onClick={() => handlePrintSelect(item)}
+                        className="cursor-pointer px-4 py-2 hover:bg-gray-100"
                       >
-                        Add New print/emb: "{printOrEmbName}"
+                        {item.printType}
                       </li>
-                    )}
+                    ))}
                   </ul>
                 )}
               </div>
-
               <div className="flex flex-col gap-2 relative">
-                <label className="font-semibold" htmlFor="stitch">
+                <label className="font-semibold" htmlFor="stitchDetails">
                   Stitch Details:
                 </label>
                 <input
                   type="text"
-                  id="stitch"
+                  id="stitchDetails"
                   value={stitchDetails}
                   onChange={handleStitchDetailChange}
-                  className="border border-gray-300 rounded-md px-2 py-2 bg-zinc-200"
-                  placeholder="Enter Stitch details"
+                  className="border border-gray-300  rounded-md px-2 py-1 bg-zinc-200"
+                  placeholder="Enter Stitch Details"
                 />
                 {stitchDetailDropdown && stitchDetails && (
-                  <ul className="absolute top-full left-0 z-10 w-full bg-white border border-gray-300 rounded-md shadow-lg">
-                    {stitchDetailSuggestions.length > 0 ? (
-                      stitchDetailSuggestions.map((suggestion) => (
-                        <li
-                          key={suggestion.id}
-                          className="px-4 py-2 cursor-pointer hover:bg-gray-200"
-                          onClick={() => handleStitchDetailSelect(suggestion)}
-                        >
-                          {suggestion.stictchDetail}
-                        </li>
-                      ))
-                    ) : (
+                  <ul className="absolute top-full left-0 z-10 w-full bg-white border border-gray-300 rounded-md shadow-lg mt-1">
+                    {stitchDetailSuggestions.map((item) => (
                       <li
-                        className="px-4 py-2 cursor-pointer text-sm text-blue-600 hover:bg-gray-200"
-                        onClick={handleAddNewStitch}
+                        key={item.id}
+                        onClick={() => handleStitchDetailSelect(item)}
+                        className="cursor-pointer px-4 py-2 hover:bg-gray-100"
                       >
-                        Add New stitch detail: "{stitchDetails}"
+                        {item.stictchDetail}
                       </li>
-                    )}
+                    ))}
                   </ul>
                 )}
               </div>
-
               <div className="flex flex-col gap-2 relative">
                 <label className="font-semibold" htmlFor="neck">
                   Neck:
@@ -1575,33 +1441,23 @@ const AddProductModal = ({ show, onClose }) => {
                   id="neck"
                   value={neck}
                   onChange={handleNeckChange}
-                  className="border border-gray-300 rounded-md px-2 py-2 bg-zinc-200"
+                  className="border border-gray-300  rounded-md px-2 py-1 bg-zinc-200"
                   placeholder="Enter Neck"
                 />
                 {neckDropdown && neck && (
-                  <ul className="absolute top-full left-0 z-10 w-full bg-white border border-gray-300 rounded-md shadow-lg">
-                    {neckSuggestions.length > 0 ? (
-                      neckSuggestions.map((suggestion) => (
-                        <li
-                          key={suggestion.id}
-                          className="px-4 py-2 cursor-pointer hover:bg-gray-200"
-                          onClick={() => handleNeckSelect(suggestion)}
-                        >
-                          {suggestion.neckType}
-                        </li>
-                      ))
-                    ) : (
+                  <ul className="absolute top-full left-0 z-10 w-full bg-white border border-gray-300 rounded-md shadow-lg mt-1">
+                    {neckSuggestions.map((item) => (
                       <li
-                        className="px-4 py-2 cursor-pointer text-sm text-blue-600 hover:bg-gray-200"
-                        onClick={handleAddNewNeck}
+                        key={item.id}
+                        onClick={() => handleNeckSelect(item)}
+                        className="cursor-pointer px-4 py-2 hover:bg-gray-100"
                       >
-                        Add New neck: "{neck}"
+                        {item.neckType}
                       </li>
-                    )}
+                    ))}
                   </ul>
                 )}
               </div>
-
               <div className="flex flex-col gap-2 relative">
                 <label className="font-semibold" htmlFor="sleeve">
                   Sleeve:
@@ -1611,29 +1467,20 @@ const AddProductModal = ({ show, onClose }) => {
                   id="sleeve"
                   value={sleeve}
                   onChange={handleSleeveChange}
-                  className="border border-gray-300 rounded-md px-2 py-2 bg-zinc-200"
+                  className="border border-gray-300  rounded-md px-2 py-1 bg-zinc-200"
                   placeholder="Enter Sleeve"
                 />
                 {sleeveDropdown && sleeve && (
-                  <ul className="absolute top-full left-0 z-10 w-full bg-white border border-gray-300 rounded-md shadow-lg">
-                    {sleeveSuggestions.length > 0 ? (
-                      sleeveSuggestions.map((suggestion) => (
-                        <li
-                          key={suggestion.id}
-                          className="px-4 py-2 cursor-pointer hover:bg-gray-200"
-                          onClick={() => handleSleeveSelect(suggestion)}
-                        >
-                          {suggestion.sleeveName}
-                        </li>
-                      ))
-                    ) : (
+                  <ul className="absolute top-full left-0 z-10 w-full bg-white border border-gray-300 rounded-md shadow-lg mt-1">
+                    {sleeveSuggestions.map((item) => (
                       <li
-                        className="px-4 py-2 cursor-pointer text-sm text-blue-600 hover:bg-gray-200"
-                        onClick={handleAddNewSleeve}
+                        key={item.id}
+                        onClick={() => handleSleeveSelect(item)}
+                        className="cursor-pointer px-4 py-2 hover:bg-gray-100"
                       >
-                        Add New sleeve: "{sleeve}"
+                        {item.sleeveName}
                       </li>
-                    )}
+                    ))}
                   </ul>
                 )}
               </div>
@@ -1646,69 +1493,49 @@ const AddProductModal = ({ show, onClose }) => {
                   id="length"
                   value={length}
                   onChange={handleLengthChange}
-                  className="border border-gray-300 rounded-md px-2 py-2 bg-zinc-200"
+                  className="border border-gray-300  rounded-md px-2 py-1 bg-zinc-200"
                   placeholder="Enter Length"
                 />
                 {lengthDropdown && length && (
-                  <ul className="absolute top-full left-0 z-10 w-full bg-white border border-gray-300 rounded-md shadow-lg">
-                    {lengthSuggestions.length > 0 ? (
-                      lengthSuggestions.map((suggestion) => (
-                        <li
-                          key={suggestion.id}
-                          className="px-4 py-2 cursor-pointer hover:bg-gray-200"
-                          onClick={() => handleLengthSelect(suggestion)}
-                        >
-                          {suggestion.lengthType}
-                        </li>
-                      ))
-                    ) : (
+                  <ul className="absolute top-full left-0 z-10 w-full bg-white border border-gray-300 rounded-md shadow-lg mt-1">
+                    {lengthSuggestions.map((item) => (
                       <li
-                        className="px-4 py-2 cursor-pointer text-sm text-blue-600 hover:bg-gray-200"
-                        onClick={handleAddNewLength}
+                        key={item.id}
+                        onClick={() => handleLengthSelect(item)}
+                        className="cursor-pointer px-4 py-2 hover:bg-gray-100"
                       >
-                        Add New length: "{length}"
+                        {item.lengthType}
                       </li>
-                    )}
+                    ))}
                   </ul>
                 )}
               </div>
-
               <div className="flex flex-col gap-2 relative">
-                <label className="font-semibold" htmlFor="packing">
+                <label className="font-semibold" htmlFor="packingMethod">
                   Packing Method:
                 </label>
                 <input
                   type="text"
-                  id="packing"
+                  id="packingMethod"
                   value={packingMethod}
                   onChange={handlePackingMethodChange}
-                  className="border border-gray-300 rounded-md px-2 py-2 bg-zinc-200"
-                  placeholder="Enter Packaging Method"
+                  className="border border-gray-300  rounded-md px-2 py-1 bg-zinc-200"
+                  placeholder="Enter Packing Method"
                 />
                 {packingDropdown && packingMethod && (
-                  <ul className="absolute top-full left-0 z-10 w-full bg-white border border-gray-300 rounded-md shadow-lg">
-                    {packingSuggestions.length > 0 ? (
-                      packingSuggestions.map((suggestion) => (
-                        <li
-                          key={suggestion.id}
-                          className="px-4 py-2 cursor-pointer hover:bg-gray-200"
-                          onClick={() => handlePackingMethodSelect(suggestion)}
-                        >
-                          {suggestion.packingType}
-                        </li>
-                      ))
-                    ) : (
+                  <ul className="absolute top-full left-0 z-10 w-full bg-white border border-gray-300 rounded-md shadow-lg mt-1">
+                    {packingSuggestions.map((item) => (
                       <li
-                        className="px-4 py-2 cursor-pointer text-sm text-blue-600 hover:bg-gray-200"
-                        onClick={handleAddNewPackingMethod}
+                        key={item.id}
+                        onClick={() => handlePackingMethodSelect(item)}
+                        className="cursor-pointer px-4 py-2 hover:bg-gray-100"
                       >
-                        Add New packing method: "{packingMethod}"
+                        {item.packingType}
                       </li>
-                    )}
+                    ))}
                   </ul>
                 )}
               </div>
-
               <div className="flex flex-col gap-2 relative">
                 <label className="font-semibold" htmlFor="piecesPerInner">
                   No.of pcs per inner:
@@ -1718,45 +1545,38 @@ const AddProductModal = ({ show, onClose }) => {
                   id="piecesPerInner"
                   value={innerPcs}
                   onChange={(e) => setInnerPcs(e.target.value)}
-                  className="border border-gray-300 rounded-md px-2 py-2 bg-zinc-200"
+                  className="border border-gray-300 rounded-md px-2 py-1 bg-zinc-200"
                   placeholder="Enter No of pieces per inner"
                 />
               </div>
 
               <div className="flex flex-col gap-2 relative">
-                <label className="font-semibold" htmlFor="measurement-chart">
-                  Measurement chart:
+                <label className="font-semibold" htmlFor="mesurementChart">
+                  Measurement Chart:
                 </label>
-                <input
-                  type="text"
-                  id="measurement-chart"
-                  value={measurementChart}
-                  onChange={handleMesurementChartChange}
-                  className="border border-gray-300 rounded-md px-2 py-2 bg-zinc-200"
-                  placeholder="Enter Measurement chart"
-                />
+                <div className="flex items-center gap-4">
+                  <input
+                    type="text"
+                    id="mesurementChart"
+                    value={measurementChart}
+                    onChange={handleMesurementChartChange}
+                    className="border border-gray-300 rounded-md px-2 py-1 bg-zinc-200"
+                    placeholder="Enter Measurement Chart"
+                  />                
                 {mesurementDropdown && measurementChart && (
-                  <ul className="absolute top-full left-0 z-10 w-full bg-white border border-gray-300 rounded-md shadow-lg">
-                    {mesurementSuggestions.length > 0 ? (
-                      mesurementSuggestions.map((suggestion) => (
-                        <li
-                          key={suggestion.id}
-                          className="px-4 py-2 cursor-pointer hover:bg-gray-200"
-                          onClick={() => handleMesurementChartSelect(suggestion)}
-                        >
-                          {suggestion.name}
-                        </li>
-                      ))
-                    ) : (
+                  <ul className="absolute top-16 left-0 z-10 w-full bg-white border border-gray-300 rounded-md shadow-lg mt-1">
+                    {mesurementSuggestions.map((item) => (
                       <li
-                        className="px-4 py-2 cursor-pointer text-sm text-blue-600 hover:bg-gray-200"
-                        onClick={handleAddNewMeasurement}
+                        key={item.id}
+                        onClick={() => handleMesurementChartSelect(item)}
+                        className="cursor-pointer px-4 py-2 hover:bg-gray-100"
                       >
-                        Add New measurement chart: "{measurementChart}"
+                        {item.name}
                       </li>
-                    )}
+                    ))}
                   </ul>
                 )}
+                </div>
               </div>
 
               {selectedMesurement && selectedMesurement.sample_size_file && (
@@ -1769,6 +1589,17 @@ const AddProductModal = ({ show, onClose }) => {
                 </div>
               )}
             </div>
+            
+            {successMessage && (
+              <div className="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 my-4">
+                <p>{successMessage}</p>
+              </div>
+            )}
+            {errorMessage && (
+              <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 my-4">
+                <p>{errorMessage}</p>
+              </div>
+            )}
 
             <div className="flex flex-col gap-2 mt-3">
               <label className="font-semibold" htmlFor="shortDescription">
@@ -1777,7 +1608,7 @@ const AddProductModal = ({ show, onClose }) => {
               <textarea
                 id="shortDescription"
                 value={shortDescription}
-                onChange={handleShortDescriptionChange}
+                onChange={(e) => setShortDescription(e.target.value)}
                 className="border border-gray-300 rounded-md px-2 py-2 bg-zinc-200"
                 rows="1"
                 placeholder="Enter Short Description"
@@ -1791,14 +1622,13 @@ const AddProductModal = ({ show, onClose }) => {
               <textarea
                 id="fullDescription"
                 value={fullDescription}
-                onChange={handleFullDescriptionChange}
+                onChange={(e) => setFullDescription(e.target.value)}
                 className="border border-gray-300 rounded-md px-2 py-2 bg-zinc-200"
                 rows="2"
                 placeholder="Enter Full Description"
               />
             </div>
-
-            {/* <button className="bg-sky-600 px-28 py-2 text-white absolute bottom-5 right-40 rounded-lg font-bold text-sm" >Add Products</button> */}
+            
             <div className="mt-10 flex justify-center gap-4">
               <button
                 className="bg-blue-500 text-white px-4 py-2 rounded-md"

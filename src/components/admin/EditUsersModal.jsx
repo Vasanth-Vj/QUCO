@@ -22,11 +22,6 @@ const EditUsersModal = ({ user, onClose, onUpdate, permissions }) => {
         }));
     };
 
-    // const handleUpdate = () => {
-    //     onUpdate(editedUser);
-    //     onClose();
-    // };
-
     const handleUpdate = async () => {
         try {
           const response = await apiService.put(`/users/${editedUser.id}`, {
@@ -76,9 +71,9 @@ const EditUsersModal = ({ user, onClose, onUpdate, permissions }) => {
                             </button>
                         </div>
                         <div className="flex items-center mb-4">
-                            {user.avatar ? (
+                            {user.profile ? (
                                 <img
-                                    src={user.avatar}
+                                    src={user.profile}
                                     alt={user.full_name}
                                     className="w-16 h-16 rounded-full object-cover mr-4"
                                 />
@@ -122,8 +117,8 @@ const EditUsersModal = ({ user, onClose, onUpdate, permissions }) => {
                                         </button>
                                     </div>
                                 </div>
-                                    <hr className="my-2 border border-gray-200 w-full" />
-        </>
+                    <hr className="my-2 border border-gray-200 w-full" />
+                </>
                             ))}
                         </div>
                         <div className="mt-4 flex justify-between">
@@ -143,12 +138,12 @@ const EditUsersModal = ({ user, onClose, onUpdate, permissions }) => {
                     </div>
                 </div>
         )}
-                    {isEditProfileModalOpen && (
-                        <EditUserProfileModal
-                            user={editedUser}
-                            onClose={() => setIsEditProfileModalOpen(false)}
-                            onUpdate={handleUpdateUser}
-                        />
+        {isEditProfileModalOpen && (
+            <EditUserProfileModal
+                user={editedUser}
+                onClose={() => setIsEditProfileModalOpen(false)}
+                onUpdate={handleUpdateUser}
+            />
     )}
         </>
     );

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import closeIcon from "../../../assets/close-modal-icon.svg";
 import apiService from "../../../apiService";
-import AddStockOutModel from '../../stocks/stock-out/AddStockOutModel';
+import AddStockOutModel from "../../stocks/stock-out/AddStockOutModel";
 
 const CreateWithoutPOModel = ({ show, onClose, getAllPurchaseOrder }) => {
   const [buyer, setBuyer] = useState("");
@@ -29,12 +29,11 @@ const CreateWithoutPOModel = ({ show, onClose, getAllPurchaseOrder }) => {
   const [sleeve, setSleeve] = useState("");
   const [length, setLength] = useState("");
   const [measurementChart, setMeasurementChart] = useState("");
-  const [selectedMeasurementImage, setSelectedMeasurementImage] =
-    useState(null);
+  const [selectedMeasurementImage, setSelectedMeasurementImage] = useState(null);
   const [packingMethod, setPackingMethod] = useState("");
   const [shortDescription, setShortDescription] = useState("");
   const [fullDescription, setFullDescription] = useState("");
-
+  
   const [notes, setNotes] = useState("");
   const [assortmentType, setAssortmentType] = useState("assorted");
   const [innerPcs, setInnerPcs] = useState({});
@@ -45,6 +44,7 @@ const CreateWithoutPOModel = ({ show, onClose, getAllPurchaseOrder }) => {
   const [totalInnerPcsPerBundle, setTotalInnerPcsPerBundle] = useState(0);
   const [totalProducts, setTotalProducts] = useState(0);
   const [stockOutPoNo, setStockOutPoNo] = useState('');
+  const [stockOutOrder, setStockOutOrder] = useState({});
   const [showStockOut, setShowStockOut] = useState(false);
 
   const handleDeliveryDateChange = (e) => {
@@ -62,7 +62,6 @@ const CreateWithoutPOModel = ({ show, onClose, getAllPurchaseOrder }) => {
     try {
       if (buyerInput.length > 0) {
         const response = await apiService.get("/buyers/getall");
-      
         const filteredBuyers = response.data.filter((b) =>
           b.name.toLowerCase().startsWith(buyerInput.toLowerCase())
         );
@@ -123,9 +122,9 @@ const CreateWithoutPOModel = ({ show, onClose, getAllPurchaseOrder }) => {
   const handleStyleChange = (e) => {
     const styleInput = e.target.value;
     if (styleInput.length > 0) {
-      setStyleNumber(styleInput);
-      setStyleDropdown(true);
-      fetchStyleSuggestions(styleInput);
+    setStyleNumber(styleInput);
+    setStyleDropdown(true);
+    fetchStyleSuggestions(styleInput);
     } else {
       setStyleNumber("");
       setStyleDropdown(false);
@@ -210,33 +209,28 @@ const CreateWithoutPOModel = ({ show, onClose, getAllPurchaseOrder }) => {
   const handleInnerPcsChange = (size, value) => {
     setInnerPcs((prev) => ({
       ...prev,
-      [size]: Number(value),
+      [size]: Number(value)
     }));
   };
 
   const handleOuterPcsChange = (size, value) => {
     setOuterPcs((prev) => ({
       ...prev,
-      [size]: Number(value),
+      [size]: Number(value)
     }));
   };
 
+  
   useEffect(() => {
-    const totalInner = Object.values(innerPcs).reduce(
-      (sum, pcs) => sum + Number(pcs || 0),
-      0
-    );
-    const totalOuter = Object.values(outerPcs).reduce(
-      (sum, pcs) => sum + Number(pcs || 0),
-      0
-    );
+    const totalInner = Object.values(innerPcs).reduce((sum, pcs) => sum + Number(pcs || 0), 0);
+    const totalOuter = Object.values(outerPcs).reduce((sum, pcs) => sum + Number(pcs || 0), 0);
     setTotalInnerPcs(totalInner);
     setTotalOuterPcs(totalOuter);
-
+    
     const totalInnerPerBundle = sizes.reduce((sum, size) => {
       const inner = innerPcs[size] || 0;
       const outer = outerPcs[size] || 0;
-      return sum + inner * outer;
+      return sum + (inner * outer);
     }, 0);
 
     setTotalInnerPcsPerBundle(totalInnerPerBundle);
@@ -263,6 +257,7 @@ const CreateWithoutPOModel = ({ show, onClose, getAllPurchaseOrder }) => {
     };
 
     try {
+      console.log(purchaseData);
       const response = await apiService.post("/purchases/create", purchaseData);
 
       if (response.status === 201) {
@@ -291,8 +286,10 @@ const CreateWithoutPOModel = ({ show, onClose, getAllPurchaseOrder }) => {
         setShortDescription("");
         setFullDescription("");
         setSelectedProduct(null);
-      
-        handleStockOut(response.data)
+        setStockOutPoNo(response.data.purchase_order_number);
+        setStockOutOrder(response.data)
+        handleStockOutModelShow();
+        // onClose();
       } else {
         console.error("Error creating Purchase order:", response.data);
       }
@@ -301,23 +298,16 @@ const CreateWithoutPOModel = ({ show, onClose, getAllPurchaseOrder }) => {
     }
   };
 
-  const handleStockOut = async(data) => {
-    try {
-      console.log(data.purchase_order_number);
-      await setStockOutPoNo(data.purchase_order_number);
-      await handleStockOutModelShow();
-    } catch (error) {
-      
+  const handleStockOutModelShow = () => {
+    if(stockOutPoNo == null) {
+      setShowStockOut(false);
+    } else {
+    setShowStockOut(true);
     }
   }
 
-  const handleStockOutModelShow = () => {
-    setShowStockOut(true);
-
-  }
-
   const handleStockOutModelClose = () => {
-    setShowStockOut(false);    
+    setShowStockOut(false);
   }
 
   if (!show) return null;
@@ -452,6 +442,19 @@ const CreateWithoutPOModel = ({ show, onClose, getAllPurchaseOrder }) => {
                     )}
                   </ul>
                 )}
+              </div>
+
+              <div className="flex flex-col gap-2 relative">
+                <label className="font-semibold" htmlFor="referenceNo">
+                  Reference No:
+                </label>
+                <input
+                  type="text"
+                  id="referenceNo"
+                  value={ReferenceNo}
+                  className="border border-gray-300 rounded-md px-2 py-2 bg-zinc-200"
+                  disabled
+                />
               </div>
 
               <div className="flex flex-col gap-2 relative">
@@ -674,6 +677,8 @@ const CreateWithoutPOModel = ({ show, onClose, getAllPurchaseOrder }) => {
                   disabled
                 />
               </div>
+              
+
             </div>
 
             <div className="flex flex-col gap-2 mt-3">
@@ -682,7 +687,7 @@ const CreateWithoutPOModel = ({ show, onClose, getAllPurchaseOrder }) => {
               </label>
               <textarea
                 id="shortDescription"
-                value={shortDescription || ''}
+                value={shortDescription}
                 className="border border-gray-300 rounded-md px-2 py-2 bg-zinc-200"
                 rows="1"
                 disabled
@@ -695,7 +700,7 @@ const CreateWithoutPOModel = ({ show, onClose, getAllPurchaseOrder }) => {
               </label>
               <textarea
                 id="fullDescription"
-                value={fullDescription || ''}
+                value={fullDescription}
                 className="border border-gray-300 rounded-md px-2 py-2 bg-zinc-200"
                 rows="2"
                 disabled
@@ -717,108 +722,103 @@ const CreateWithoutPOModel = ({ show, onClose, getAllPurchaseOrder }) => {
             </div>
 
             <div className="my-4">
-              <label className="font-semibold">Packaging Type:</label>
-              <div className="flex items-center gap-4 mt-2">
-                <label>
-                  <input
-                    type="radio"
-                    value="assorted"
-                    checked={assortmentType === "assorted"}
-                    onChange={handleAssortmentTypeChange}
-                    className="mx-1"
-                  />
-                  Assorted
-                </label>
-                <label>
-                  <input
-                    type="radio"
-                    value="solid"
-                    checked={assortmentType === "solid"}
-                    onChange={handleAssortmentTypeChange}
-                    className="mx-1"
-                  />
-                  Solid
-                </label>
-              </div>
-            </div>
+          <label className="font-semibold">Packaging Type:</label>
+          <div className="flex items-center gap-4 mt-2">
+            <label>
+              <input
+                type="radio"
+                value="assorted"
+                checked={assortmentType === "assorted"}
+                onChange={handleAssortmentTypeChange}
+                className="mx-1"
+              />
+               Assorted
+            </label>
+            <label>
+              <input
+                type="radio"
+                value="solid"
+                checked={assortmentType === "solid"}
+                onChange={handleAssortmentTypeChange}
+                className="mx-1"
+              />
+               Solid
+            </label>
+          </div>
+        </div>
 
             <div className="">
               <div className="flex items-center gap-2 mb-4">
                 <h3 className="text-lg font-medium">Order Info:</h3>
               </div>
               <div className="flex gap-4 border border-gray-400 px-5 justify-between">
-                <div className="p-4 rounded-lg">
-                  <h4 className="text-sm font-medium mb-4">
-                    Quantity per size:
-                  </h4>
-                  <div className="flex flex-col gap-4">
-                    {sizes.map((size, index) => (
-                      <div key={index} className="flex items-center gap-4 mb-2">
-                        <div className="w-16">{size}: </div>
-                        <input
-                          type="number"
-                          value={innerPcs[size] || ""}
-                          onChange={(e) =>
-                            handleInnerPcsChange(size, e.target.value)
-                          }
-                          placeholder="Inner Pcs"
-                          className="border border-gray-300 rounded-md px-2 py-1 w-24"
-                          disabled={assortmentType === "solid"}
-                        />
-                        <input
-                          type="number"
-                          value={outerPcs[size] || ""}
-                          onChange={(e) =>
-                            handleOuterPcsChange(size, e.target.value)
-                          }
-                          placeholder="Outer Pcs"
-                          className="border border-gray-300 rounded-md px-2 py-1 w-24"
-                        />
-                      </div>
-                    ))}
-                  </div>
-                </div>
+            <div className="p-4 rounded-lg">
+              <h4 className="text-sm font-medium mb-4">Quantity per size:</h4>
+              <div className="flex flex-col gap-4">
+              {sizes.map((size, index) => (
+            <div key={index} className="flex items-center gap-4 mb-2">
+              <div className="w-16">{size}: </div>
+              <input
+                type="number"
+                value={innerPcs[size] || ''}
+                onChange={(e) => handleInnerPcsChange(size, e.target.value)}
+                placeholder="Inner Pcs"
+                className="border border-gray-300 rounded-md px-2 py-1 w-24"
+                disabled={assortmentType === "solid"}
+              />
+              <input
+                type="number"
+                value={outerPcs[size] || ''}
+                onChange={(e) => handleOuterPcsChange(size, e.target.value)}
+                placeholder="Outer Pcs"
+                className="border border-gray-300 rounded-md px-2 py-1 w-24"
+              />
+            </div>
+          ))}
+              </div>
+            </div>
 
-                <div className="px-20 content-center">
-                  <label className="font-semibold">Number of Bundles: </label>
-                  <input
-                    type="number"
-                    value={bundles}
-                    onChange={(e) => setBundles(Number(e.target.value))}
-                    placeholder="Bundles"
-                    className="border border-gray-300 rounded-md px-2 py-1 w-24"
-                  />
-                </div>
+            <div className="px-20 content-center">
+          <label className="font-semibold">Number of Bundles: </label>
+          <input
+            type="number"
+            value={bundles}
+            onChange={(e) => setBundles(Number(e.target.value))}
+            placeholder="Bundles"
+            className="border border-gray-300 rounded-md px-2 py-1 w-24"
+          />
+        </div>
 
-                <div className="p-4 bg-gray-100 flex items-center justify-center mt-8 mb-8">
-                  <div className="flex flex-col gap-4">
-                    <div className="flex gap-5 justify-between">
-                      <label className="block text-sm font-medium text-gray-700">
-                        Total Inner Pcs
-                      </label>
-                      <span>{totalInnerPcs}</span>
-                    </div>
-                    <div className="flex gap-5 justify-between">
-                      <label className="block text-sm font-medium text-gray-700">
-                        Total Outer Pcs
-                      </label>
-                      <span>{totalOuterPcs}</span>
-                    </div>
-                    <div className="flex gap-5 justify-between">
-                      <label className="block text-sm font-medium text-gray-700">
-                        Total Pcs per Bundle
-                      </label>
-                      <span>{totalInnerPcsPerBundle}</span>
-                    </div>
-                    <div className="flex gap-5 justify-between">
-                      <label className="block text-sm font-medium text-gray-700">
-                        Total Pcs
-                      </label>
-                      <span>{totalProducts}</span>
-                    </div>
-                  </div>
+        <div className="p-4 bg-gray-100 flex items-center justify-center mt-8 mb-8">
+              <div className="flex flex-col gap-4">
+                <div className="flex gap-5 justify-between">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Total Inner Pcs
+                  </label>
+                  <span>{totalInnerPcs}</span>
+                </div>
+                <div className="flex gap-5 justify-between">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Total Outer Pcs
+                  </label>
+                  <span>{totalOuterPcs}</span>
+                </div>
+                <div className="flex gap-5 justify-between">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Total Pcs per Bundle
+                  </label>
+                  <span>{totalInnerPcsPerBundle}</span>
+                </div>
+                <div className="flex gap-5 justify-between">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Total Pcs
+                  </label>
+                  <span>{totalProducts}</span>
                 </div>
               </div>
+            </div>
+
+          </div>
             </div>
           </div>
           <div className="flex justify-center px-20 mt-5">
@@ -831,7 +831,7 @@ const CreateWithoutPOModel = ({ show, onClose, getAllPurchaseOrder }) => {
           </div>
         </div>
       </div>
-      <AddStockOutModel show={handleStockOutModelShow} onClose={handleStockOutModelClose} stockOutPoNo={stockOutPoNo}/>
+      <AddStockOutModel show={showStockOut} onClose={handleStockOutModelClose} stockOutPoNo={stockOutPoNo} stockOutOrder={stockOutOrder}/>
     </div>
   );
 };

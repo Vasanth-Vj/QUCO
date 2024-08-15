@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import dropdownIcon from "../../assets/dropdown-icon.svg";
-import StyleNo from "./StyleNo";
+import ReferenceNo from './ReferenceNo';
 
 import Brand from "./Brand";
 import Fabric from "./Fabric";
@@ -23,7 +23,6 @@ import noDataImage from "../../assets/no-data1.png";
 import Category from "./Category";
 import ProductTypes from "./ProductTypes";
 import Buyer from "./Buyer";
-import RefNo from "./RefNo";
 
 const ProductsTopLayer = ({
   showDropdown = true,
@@ -36,8 +35,7 @@ const ProductsTopLayer = ({
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const presets = [
-    { id: "pr19", value: "19", label: "Buyer", component: Buyer },
-    { id: "pr1", value: "1", label: "Ref No", component: RefNo },
+    { id: "pr1", value: "1", label: "Reference No", component: ReferenceNo },
     { id: "pr2", value: "2", label: "Category", component: Category,},
     { id: "pr3", value: "3", label: "Brand", component: Brand },
     { id: "pr4", value: "4", label: "Fabric", component: Fabric },
@@ -81,6 +79,7 @@ const ProductsTopLayer = ({
       label: "ProductTypes",
       component: ProductTypes,
     },
+    { id: "pr19", value: "19", label: "Buyers", component: Buyer },
   ];
 
   const handlePresetChange = (event) => {
@@ -155,7 +154,7 @@ const ProductsTopLayer = ({
 
   return (
     <div>
-      <div className="flex flex-col md:flex-row justify-between items-center px-4 py-2 min-h-[80px] bg-white rounded-lg m-7">
+      <div className="flex flex-col md:flex-row justify-between items-center px-4 py-2 min-h-[80px] bg-white">
         {showDropdown && (
           <div className="relative mr-4">
             <span className="text-xs font-medium">Select Product Category</span>

@@ -6,7 +6,7 @@ const CreateStockInwardModal = ({ showModal, close }) => {
   const stockData = {
     styleNo: "123456",
     referenceNo: "REF123",
-    date: "12/12/2021",
+    date: "12/12/2021", 
     size: "S",
     quantity: "10",
     description: "Shirt",
