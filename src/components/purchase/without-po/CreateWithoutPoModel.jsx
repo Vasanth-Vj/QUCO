@@ -17,7 +17,7 @@ const CreateWithoutPOModel = ({ show, onClose, getAllPurchaseOrder }) => {
   const [productType, setProductType] = useState("");
   const [brand, setBrand] = useState("");
   const [fabric, setFabric] = useState("");
-  const [fabricFinish, setFabricFinish] = useState("");
+  const [fabricFinish, setFabricFinish] = useState(""); 
   const [gsm, setGsm] = useState(null);
   const [knitType, setKnitType] = useState("");
   const [colors, setColors] = useState("");

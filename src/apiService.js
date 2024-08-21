@@ -5,9 +5,7 @@ const API_BASE_URL = 'https://qucoerp.ysk.co.in';
 
 const apiService = axios.create({
   baseURL: API_BASE_URL,
-  // headers: {
-  //   'Content-Type': 'application/json',
-  // },
+ 
 });
 
 // 167.71.231.139

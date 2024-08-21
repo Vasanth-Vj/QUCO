@@ -6,7 +6,7 @@ import imgbg from "../../../assets/imgbg.jpg";
 const EditStockInModal = ({ showModal, close, getAllStocks, stockInId }) => {
   const [styleNumber, setStyleNumber] = useState("");
 
-  const [selectedProductId, setSelectedProductId] = useState(null);
+  const [selectedProductId, setSelectedProductId] = useState(null); 
   const [ReferenceNo, setReferenceNo] = useState("");
   const [category, setCategory] = useState("");
   const [productType, setProductType] = useState("");
@@ -478,21 +478,15 @@ const handleOuterPcsChange = (e, sizeName) => {
   };
 
   useEffect(() => {
-    const totalInner = Object.values(innerPcs).reduce(
-      (sum, pcs) => sum + Number(pcs || 0),
-      0
-    );
-    const totalOuter = Object.values(outerPcs).reduce(
-      (sum, pcs) => sum + Number(pcs || 0),
-      0
-    );
+    const totalInner = Object.values(innerPcs).reduce((sum, pcs) => sum + Number(pcs || 0), 0);
+    const totalOuter = Object.values(outerPcs).reduce((sum, pcs) => sum + Number(pcs || 0), 0);
     setTotalInnerPcs(totalInner);
     setTotalOuterPcs(totalOuter);
-
+    
     const totalInnerPerBundle = sizes.reduce((sum, size) => {
       const inner = innerPcs[size] || 0;
       const outer = outerPcs[size] || 0;
-      return sum + inner * outer;
+      return sum + (inner * outer);
     }, 0);
 
     setTotalInnerPcsPerBundle(totalInnerPerBundle);
@@ -561,7 +555,7 @@ const handleOuterPcsChange = (e, sizeName) => {
         </div>
         <hr className="my-4" />
         <div className="flex justify-between px-20 my-5 mt-6">
-          <div className="flex flex-col grid grid-cols-3 2xl:grid-cols-5 gap-2">
+          <div className=" grid grid-cols-3 2xl:grid-cols-5 gap-2">
             <div className="flex flex-col">
               <div className="flex flex-col gap-2 relative">
                 <label className="font-semibold" htmlFor="styleNumber">
@@ -885,15 +879,15 @@ const handleOuterPcsChange = (e, sizeName) => {
                     <div className="w-16">{size}: </div>
                     <input
                       type="number"
-                      value={stockInData.stock_by_size.find(item => item.sizeName === size.sizeName)?.innerPcs || 0}
+                      value={innerPcs[size] || ''}
                       onChange={(e) => handleInnerPcsChange(e, size.sizeName)}
                       placeholder="Inner Pcs"
                       className="border border-gray-300 rounded-md px-2 py-1 w-24"
                       disabled={assortmentType === "solid"}
-                    />
+                    /> 
                     <input
                       type="number"
-                      value={stockInData.stock_by_size.find(item => item.sizeName === size.sizeName)?.outerPcs || 0}
+                      value={outerPcs[size] || ''}
                       onChange={(e) => handleOuterPcsChange(e, size.sizeName)}
                       placeholder="Outer Pcs"
                       className="border border-gray-300 rounded-md px-2 py-1 w-24"

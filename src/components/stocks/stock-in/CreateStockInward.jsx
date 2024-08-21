@@ -3,7 +3,7 @@ import closeIcon from "../../../assets/close-modal-icon.svg";
 import editIcon from "../../../assets/edit-icon.svg";
 
 const CreateStockInwardModal = ({ showModal, close }) => {
-  const stockData = {
+  const stockData = { 
     styleNo: "123456",
     referenceNo: "REF123",
     date: "12/12/2021", 

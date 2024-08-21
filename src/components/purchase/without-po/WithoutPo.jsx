@@ -18,7 +18,7 @@ const WithoutPo = () => {
   const [recordsPerPage, setRecordsPerPage] = useState(5);
   const [showModal, setShowModal] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
-  const [selectedProductId, setSelectedProductId] = useState(null);
+  const [selectedWithOutPoId, setSelectedWithOutPoId] = useState(null);
 
   // Function to fetch all orders
   const getAllPurchaseOrder = async () => {
@@ -56,7 +56,7 @@ const WithoutPo = () => {
   };
 
   const handleEditClick = (id) => {
-    setSelectedProductId(id);
+    setSelectedWithOutPoId(id);
     setShowModal(true);
   };
 
@@ -92,7 +92,7 @@ const WithoutPo = () => {
 
   const handleCloseModal = () => {
     setShowModal(false);
-    setSelectedProductId(null);
+    setSelectedWithOutPoId(null);
   };
 
   const handleAddModalClose = () => {
@@ -221,7 +221,7 @@ const WithoutPo = () => {
         </div>
       </div>
       <CreateWithoutPoModal show={showAddModal} onClose={handleAddModalClose} getAllPurchaseOrder={getAllPurchaseOrder} />
-      <EditWithoutPoModal show={showModal} onClose={handleCloseModal} productId={selectedProductId} />
+      <EditWithoutPoModal show={showModal} onClose={handleCloseModal} withPoOutId={selectedWithOutPoId} />
     </>
   );
 };

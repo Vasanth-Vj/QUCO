@@ -212,7 +212,7 @@ const UsersTable = ({searchQuery}) => {
                                     {row.full_name.charAt(0).toUpperCase()}
                                 </div>
                             )}
-                      </div>
+                      </div> 
                     </td>
                 <td className="px-6 py-2 whitespace-nowrap text-md text-left text-black w-64">
                     {row.full_name}

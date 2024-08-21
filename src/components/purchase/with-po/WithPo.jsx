@@ -19,6 +19,7 @@ const WithPo = () => {
   const [showModal, setShowModal] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
   const [selectedProductId, setSelectedProductId] = useState(null);
+  const [selectedWithPoId, setSelectedWithPoId] = useState(null);
 
 
    // Function to fetch all orders
@@ -29,7 +30,7 @@ const WithPo = () => {
         headers: {
           'Content-Type': 'application/json',
         },
-      });
+      }); 
       // Format the created_at date
     const formattedData = response.data.map(stock => ({
       ...stock,
@@ -57,7 +58,7 @@ const WithPo = () => {
   };
 
   const handleEditClick = (id) => {
-    setSelectedProductId(id);
+    setSelectedWithPoId(id);
     setShowModal(true);
   };
 
@@ -222,7 +223,7 @@ const WithPo = () => {
         </div>
       </div>
       <CreatePoModal show={showAddModal} onClose={handleAddModalClose} getAllPurchaseOrder={getAllPurchaseOrder}/>
-      <EditPoModal show={showModal} onClose={handleCloseModal} productId={selectedProductId} />
+      <EditPoModal show={showModal} onClose={handleCloseModal} withPoId={selectedWithPoId} />
     </>
   );
 };
