@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import closeIcon from "../../../assets/close-modal-icon.svg";
 import StockEnterManuallyModel from "./StockEnterManuallyModel";
 import AddStockOutModel from "./AddStockOutModel";
-import CreateWithoutPoModal from "../../purchase/without-po/CreateWithoutPoModel";
+import StockOutWPO from "./StockOutWPO";
 
 const StockSelectOptionModel = ({ show, onClose, fetchStockOut }) => {
     const [showAddWPO, setShowWPO] = useState(false);
@@ -53,7 +53,7 @@ const StockSelectOptionModel = ({ show, onClose, fetchStockOut }) => {
                         </div>
                     </div>
                     <AddStockOutModel show={showStockOut} onClose={handleCloseModal} fetchStockOut={fetchStockOut}/>
-                    <CreateWithoutPoModal show={showAddWPO} onClose={handleCloseModal} fetchStockOut={fetchStockOut} />
+                    <StockOutWPO show={showAddWPO} onClose={handleCloseModal} fetchStockOut={fetchStockOut} />
                 </div>
             )}
         </>

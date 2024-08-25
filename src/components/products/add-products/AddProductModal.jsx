@@ -20,7 +20,8 @@ const AddProductModal = ({ show, onClose }) => {
   const [sleeve, setSleeve] = useState("");
   const [length, setLength] = useState("");
   const [measurementChart, setMeasurementChart] = useState("");
-  const [selectedMeasurementImage, setSelectedMeasurementImage] = useState(null);
+  const [selectedMeasurementImage, setSelectedMeasurementImage] =
+    useState(null);
   const [packingMethod, setPackingMethod] = useState("");
   const [category, setCategory] = useState("");
   const [productTypes, setProductTypes] = useState("");
@@ -781,8 +782,8 @@ const AddProductModal = ({ show, onClose }) => {
     setCategoryDropdown(false);
   };
 
-   // fetch product types
-   const fetchProductTypesSuggestions = async (productTypesInput) => {
+  // fetch product types
+  const fetchProductTypesSuggestions = async (productTypesInput) => {
     try {
       if (productTypesInput.length > 0) {
         const response = await apiService.get("/productTypes/getall");
@@ -864,17 +865,16 @@ const AddProductModal = ({ show, onClose }) => {
     newPreviews.splice(result.destination.index, 0, movedPreview);
     setPreviews(newPreviews);
   };
-
-  
+ 
   const handleSubmit = async () => {
     setLoading(true);
 
-     // Ensure primary image is first
-     const updatedImages = [...images];
-     if (updatedImages[0] !== images[0]) {
-       const primaryImage = updatedImages.splice(images.indexOf(images[0]), 1);
-       updatedImages.unshift(primaryImage[0]);
-     }
+    // Ensure primary image is first
+    const updatedImages = [...images];
+    if (updatedImages[0] !== images[0]) {
+      const primaryImage = updatedImages.splice(images.indexOf(images[0]), 1);
+      updatedImages.unshift(primaryImage[0]);
+    }
 
     const formData = new FormData();
     formData.append("style_no", styleNo);
@@ -900,9 +900,9 @@ const AddProductModal = ({ show, onClose }) => {
     formData.append("short_description", shortDescription);
     formData.append("full_description", fullDescription);
     images.forEach((image) => {
-      formData.append("images", image); 
+      formData.append("images", image);
     });
-  
+
     try {
       const response = await apiService.post("/products/create", formData, {
         headers: {
@@ -947,7 +947,7 @@ const AddProductModal = ({ show, onClose }) => {
       setLoading(false);
     }
   };
-  
+
   if (!show) return null;
 
   const handleModalClose = () => {
@@ -972,6 +972,10 @@ const AddProductModal = ({ show, onClose }) => {
     setPackingMethod("");
     setInnerPcs(null);
     setMeasurementChart("");
+
+    setShortDescription("");
+    setFullDescription("");
+    setSelectedMesurement(null);
     onClose();
   };
 
@@ -996,77 +1000,84 @@ const AddProductModal = ({ show, onClose }) => {
           </div>
           <hr className="my-2" />
           <div className="px-40">
+            <div className="flex flex-col gap-3 mt-10">
+              <div className="flex gap-4">
+                <h1 className="font-bold">Product Images</h1>
+                <span className="text-sm text-gray-400 mt-1 relative px-2">
+                  <span className="absolute left-0 top-0 text-gray-600">*</span>
+                  Choose up to 13 images
+                </span>
+              </div>
 
-          <div className="flex flex-col gap-3 mt-10">
-      <div className="flex gap-4">
-        <h1 className="font-bold">Product Images</h1>
-        <span className="text-sm text-gray-400 mt-1 relative px-2">
-          <span className="absolute left-0 top-0 text-gray-600">*</span>
-          Choose up to 13 images
-        </span>
-      </div>
-
-      <div className="min-h-40 bg-gray-100 flex items-center justify-center">
-        <div className="container mx-auto px-4 py-4">
-          <div className="mb-4">
-            <input
-              type="file"
-              multiple
-              accept="image/*"
-              onChange={handleImageChange}
-              className="block w-full text-sm text-gray-500 file:mr-2 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-violet-50 file:text-violet-700 hover:file:bg-violet-100"
-            />
-          </div>
-          <DragDropContext onDragEnd={handleDragEnd}>
-            <Droppable droppableId="images" direction="horizontal">
-              {(provided) => (
-                <div
-                  className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-4"
-                  {...provided.droppableProps}
-                  ref={provided.innerRef}
-                >
-                  {previews.map((preview, index) => (
-                    <Draggable key={index} draggableId={index.toString()} index={index}>
+              <div className="min-h-40 bg-gray-100 flex items-center justify-center">
+                <div className="container mx-auto px-4 py-4">
+                  <div className="mb-4">
+                    <input
+                      type="file"
+                      multiple
+                      accept="image/*"
+                      onChange={handleImageChange}
+                      className="block w-full text-sm text-gray-500 file:mr-2 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-violet-50 file:text-violet-700 hover:file:bg-violet-100"
+                    />
+                  </div>
+                  <DragDropContext onDragEnd={handleDragEnd}>
+                    <Droppable droppableId="images" direction="horizontal">
                       {(provided) => (
                         <div
+                          className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-4"
+                          {...provided.droppableProps}
                           ref={provided.innerRef}
-                          {...provided.draggableProps}
-                          {...provided.dragHandleProps}
-                          className="relative cursor-pointer"
-                          onClick={() => handleSelectPrimary(index)}
                         >
-                          <img
-                            src={preview}
-                            alt={`Preview ${index}`}
-                            className={`w-full h-32 object-cover rounded-lg shadow-md ${index === 0 ? 'border-4 border-blue-500' : ''}`}
-                          />
-                          {index === 0 && (
-                            <span className="absolute -top-2 left-1/2 transform -translate-x-1/2 bg-blue-500 text-white rounded-lg px-2 py-1 text-xs">
-                              Primary
-                            </span>
-                          )}
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              removeImage(index);
-                            }}
-                            className="absolute top-2 right-2 bg-red-600 text-white rounded-full px-1.5 focus:outline-none"
-                          >
-                            &times;
-                          </button>
+                          {previews.map((preview, index) => (
+                            <Draggable
+                              key={index}
+                              draggableId={index.toString()}
+                              index={index}
+                            >
+                              {(provided) => (
+                                <div
+                                  ref={provided.innerRef}
+                                  {...provided.draggableProps}
+                                  {...provided.dragHandleProps}
+                                  className="relative cursor-pointer"
+                                  onClick={() => handleSelectPrimary(index)}
+                                >
+                                  <img
+                                    src={preview}
+                                    alt={`Preview ${index}`}
+                                    className={`w-full h-32 object-cover rounded-lg shadow-md ${
+                                      index === 0
+                                        ? "border-4 border-blue-500"
+                                        : ""
+                                    }`}
+                                  />
+                                  {index === 0 && (
+                                    <span className="absolute -top-2 left-1/2 transform -translate-x-1/2 bg-blue-500 text-white rounded-lg px-2 py-1 text-xs">
+                                      Primary
+                                    </span>
+                                  )}
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      removeImage(index);
+                                    }}
+                                    className="absolute top-2 right-2 bg-red-600 text-white rounded-full px-1.5 focus:outline-none"
+                                  >
+                                    &times;
+                                  </button>
+                                </div>
+                              )}
+                            </Draggable>
+                          ))}
+                          {provided.placeholder}
                         </div>
                       )}
-                    </Draggable>
-                  ))}
-                  {provided.placeholder}
+                    </Droppable>
+                  </DragDropContext>
                 </div>
-              )}
-            </Droppable>
-          </DragDropContext>
-        </div>
-      </div>
-    </div>
+              </div>
+            </div>
             <div className="mt-10 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
               <div className="flex flex-col gap-2 relative">
                 <label className="font-semibold" htmlFor="styleNo">
@@ -1562,20 +1573,20 @@ const AddProductModal = ({ show, onClose }) => {
                     onChange={handleMesurementChartChange}
                     className="border border-gray-300 rounded-md px-2 py-1 bg-zinc-200"
                     placeholder="Enter Measurement Chart"
-                  />                
-                {mesurementDropdown && measurementChart && (
-                  <ul className="absolute top-16 left-0 z-10 w-full bg-white border border-gray-300 rounded-md shadow-lg mt-1">
-                    {mesurementSuggestions.map((item) => (
-                      <li
-                        key={item.id}
-                        onClick={() => handleMesurementChartSelect(item)}
-                        className="cursor-pointer px-4 py-2 hover:bg-gray-100"
-                      >
-                        {item.name}
-                      </li>
-                    ))}
-                  </ul>
-                )}
+                  />
+                  {mesurementDropdown && measurementChart && (
+                    <ul className="absolute top-16 left-0 z-10 w-full bg-white border border-gray-300 rounded-md shadow-lg mt-1">
+                      {mesurementSuggestions.map((item) => (
+                        <li
+                          key={item.id}
+                          onClick={() => handleMesurementChartSelect(item)}
+                          className="cursor-pointer px-4 py-2 hover:bg-gray-100"
+                        >
+                          {item.name}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
                 </div>
               </div>
 
@@ -1589,7 +1600,7 @@ const AddProductModal = ({ show, onClose }) => {
                 </div>
               )}
             </div>
-            
+
             {successMessage && (
               <div className="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 my-4">
                 <p>{successMessage}</p>
@@ -1628,7 +1639,7 @@ const AddProductModal = ({ show, onClose }) => {
                 placeholder="Enter Full Description"
               />
             </div>
-            
+
             <div className="mt-10 flex justify-center gap-4">
               <button
                 className="bg-blue-500 text-white px-4 py-2 rounded-md"

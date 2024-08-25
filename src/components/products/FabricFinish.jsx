@@ -196,6 +196,12 @@ const FabricFinish = ({ searchQuery, isModalOpen, onClose }) => {
     setAddedFabricFinishes(newAddedFabricFinishes);
   };
 
+  const handleClose = () => {
+    setSingleFabricFinishes("");
+    onClose()
+  }
+
+
   const filteredData = data.filter(
     (item) =>
       item.fabricFinishName &&
@@ -370,7 +376,7 @@ const FabricFinish = ({ searchQuery, isModalOpen, onClose }) => {
         <div className="fixed inset-0 z-50 flex items-center justify-center">
           <div
             className="fixed inset-0 bg-black opacity-50"
-            onClick={onClose}
+            onClick={handleClose}
           ></div>
           <div className="relative bg-white rounded-lg shadow-lg w-full max-w-[35vw] h-screen max-h-[50vh] overflow-y-auto lg:overflow-hidden">
             <div className="py-2 flex flex-col">
@@ -379,7 +385,7 @@ const FabricFinish = ({ searchQuery, isModalOpen, onClose }) => {
                   <h2 className="text-2xl font-bold">Add Fabric finish</h2>
                   <button
                     className="absolute right-5 cursor-pointer"
-                    onClick={onClose}
+                    onClick={handleClose}
                   >
                     <img src={closeIcon} alt="Close" className="mt-2" />
                   </button>

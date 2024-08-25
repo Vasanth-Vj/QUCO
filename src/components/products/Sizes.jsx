@@ -20,7 +20,7 @@ const Sizes = ({ searchQuery, isModalOpen, onClose }) => {
   const [sizes, setSizes] = useState([]);
   const [inputValue, setInputValue] = useState("");
   const [singleSize, setSingleSize] = useState("");
-  const [typeName, setTypeName] = useState('');
+  const [typeName, setTypeName] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
 
@@ -32,11 +32,11 @@ const Sizes = ({ searchQuery, isModalOpen, onClose }) => {
     try {
       const response = await apiService.get("/sizes/getall", {
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
       });
       if (response.status === 200) {
-      setData(response.data);
+        setData(response.data);
       }
     } catch (error) {
       console.error("Error fetching Sizes", error);
@@ -48,8 +48,8 @@ const Sizes = ({ searchQuery, isModalOpen, onClose }) => {
   );
 
   const handleAddSizeField = () => {
-    setSizes([...sizes, ['']]);
-  };  
+    setSizes([...sizes, [""]]);
+  };
 
   const handleRemoveSizeField = (index) => {
     const newSizes = sizes.filter((_, i) => i !== index);
@@ -61,19 +61,18 @@ const Sizes = ({ searchQuery, isModalOpen, onClose }) => {
     setSizes(newSizes);
   };
 
-
   // handle add new size
-  const handleAddSizes = async() => {
+  const handleAddSizes = async () => {
     try {
       const data = {
         type_name: typeName,
         sizes,
       };
-      const response = await apiService.post('/sizes/create', data, {
+      const response = await apiService.post("/sizes/create", data, {
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
-      })
+      });
       if (response.status === 201) {
         setTypeName("");
         setSizes([]);
@@ -81,8 +80,8 @@ const Sizes = ({ searchQuery, isModalOpen, onClose }) => {
         setErrorMessage("");
         fetchAllSizes();
 
-         // Clear messages after 5 seconds
-         setTimeout(() => {
+        // Clear messages after 5 seconds
+        setTimeout(() => {
           setSuccessMessage("");
           setErrorMessage("");
         }, 5000);
@@ -108,9 +107,8 @@ const Sizes = ({ searchQuery, isModalOpen, onClose }) => {
       setSuccessMessage("");
     }
 
-
     const newSizes = sizes
-      .map((size) => size.size.trim())
+    .map((size) => (size && size.size && typeof size.size === 'string' ? size.size.trim() : ""))
       .filter((size) => size !== "");
     if (newSizes.length > 0) {
       setData([
@@ -125,13 +123,17 @@ const Sizes = ({ searchQuery, isModalOpen, onClose }) => {
   // handle toggle button click
   const handleStatusToggle = async ({ id, isActive }) => {
     try {
-      const response = await apiService.put(`/sizes/${id}`, {
-        isActive: !isActive,
-      }, {
-        headers: {
-          'Content-Type': 'application/json',
+      const response = await apiService.put(
+        `/sizes/${id}`,
+        {
+          isActive: !isActive,
         },
-      });
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
       if (response.status === 200) {
         fetchAllSizes();
       }
@@ -150,13 +152,17 @@ const Sizes = ({ searchQuery, isModalOpen, onClose }) => {
   // handle save button click
   const handleSaveClick = async (index, id) => {
     try {
-      const response = await apiService.put(`/sizes${id}`, {
-        type_name: editedSizes,
-      }, {
-        headers:{
-          'Content-Type': 'application/json',
+      const response = await apiService.put(
+        `/sizes${id}`,
+        {
+          type_name: editedSizes,
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
         }
-      });
+      );
       if (response.status === 200) {
         fetchAllSizes();
         setEditIndex(null);
@@ -183,9 +189,9 @@ const Sizes = ({ searchQuery, isModalOpen, onClose }) => {
   const handleDelete = async (id) => {
     try {
       const response = await apiService.delete(`/sizes/${id}`, {
-        headers:{
-          'Content-Type': 'application/json',
-        }
+        headers: {
+          "Content-Type": "application/json",
+        },
       });
       console.log(response);
       if (response.status === 202) {
@@ -211,6 +217,12 @@ const Sizes = ({ searchQuery, isModalOpen, onClose }) => {
   const handleRecordsPerPageChange = (e) => {
     setRecordsPerPage(Number(e.target.value));
     setCurrentPage(1);
+  };
+
+  const handleClose = () => {
+    setTypeName("");
+    setSizes([]);
+    onClose();
   };
 
   const startIndex = (currentPage - 1) * recordsPerPage;
@@ -318,7 +330,7 @@ const Sizes = ({ searchQuery, isModalOpen, onClose }) => {
                 <td className="px-2 py-3 whitespace-nowrap text-md text-center text-black w-16">
                   {editIndex === row.id ? (
                     <button
-                    onClick={() => handleSaveClick(index, row.id)}
+                      onClick={() => handleSaveClick(index, row.id)}
                       className="bg-green-200 border border-green-500 px-2 py-1 rounded-lg flex"
                     >
                       <img src={tickIcon} alt="" className="mt-1 mr-2" />
@@ -326,12 +338,12 @@ const Sizes = ({ searchQuery, isModalOpen, onClose }) => {
                     </button>
                   ) : (
                     <button
-                    onClick={() =>
-                      handleEditClick({
-                        id: row.id,
-                        type_name: row.type_name,
-                      })
-                    }
+                      onClick={() =>
+                        handleEditClick({
+                          id: row.id,
+                          type_name: row.type_name,
+                        })
+                      }
                       className="text-blue-500 text-center"
                     >
                       <img src={editIcon} alt="Edit" className="h-6 w-6" />
@@ -396,7 +408,7 @@ const Sizes = ({ searchQuery, isModalOpen, onClose }) => {
         <div className="fixed inset-0 z-50 flex items-center justify-center">
           <div
             className="fixed inset-0 bg-black opacity-50"
-            onClick={onClose}
+            onClick={handleClose}
           ></div>
           <div className="relative bg-white rounded-lg shadow-lg w-full max-w-[35vw] py-6 px-10 h-fit overflow-y-auto lg:overflow-hidden">
             <div className="py-2 flex flex-col">
@@ -405,7 +417,7 @@ const Sizes = ({ searchQuery, isModalOpen, onClose }) => {
                   <h2 className="text-2xl font-bold">Add Sizes</h2>
                   <button
                     className="absolute right-5 cursor-pointer"
-                    onClick={onClose}
+                    onClick={handleClose}
                   >
                     <img src={closeIcon} alt="Close" className="mt-2" />
                   </button>
@@ -443,17 +455,17 @@ const Sizes = ({ searchQuery, isModalOpen, onClose }) => {
                   </div>
                 ))}
                 <div>
-                {successMessage && (
-              <div className="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 my-4">
-                <p>{successMessage}</p>
-              </div>
-            )}
-            {errorMessage && (
-              <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 my-4">
-                <p>{errorMessage}</p>
-              </div>
-            )}
-            </div>
+                  {successMessage && (
+                    <div className="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 my-4">
+                      <p>{successMessage}</p>
+                    </div>
+                  )}
+                  {errorMessage && (
+                    <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 my-4">
+                      <p>{errorMessage}</p>
+                    </div>
+                  )}
+                </div>
                 <button
                   className="text-blue-600 px-2 py-2 font-bold text-md mt-3"
                   onClick={handleAddSizeField}

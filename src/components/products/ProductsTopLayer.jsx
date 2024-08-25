@@ -23,6 +23,7 @@ import noDataImage from "../../assets/no-data1.png";
 import Category from "./Category";
 import ProductTypes from "./ProductTypes";
 import Buyer from "./Buyer";
+import WareHouse from "./WareHouse";
 
 const ProductsTopLayer = ({
   showDropdown = true,
@@ -80,6 +81,12 @@ const ProductsTopLayer = ({
       component: ProductTypes,
     },
     { id: "pr19", value: "19", label: "Buyers", component: Buyer },
+    {
+      id: "pr20",
+      value: "20",
+      label: "Warehouse",
+      component: WareHouse,
+    }
   ];
 
   const handlePresetChange = (event) => {

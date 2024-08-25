@@ -197,6 +197,11 @@ const handleEditClick = ({ id, sleeveName }) => {
       item.sleeveName.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  const handleClose = () => {
+    setSingleSleeves("");
+    onClose()
+  }
+
   const startIndex = (currentPage - 1) * recordsPerPage;
   const endIndex = startIndex + recordsPerPage;
   const currentData = filteredData.slice(startIndex, endIndex);
@@ -365,7 +370,7 @@ const handleEditClick = ({ id, sleeveName }) => {
         <div className="fixed inset-0 z-50 flex items-center justify-center">
           <div
             className="fixed inset-0 bg-black opacity-50"
-            onClick={onClose}
+            onClick={handleClose}
           ></div>
           <div className="relative bg-white rounded-lg shadow-lg w-full max-w-[35vw] h-screen max-h-[50vh] overflow-y-auto lg:overflow-hidden">
             <div className="py-2 flex flex-col">
@@ -374,7 +379,7 @@ const handleEditClick = ({ id, sleeveName }) => {
                   <h2 className="text-2xl font-bold">Add Sleeve</h2>
                   <button
                     className="absolute right-5 cursor-pointer"
-                    onClick={onClose}
+                    onClick={handleClose}
                   >
                     <img src={closeIcon} alt="Close" className="mt-2" />
                   </button>

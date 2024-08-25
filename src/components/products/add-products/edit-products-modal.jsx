@@ -16,8 +16,6 @@ const EditProductModal = ({ show, onClose, productId }) => {
   const [primaryImageIndex, setPrimaryImageIndex] = useState(0);
   const [loading, setLoading] = useState(true);
 
-
-
   //suggestion brand states
   const [brandDropdown, setBrandDropdown] = useState(false);
   const [brandSuggestions, setBrandSuggestions] = useState([]);
@@ -109,7 +107,6 @@ const EditProductModal = ({ show, onClose, productId }) => {
   const [productTypesDropdown, setProductTypesDropdown] = useState(false);
   const [productTypesSuggestions, setProductTypesSuggestions] = useState([]);
   const [selectedProductTypesId, setSelectedProductTypesId] = useState(null);
-
 
   const handleStyleNoChange = (e) => {
     const styleNo = e.target.value;
@@ -286,7 +283,7 @@ const EditProductModal = ({ show, onClose, productId }) => {
   };
 
   const handleAddNewRef = () => {
-    // Implement the logic to add a new buyer here  
+    // Implement the logic to add a new buyer here
     console.log("Adding new reference NO:", productData.Reference.reference_no);
     // Close the dropdown after adding the buyer
     setRefDropdown(false);
@@ -983,8 +980,8 @@ const EditProductModal = ({ show, onClose, productId }) => {
     setPackingDropdown(false);
   };
 
-   // fetch mesurementChart
-   const fetchMesurementChartSuggestions = async (mesurementChartInput) => {
+  // fetch mesurementChart
+  const fetchMesurementChartSuggestions = async (mesurementChartInput) => {
     try {
       if (mesurementChartInput.length > 0) {
         const response = await apiService.get("/mesurementCharts/getall");
@@ -1022,7 +1019,7 @@ const EditProductModal = ({ show, onClose, productId }) => {
         sample_size_file: mesurementChart.sample_size_file,
       },
     });
-   
+
     setSelectedMesurement(mesurementChart);
     setSelectedMesurementId(mesurementChart.id);
     setMesurementSuggestions([]);
@@ -1078,10 +1075,9 @@ const EditProductModal = ({ show, onClose, productId }) => {
       Category: {
         ...productData.Category,
         categoryName: categorie.categoryName,
-      
       },
     });
-   
+
     setSelectedCategorieId(categorie.id);
     setCategorieSuggestions([]);
     setCategorieDropdown(false);
@@ -1100,7 +1096,6 @@ const EditProductModal = ({ show, onClose, productId }) => {
     categorieDropdown(false);
   };
 
-  
   // fetch product types
   const fetchProductTypesSuggestions = async (productTypesInput) => {
     try {
@@ -1137,7 +1132,6 @@ const EditProductModal = ({ show, onClose, productId }) => {
       ProductType: {
         ...productData.ProductType,
         product: productTypes.product,
-      
       },
     });
     setSelectedProductTypesId(productTypes.id);
@@ -1169,10 +1163,6 @@ const EditProductModal = ({ show, onClose, productId }) => {
       inner_pcs: NumberOfPcs,
     });
   };
-
- 
-
- 
 
   useEffect(() => {
     console.log("Product ID:", productId); // Log the productId
@@ -1207,8 +1197,6 @@ const EditProductModal = ({ show, onClose, productId }) => {
   if (!productData) {
     return <div>No data available</div>;
   }
-
- 
 
   if (!show) {
     return null;
@@ -1252,8 +1240,6 @@ const EditProductModal = ({ show, onClose, productId }) => {
     const newPreviews = [...previews];
     const primaryPreview = newPreviews.splice(index, 1);
     setPreviews([primaryPreview[0], ...newPreviews]);
-
-   
   };
 
   const handleDragEnd = (result) => {
@@ -1317,24 +1303,22 @@ const EditProductModal = ({ show, onClose, productId }) => {
       console.log(updatedProductData);
       const formData = new FormData();
 
-       // Append the product data
-    formData.append("productData", JSON.stringify(productData));
-    
-    // Append new images
-    images.forEach((image, index) => {
-      if (image.file) {
-        formData.append("images", image.file);
-      } else {
-        formData.append("existingImages", image.url);
-      }
-    });
-  
+      // Append the product data
+      formData.append("productData", JSON.stringify(productData));
+      onClose();
+
+      // Append new images
+      images.forEach((image, index) => {
+        if (image.file) {
+          formData.append("images", image.file);
+        } else {
+          formData.append("existingImages", image.url);
+        }
+      });
 
       Object.entries(updatedProductData).map(([key, value]) => {
         formData.append(key, value);
       });
-
-    
 
       const response = await apiService.put(
         `/products/${productId}`,
@@ -1350,9 +1334,6 @@ const EditProductModal = ({ show, onClose, productId }) => {
       console.error("Error updating :", error);
     }
   };
-
-
-
 
   if (!show) return null;
 
@@ -1428,7 +1409,7 @@ const EditProductModal = ({ show, onClose, productId }) => {
                                         : ""
                                     }`}
                                   />
-                                  {index === primaryImageIndex  && (
+                                  {index === primaryImageIndex && (
                                     <span className="absolute -top-2 left-1/2 transform -translate-x-1/2 bg-blue-500 text-white rounded-lg px-2 py-1 text-xs">
                                       Primary
                                     </span>
@@ -1554,7 +1535,7 @@ const EditProductModal = ({ show, onClose, productId }) => {
                   className="border border-gray-300 rounded-md px-2 py-1 bg-zinc-200"
                   placeholder="Enter Category Name"
                 />
-                 {productTypesDropdown && productData.ProductType.product && (
+                {productTypesDropdown && productData.ProductType.product && (
                   <ul className="absolute top-full left-0 z-10 w-full bg-white border border-gray-300 rounded-md shadow-lg">
                     {productTypesSuggestions.length > 0 ? (
                       productTypesSuggestions.map((suggestion) => (
@@ -1571,7 +1552,8 @@ const EditProductModal = ({ show, onClose, productId }) => {
                         className="px-4 py-2 cursor-pointer text-sm text-blue-600 hover:bg-gray-200"
                         onClick={handleAddNewProductType}
                       >
-                        Add New product type: "{productData.ProductType.product}"
+                        Add New product type: "{productData.ProductType.product}
+                        "
                       </li>
                     )}
                   </ul>
@@ -2086,7 +2068,7 @@ const EditProductModal = ({ show, onClose, productId }) => {
                   type="number"
                   id="piecesPerInner"
                   value={productData.inner_pcs}
-                onChange={handleNumberOfPcsChange}
+                  onChange={handleNumberOfPcsChange}
                   className="border border-gray-300 rounded-md px-2 py-1 bg-zinc-200"
                   placeholder="Enter No of pieces per inner"
                 />
@@ -2096,23 +2078,25 @@ const EditProductModal = ({ show, onClose, productId }) => {
                 <label className="font-semibold" htmlFor="mesurementChart">
                   Measurement Chart:
                 </label>
-             
-                  <input
-                    type="text"
-                    id="mesurementChart"
-                    value={productData.MeasurementChart.name}
-                    onChange={handleMesurementChartChange}
-                    className="border border-gray-300 rounded-md px-2 py-1 bg-zinc-200"
-                    placeholder="Enter Measurement Chart"
-                  />
-                  {mesurementDropdown && productData.MeasurementChart.name && (
+
+                <input
+                  type="text"
+                  id="mesurementChart"
+                  value={productData.MeasurementChart.name}
+                  onChange={handleMesurementChartChange}
+                  className="border border-gray-300 rounded-md px-2 py-1 bg-zinc-200"
+                  placeholder="Enter Measurement Chart"
+                />
+                {mesurementDropdown && productData.MeasurementChart.name && (
                   <ul className="absolute top-full left-0 z-10 w-full bg-white border border-gray-300 rounded-md shadow-lg">
                     {mesurementSuggestions.length > 0 ? (
                       mesurementSuggestions.map((suggestion) => (
                         <li
                           key={suggestion.id}
                           className="px-4 py-2 cursor-pointer hover:bg-gray-200"
-                          onClick={() => handleMesurementChartSelect(suggestion)}
+                          onClick={() =>
+                            handleMesurementChartSelect(suggestion)
+                          }
                         >
                           {suggestion.name}
                         </li>
@@ -2122,13 +2106,12 @@ const EditProductModal = ({ show, onClose, productId }) => {
                         className="px-4 py-2 cursor-pointer text-sm text-blue-600 hover:bg-gray-200"
                         onClick={handleAddNewMeasurement}
                       >
-                        Add New measurement chart: "{productData.MeasurementChart.name}"
+                        Add New measurement chart: "
+                        {productData.MeasurementChart.name}"
                       </li>
                     )}
                   </ul>
                 )}
-              
-               
               </div>
 
               {productData.MeasurementChart &&

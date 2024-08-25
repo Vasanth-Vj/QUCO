@@ -5,12 +5,15 @@ import leftArrowIcon from "../../../assets/left-arrow-icon.svg";
 import rightArrowIcon from "../../../assets/right-arrow-icon.svg";
 import TopLayer from "../../shared/TopLayer"; // Make sure to import TopLayer
 import EditStockInModal from "./editStockInModal";
+import { RiQrScan2Line } from "react-icons/ri";
 import SuccessAlert from "./SuccessAlert";
 import AddStockModal from "./AddStockModal";
 import apiService from "../../../apiService";
+import QRCodeOut from "./QrCodeOut";
 
-const StockIn = ({ searchQuery }) => { 
+const StockIn = ({ searchQuery }) => {
   const [initialData, setInitialData] = useState([]);
+  const [sortedData, setSortedData] = useState([]);
   const [filteredData, setFilteredData] = useState(initialData);
   const [editIndex, setEditIndex] = useState(null);
   const [checkedIds, setCheckedIds] = useState([]);
@@ -18,31 +21,31 @@ const StockIn = ({ searchQuery }) => {
   const [recordsPerPage, setRecordsPerPage] = useState(5);
   const [showModal, setShowModal] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
-  const [selectedStockInId, setSelectedStockInId] = useState(null);
+  const [selectedStock, setSelectedStock] = useState();
+  const [showQr, setShowQr] = useState(false);
 
   // Function to fetch all products
   const getAllStocks = async () => {
     try {
       const response = await apiService.get(`/stocks/stockIn/all`, {
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
       });
-      const data = response.data.filter((item) => item.total_pcs > 0);
+      const data = response.data.filter(item => item.total_pcs > 0);
       // Format the created_at date
-      const formattedData = data.map((stock) => ({
-        ...stock,
-        created_at: new Date(stock.created_at).toLocaleDateString("en-GB"),
-        days_since_created: Math.floor(
-          (new Date() - new Date(stock.created_at)) / (1000 * 60 * 60 * 24)
-        ),
-      }));
+    const formattedData = data.map(stock => ({
+      ...stock,
+      created_at: new Date(stock.created_at).toLocaleDateString('en-GB'),
+      days_since_created: Math.floor((new Date() - new Date(stock.created_at)) / (1000 * 60 * 60 * 24))
+    }));
 
-      console.log(formattedData);
-      setInitialData(formattedData);
-      setFilteredData(formattedData);
+    console.log(formattedData);
+    setInitialData(formattedData);
+    setFilteredData(formattedData);
+    setSortedData(formattedData);
     } catch (error) {
-      console.error("Error fetching products:", error);
+      console.error('Error fetching products:', error);
     }
   };
 
@@ -50,19 +53,18 @@ const StockIn = ({ searchQuery }) => {
     getAllStocks();
   }, []);
 
-  const handleSaveClick = async () => {
-    try {
-      // Assuming selectedProductId is set correctly
-      const response = await apiService.put(`/stocks/stockIn/${selectedStockInId}`, {
-        // Update object fields based on your form data or state
-        // Example: brand: newData.brand, fabric: newData.fabric, etc.
-      });
-      console.log('Stock Out updated successfully:', response.data);
-      setShowModal(false);
-      getAllStocks(); // Refresh the product list
-    } catch (error) {
-      console.error('Error updating Stock Out:', error);
+  // handle sort
+  const handleSort = (sortOption) => {
+    let sortedArray = [...initialData];
+    
+    if (sortOption === "newest") {
+      sortedArray.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+    } else if (sortOption === "oldest") {
+      sortedArray.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
     }
+
+    setSortedData(sortedArray);
+    setCurrentPage(1); // Reset to first page after sorting
   };
 
   const handleSearch = (searchValue) => {
@@ -74,7 +76,7 @@ const StockIn = ({ searchQuery }) => {
   };
 
   const handleEditClick = (id) => {
-    setSelectedStockInId(id);
+    setEditIndex(id);
     setShowModal(true);
   };
 
@@ -87,17 +89,17 @@ const StockIn = ({ searchQuery }) => {
   const handleDelete = async () => {
     try {
       // Assuming checkedIds contains IDs to delete
-      const promises = checkedIds.map((id) =>
+      const promises = checkedIds.map(id =>
         apiService.delete(`/stocks/stockIn/${id}`)
       );
       await Promise.all(promises);
-      console.log("Products deleted successfully");
+      console.log('Products deleted successfully');
       getAllStocks(); // Refresh the product list
       setCheckedIds([]); // Clear checked IDs after deletion
     } catch (error) {
-      console.error("Error deleting products:", error);
+      console.error('Error deleting products:', error);
     }
-  };
+  }; 
 
   const handlePageChange = (direction) => {
     if (direction === "prev" && currentPage > 1) {
@@ -117,11 +119,24 @@ const StockIn = ({ searchQuery }) => {
 
   const handleCloseModal = () => {
     setShowModal(false);
-    setSelectedStockInId(null);
   };
 
   const handleAddModalClose = () => {
     setShowAddModal(false);
+  };
+
+  const handleQrClick = (id) => {
+    if (id) {
+      setSelectedStock(id);
+      setShowQr(true);
+    } else {
+      console.error('Stock ID is undefined');
+    }
+  };  
+
+  const handleQrModalClose = () => {
+    console.log('handle');
+    setShowQr(false);
   };
 
   const startIndex = (currentPage - 1) * recordsPerPage;
@@ -136,21 +151,21 @@ const StockIn = ({ searchQuery }) => {
           isSearch={true}
           onSearch={handleSearch}
           showDropdown={true}
-          options={["BrandA", "BrandB", "BrandC"]}
+          options={["Sort by Newest", "Sort by Oldest"]}
           selectedOption=""
           setSelectedOption={(option) => {
-            const filtered = initialData.filter(
-              (item) => item.brand === option
-            );
-            setFilteredData(filtered);
-            setCurrentPage(1);
+            if (option === "Sort by Newest") {
+              handleSort("newest");
+            } else if (option === "Sort by Oldest") {
+              handleSort("oldest");
+            }
           }}
           isAddButton={true}
-          addButtonText="Add Stock In"
+          addButtonText="Add Stock"
           onAddButtonClick={() => setShowAddModal(true)}
         />
         <div className="p-4 mx-auto mt-5 bg-white ">
-          <div className="min-h-[60vh] max-h-[60vh] overflow-y-auto">
+          <div className="min-h-[60vh]">
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="w-full bg-gray-50">
                 <tr>
@@ -190,10 +205,13 @@ const StockIn = ({ searchQuery }) => {
                   <th className="w-16 px-2 py-3 font-bold text-center text-black uppercase text-md">
                     Age
                   </th>
-                  <th className="w-16 px-2 py-3 font-bold text-center text-black uppercase text-md">
+                  <th className="w-10 px-2 py-3 font-bold text-center text-black uppercase text-md">
+                    QR code
+                  </th>
+                  <th className="w-10 px-2 py-3 font-bold text-center text-black uppercase text-md">
                     Action
                   </th>
-                  <th className="w-16 px-2 py-3 font-bold text-center text-black uppercase text-md">
+                  <th className="w-8 px-2 py-3 font-bold text-center text-black uppercase text-md">
                     <input
                       type="checkbox"
                       className="form-checkbox"
@@ -221,11 +239,8 @@ const StockIn = ({ searchQuery }) => {
                     <td className="px-2 py-3 text-center text-black w-28 whitespace-nowrap text-md">
                       <div className="flex items-center justify-center">
                         <img
-                          src={
-                            row.Product.images[0] ||
-                            "https://img.freepik.com/free-vector/illustration-gallery-icon_53876-27002.jpg?t=st=1722163869~exp=1722167469~hmac=37361beb0ca1a1c652d36c9ca94818f793a54d21822edab80e80c6e43a9b7b37&w=740"
-                          }
-                          alt="Stock"
+                          src={row.Product.images[0] || 'https://img.freepik.com/free-vector/illustration-gallery-icon_53876-27002.jpg?t=st=1722163869~exp=1722167469~hmac=37361beb0ca1a1c652d36c9ca94818f793a54d21822edab80e80c6e43a9b7b37&w=740'}
+                          alt='Stock'
                           className="h-28"
                         />
                       </div>
@@ -259,8 +274,11 @@ const StockIn = ({ searchQuery }) => {
                     </td>
                     <td className="w-16 px-2 py-3 text-center text-black whitespace-nowrap text-md">
                       {row.days_since_created}
-                    </td>
-                    <td className="w-16 px-2 py-3 text-center text-black whitespace-nowrap text-md">
+                    </td> 
+                    <td className="w-10 px-2 py-3 text-center text-black whitespace-nowrap text-md">
+                      <RiQrScan2Line className="w-6 h-6 text-center cursor-pointer" onClick={() => handleQrClick(row.id)}/>
+                    </td>   
+                    <td className="w-10 px-2 py-3 text-center text-black whitespace-nowrap text-md">
                       <button
                         onClick={() => handleEditClick(row.id)}
                         className="text-center text-blue-500"
@@ -268,7 +286,7 @@ const StockIn = ({ searchQuery }) => {
                         <img src={editIcon} alt="Edit" className="w-6 h-6" />
                       </button>
                     </td>
-                    <td className="w-12 px-2 py-3 text-center whitespace-nowrap">
+                    <td className="w-8 px-2 py-3 text-center whitespace-nowrap">
                       <input
                         type="checkbox"
                         className="form-checkbox"
@@ -277,17 +295,13 @@ const StockIn = ({ searchQuery }) => {
                       />
                     </td>
                     <td className="w-8 px-2 py-3 text-center text-black whitespace-nowrap text-md">
-                      <button
-                        onClick={() => handleDelete(row.id)}
-                        className="text-red-500"
-                      >
-                        <img
-                          src={deleteIcon}
-                          alt="Delete"
-                          className="w-5 h-5"
-                        />
-                      </button>
-                    </td>
+                  <button
+                    onClick={() => handleDelete(row.id)}
+                    className="text-red-500"
+                  >
+                    <img src={deleteIcon} alt="Delete" className="w-5 h-5" />
+                  </button>
+                </td>
                   </tr>
                 ))}
               </tbody>
@@ -328,17 +342,9 @@ const StockIn = ({ searchQuery }) => {
           </div>
         </div>
       </div>
-      <EditStockInModal
-        showModal={showModal}
-        close={handleCloseModal}
-        stockInId={selectedStockInId}
-      />
-      {/* <SuccessAlert show={showModal} onClose={handleCloseModal} /> */}
-      <AddStockModal
-        show={showAddModal}
-        onClose={handleAddModalClose}
-        getAllStocks={getAllStocks}
-      />
+      <EditStockInModal showModal={showModal} close={handleCloseModal} editIndex={editIndex} stockInData={currentData.find((item) => item.id === editIndex)} />
+      <AddStockModal show={showAddModal} onClose={handleAddModalClose} getAllStocks={getAllStocks} />
+      <QRCodeOut show={showQr} stockId={selectedStock} close={handleQrModalClose}/>
     </>
   );
 };

@@ -8,7 +8,7 @@ const AddStockModal = ({ show, onClose, getAllStocks }) => {
   const [styleDropdown, setStyleDropdown] = useState(false);
   const [styleSuggestions, setStyleSuggestions] = useState([]);
   const [selectedProductId, setSelectedProductId] = useState(null);
-  const [ReferenceNo, setReferenceNo] = useState("");
+  const [ReferenceNo, setReferenceNo] = useState(""); 
   const [category, setCategory] = useState("");
   const [productType, setProductType] = useState("");
   const [brand, setBrand] = useState("");
@@ -24,13 +24,14 @@ const AddStockModal = ({ show, onClose, getAllStocks }) => {
   const [sleeve, setSleeve] = useState("");
   const [length, setLength] = useState("");
   const [measurementChart, setMeasurementChart] = useState("");
-  const [selectedMeasurementImage, setSelectedMeasurementImage] = useState(null);
+  const [selectedMeasurementImage, setSelectedMeasurementImage] =
+    useState(null);
   const [packingMethod, setPackingMethod] = useState("");
   const [sizes, setSizes] = useState([]);
-  const [shortDescription, setShortDescription] = useState('');
-  const [fullDescription, setFullDescription] = useState('');
-  const [imageUrl, setImageUrl] = useState('');
-  const [assortmentType, setAssortmentType] = useState("assorted");
+  const [shortDescription, setShortDescription] = useState("");
+  const [fullDescription, setFullDescription] = useState("");
+  const [imageUrl, setImageUrl] = useState("");
+  const [assortmentType, setAssortmentType] = useState("assorted"); 
   const [innerPcs, setInnerPcs] = useState({});
   const [outerPcs, setOuterPcs] = useState({});
   const [bundles, setBundles] = useState("");
@@ -41,8 +42,60 @@ const AddStockModal = ({ show, onClose, getAllStocks }) => {
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [successMessage, setSuccessMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
+  const [warehouse, setWarehouse] = useState('');
+  const [loading, setLoading] = useState(false);
 
-// get product by style number
+
+  // Suggestion warehouse states
+  const [warehouseDropdown, setWarehouseDropdown] = useState(false);
+  const [warehouseSuggestions, setWarehouseSuggestions] = useState([]);
+  const [selectedWarehouseId, setSelectedWarehouseId] = useState(null);
+
+  // Fetch warehouse suggestions
+  const fetchWarehouseSuggestions = async (warehouseInput) => {
+    try {
+      if (warehouseInput.length > 0) {
+        const response = await apiService.get("/warehouses/getall");
+        const filteredWarehouse = response.data.filter((b) =>
+          b.warehouse.toLowerCase().startsWith(warehouseInput.toLowerCase())
+        );
+        console.log(filteredWarehouse);
+        setWarehouseSuggestions(filteredWarehouse);
+      } else {
+        setWarehouseSuggestions([]);
+      }
+    } catch (error) {
+      console.error("Error fetching warehouse:", error); 
+    }
+  };
+
+  const handleWarehouseChange = (e) => {
+    const warehouseInput = e.target.value;
+    setWarehouse(warehouseInput);
+    setWarehouseDropdown(true);
+    fetchWarehouseSuggestions(warehouseInput);
+    if (warehouseInput === "") {
+      // setBuyerLocation("");
+      setSelectedWarehouseId(null);
+    }
+  };
+
+  const handleWarehouseSelect = (warehouse) => {
+    setWarehouse(warehouse.warehouse);
+   
+    setSelectedWarehouseId(warehouse.id);
+    setWarehouseSuggestions([]);
+    setWarehouseDropdown(false);
+  };
+
+  const handleAddNewWarehouse = () => {
+    // Implement the logic to add a new buyer here
+    console.log("Adding new warehouse:", warehouse);
+    setWarehouseDropdown(false);
+  };
+
+
+  // get product by style number
   const fetchStyleSuggestions = async (styleInput) => {
     try {
       if (styleInput.length > 0) {
@@ -63,9 +116,9 @@ const AddStockModal = ({ show, onClose, getAllStocks }) => {
   const handleInputChange = (e) => {
     const styleInput = e.target.value;
     if (styleInput.length > 0) {
-    setStyleNumber(styleInput);
-    setStyleDropdown(true);
-    fetchStyleSuggestions(styleInput);
+      setStyleNumber(styleInput);
+      setStyleDropdown(true);
+      fetchStyleSuggestions(styleInput);
     } else {
       setStyleNumber("");
       setStyleDropdown(false);
@@ -90,7 +143,7 @@ const AddStockModal = ({ show, onClose, getAllStocks }) => {
       setPackingMethod("");
       setShortDescription("");
       setFullDescription("");
-      setImageUrl('');
+      setImageUrl("");
       setSelectedProduct(null);
     }
   };
@@ -136,7 +189,6 @@ const AddStockModal = ({ show, onClose, getAllStocks }) => {
     }
   };
 
-
   const handleAssortmentTypeChange = (e) => {
     setAssortmentType(e.target.value);
     if (e.target.value === "solid" && selectedProduct) {
@@ -153,28 +205,33 @@ const AddStockModal = ({ show, onClose, getAllStocks }) => {
   const handleInnerPcsChange = (size, value) => {
     setInnerPcs((prev) => ({
       ...prev,
-      [size]: Number(value)
+      [size]: Number(value),
     }));
   };
 
   const handleOuterPcsChange = (size, value) => {
     setOuterPcs((prev) => ({
       ...prev,
-      [size]: Number(value)
+      [size]: Number(value),
     }));
   };
 
-  
   useEffect(() => {
-    const totalInner = Object.values(innerPcs).reduce((sum, pcs) => sum + Number(pcs || 0), 0);
-    const totalOuter = Object.values(outerPcs).reduce((sum, pcs) => sum + Number(pcs || 0), 0);
+    const totalInner = Object.values(innerPcs).reduce(
+      (sum, pcs) => sum + Number(pcs || 0),
+      0
+    );
+    const totalOuter = Object.values(outerPcs).reduce(
+      (sum, pcs) => sum + Number(pcs || 0),
+      0
+    );
     setTotalInnerPcs(totalInner);
     setTotalOuterPcs(totalOuter);
-    
+
     const totalInnerPerBundle = sizes.reduce((sum, size) => {
       const inner = innerPcs[size] || 0;
       const outer = outerPcs[size] || 0;
-      return sum + (inner * outer);
+      return sum + inner * outer;
     }, 0);
 
     setTotalInnerPcsPerBundle(totalInnerPerBundle);
@@ -183,49 +240,83 @@ const AddStockModal = ({ show, onClose, getAllStocks }) => {
   }, [innerPcs, outerPcs, bundles, sizes]);
 
   const handleSubmit = async () => {
+    setLoading(true);
     const stockData = {
-      product_style_number: styleNumber,
-      product_id: selectedProductId,
-      packing_type: assortmentType,
-      total_pcs: totalProducts,
-      stock_by_size: sizes.map((size) => ({
-        size,
-        innerPcs: innerPcs[size],
-        outerPcs: outerPcs[size]
-      })),
-      no_bundles: bundles,
+        product_style_number: styleNumber,
+        product_id: selectedProductId,
+        packing_type: assortmentType,
+        total_pcs: totalProducts,
+        warehouse_id: selectedWarehouseId,
+        stock_by_size: sizes.map((size) => ({
+            size,
+            innerPcs: innerPcs[size],
+            outerPcs: outerPcs[size],
+        })),
+        no_bundles: bundles,
     };
 
     try {
-      const response = await apiService.post("/stocks/create", stockData);
+        const response = await apiService.post("/stocks/create", stockData);
 
-      if (response.status === 200) {
-      console.log("Stock created:", response.data);
-      onClose();
-      getAllStocks();
-      } 
+        if (response.status === 200) {
+            console.log("Stock created:", response.data);
+            setErrorMessage("");
+            // Trigger parent component to refresh the stock list
+            getAllStocks();
+            // Auto-close the modal
+            onClose();
+        }
     } catch (error) {
-      if (error.response && error.response.status === 409) {
-        setErrorMessage("Reference number of the product already exists.");
-
+        if (error.response && error.response.status === 409) {
+            setErrorMessage("Reference number of the product already exists.");
+        } else {
+            setErrorMessage("Error adding Stock.");
+        }
+    } finally {
+        setLoading(false);
         // Clear messages after 5 seconds
         setTimeout(() => {
-          setSuccessMessage("");
-          setErrorMessage("");
+            setSuccessMessage("");
+            setErrorMessage("");
         }, 5000);
-      } else {
-        setErrorMessage("Error adding Stock.");
-
-        // Clear messages after 5 seconds
-        setTimeout(() => {
-          setSuccessMessage("");
-          setErrorMessage("");
-        }, 5000);
-      }
-      setSuccessMessage("");
     }
-  };
+};
 
+
+  const handleModalClose = () => { 
+    setStyleNumber("");
+    setReferenceNo("");
+    setCategory("");
+    setProductType("");
+    setBrand("");
+    setFabric("");
+    setFabricFinish("");
+    setGsm("");
+    setKnitType("");
+    setColors("");
+    setSizes([]);
+    setDecoration("");
+    setPrintOrEmb("");
+    setStitch("");
+    setLength("");
+    setNeck("");
+    setSleeve("");
+    setMeasurementChart("");
+    setSelectedMeasurementImage("");
+    setPackingMethod("");
+    setShortDescription("");
+    setFullDescription("");
+    setSelectedProduct(null);
+    setBundles("");
+    setAssortmentType("");
+    setImageUrl("");
+    setTotalInnerPcs(0);
+    setTotalOuterPcs(0);
+    setTotalInnerPcsPerBundle(0);
+    setTotalProducts(0);
+
+    onClose();
+  };
 
   if (!show) return null;
 
@@ -233,7 +324,7 @@ const AddStockModal = ({ show, onClose, getAllStocks }) => {
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div
         className="fixed inset-0 bg-black opacity-50"
-        onClick={onClose}
+        onClick={handleModalClose}
       ></div>
       <div className="relative bg-white rounded-lg shadow-lg w-full max-w-[80vw] h-screen max-h-[90vh] overflow-auto py-10">
         <div className="flex justify-between items-center mb-4 relative px-20">
@@ -241,16 +332,18 @@ const AddStockModal = ({ show, onClose, getAllStocks }) => {
             <h2 className="text-2xl font-medium">CREATE STOCK INWARD</h2>
           </div>
           {/* <p className="text-2xl font-medium">Date:</p> */}
-          <button className="text-black absolute right-5" onClick={onClose}>
+          <button
+            className="text-black absolute right-5"
+            onClick={handleModalClose}
+          >
             <img src={closeIcon} alt="Close" />
           </button>
         </div>
         <hr className="my-4" />
-        <div className="flex justify-between px-20 my-5 mt-6">
-
-          <div className="flex flex-col grid grid-cols-3 2xl:grid-cols-5 gap-2">
+        <div className="flex justify-between px-20 my-5 mt-6 gap-5">
+          <div className=" grid grid-cols-3 2xl:grid-cols-5 gap-2">
             <div className="flex flex-col">
-            <div className="flex flex-col gap-2 relative">
+              <div className="flex flex-col gap-2 relative">
                 <label className="font-semibold" htmlFor="styleNumber">
                   Style No:
                 </label>
@@ -262,7 +355,7 @@ const AddStockModal = ({ show, onClose, getAllStocks }) => {
                   className="border border-gray-300 rounded-md px-2 py-1 bg-zinc-200"
                   placeholder="Enter Style Number"
                 />
-              {styleDropdown && styleNumber && (
+                {styleDropdown && styleNumber && (
                   <ul className="absolute top-full left-0 z-10 w-full bg-white border border-gray-300 rounded-md shadow-lg">
                     {styleSuggestions.map((item) => (
                       <li
@@ -275,30 +368,30 @@ const AddStockModal = ({ show, onClose, getAllStocks }) => {
                     ))}
                   </ul>
                 )}
-                </div>
+              </div>
             </div>
             <div className="flex flex-col gap-2 relative">
               <label className="font-semibold" htmlFor="referenceNo">
-              Reference No:
+                Reference No:
               </label>
               <input
-                  type="text"
-                  id="referenceNo"
-                  value={ReferenceNo}
-                  className="border border-gray-300 rounded-md px-2 py-1 bg-zinc-200"
-                  disabled
+                type="text"
+                id="referenceNo"
+                value={ReferenceNo}
+                className="border border-gray-300 rounded-md px-2 py-1 bg-zinc-200"
+                disabled
               />
             </div>
             <div className="flex flex-col gap-2 relative">
               <label className="font-semibold" htmlFor="category">
-                  Category:
+                Category:
               </label>
               <input
-                  type="text"
-                  id="category"
-                  value={category}
-                  className="border border-gray-300 rounded-md px-2 py-1 bg-zinc-200"
-                  disabled
+                type="text"
+                id="category"
+                value={category}
+                className="border border-gray-300 rounded-md px-2 py-1 bg-zinc-200"
+                disabled
               />
             </div>
             <div className="flex flex-col gap-2 relative">
@@ -306,11 +399,11 @@ const AddStockModal = ({ show, onClose, getAllStocks }) => {
                 Product Type:
               </label>
               <input
-                  type="text"
-                  id="productType"
-                  value={productType}
-                  className="border border-gray-300 rounded-md px-2 py-1 bg-zinc-200"
-                  disabled
+                type="text"
+                id="productType"
+                value={productType}
+                className="border border-gray-300 rounded-md px-2 py-1 bg-zinc-200"
+                disabled
               />
             </div>
             <div className="flex flex-col gap-2 relative">
@@ -318,11 +411,11 @@ const AddStockModal = ({ show, onClose, getAllStocks }) => {
                 Brand:
               </label>
               <input
-                  type="text"
-                  id="brand"
-                  value={brand}
-                  className="border border-gray-300 rounded-md px-2 py-1 bg-zinc-200"
-                  disabled
+                type="text"
+                id="brand"
+                value={brand}
+                className="border border-gray-300 rounded-md px-2 py-1 bg-zinc-200"
+                disabled
               />
             </div>
             <div className="flex flex-col gap-2 relative">
@@ -330,11 +423,11 @@ const AddStockModal = ({ show, onClose, getAllStocks }) => {
                 Fabric:
               </label>
               <input
-                  type="text"
-                  id="fabric"
-                  value={fabric}
-                  className="border border-gray-300 rounded-md px-2 py-1 bg-zinc-200"
-                  disabled
+                type="text"
+                id="fabric"
+                value={fabric}
+                className="border border-gray-300 rounded-md px-2 py-1 bg-zinc-200"
+                disabled
               />
             </div>
             <div className="flex flex-col gap-2 relative">
@@ -342,11 +435,11 @@ const AddStockModal = ({ show, onClose, getAllStocks }) => {
                 Fabric Fisnish:
               </label>
               <input
-                  type="text"
-                  id="fabric-finish"
-                  value={fabricFinish}
-                  className="border border-gray-300 rounded-md px-2 py-1 bg-zinc-200"
-                  disabled
+                type="text"
+                id="fabric-finish"
+                value={fabricFinish}
+                className="border border-gray-300 rounded-md px-2 py-1 bg-zinc-200"
+                disabled
               />
             </div>
             <div className="flex flex-col gap-2 relative">
@@ -354,11 +447,11 @@ const AddStockModal = ({ show, onClose, getAllStocks }) => {
                 GSM:
               </label>
               <input
-                  type="number"
-                  id="gsm"
-                  value={gsm}
-                  className="border border-gray-300 rounded-md px-2 py-1 bg-zinc-200"
-                  disabled
+                type="number"
+                id="gsm"
+                value={gsm}
+                className="border border-gray-300 rounded-md px-2 py-1 bg-zinc-200"
+                disabled
               />
             </div>
             <div className="flex flex-col gap-2 relative">
@@ -366,11 +459,11 @@ const AddStockModal = ({ show, onClose, getAllStocks }) => {
                 Knit Type:
               </label>
               <input
-                  type="text"
-                  id="knitType"
-                  value={knitType}
-                  className="border border-gray-300 rounded-md px-2 py-1 bg-zinc-200"
-                  disabled
+                type="text"
+                id="knitType"
+                value={knitType}
+                className="border border-gray-300 rounded-md px-2 py-1 bg-zinc-200"
+                disabled
               />
             </div>
             <div className="flex flex-col gap-2 relative">
@@ -378,11 +471,11 @@ const AddStockModal = ({ show, onClose, getAllStocks }) => {
                 Color:
               </label>
               <input
-                  type="text"
-                  id="color"
-                  value={colors}
-                  className="border border-gray-300 rounded-md px-2 py-1 bg-zinc-200"
-                  disabled
+                type="text"
+                id="color"
+                value={colors}
+                className="border border-gray-300 rounded-md px-2 py-1 bg-zinc-200"
+                disabled
               />
             </div>
             <div className="flex flex-col gap-2 relative">
@@ -390,11 +483,11 @@ const AddStockModal = ({ show, onClose, getAllStocks }) => {
                 Size:
               </label>
               <input
-                  type="text"
-                  id="size"
-                  value={sizes}
-                  className="border border-gray-300 rounded-md px-2 py-1 bg-zinc-200"
-                  disabled
+                type="text"
+                id="size"
+                value={sizes}
+                className="border border-gray-300 rounded-md px-2 py-1 bg-zinc-200"
+                disabled
               />
             </div>
             <div className="flex flex-col gap-2 relative">
@@ -402,11 +495,11 @@ const AddStockModal = ({ show, onClose, getAllStocks }) => {
                 Decoration:
               </label>
               <input
-                  type="text"
-                  id="decoration"
-                  value={decoration}
-                  className="border border-gray-300 rounded-md px-2 py-1 bg-zinc-200"
-                  disabled
+                type="text"
+                id="decoration"
+                value={decoration}
+                className="border border-gray-300 rounded-md px-2 py-1 bg-zinc-200"
+                disabled
               />
             </div>
             <div className="flex flex-col gap-2 relative">
@@ -414,11 +507,11 @@ const AddStockModal = ({ show, onClose, getAllStocks }) => {
                 Print or Emb:
               </label>
               <input
-                  type="text"
-                  id="print"
-                  value={printOrEmb}
-                  className="border border-gray-300 rounded-md px-2 py-1 bg-zinc-200"
-                  disabled
+                type="text"
+                id="print"
+                value={printOrEmb}
+                className="border border-gray-300 rounded-md px-2 py-1 bg-zinc-200"
+                disabled
               />
             </div>
             <div className="flex flex-col gap-2 relative">
@@ -426,11 +519,11 @@ const AddStockModal = ({ show, onClose, getAllStocks }) => {
                 Stitch Details:
               </label>
               <input
-                  type="text"
-                  id="stitch"
-                  value={stitch}
-                  className="border border-gray-300 rounded-md px-2 py-1 bg-zinc-200"
-                  disabled
+                type="text"
+                id="stitch"
+                value={stitch}
+                className="border border-gray-300 rounded-md px-2 py-1 bg-zinc-200"
+                disabled
               />
             </div>
             <div className="flex flex-col gap-2 relative">
@@ -438,11 +531,11 @@ const AddStockModal = ({ show, onClose, getAllStocks }) => {
                 Neck:
               </label>
               <input
-                  type="text"
-                  id="neck"
-                  value={neck}
-                  className="border border-gray-300 rounded-md px-2 py-1 bg-zinc-200"
-                  disabled
+                type="text"
+                id="neck"
+                value={neck}
+                className="border border-gray-300 rounded-md px-2 py-1 bg-zinc-200"
+                disabled
               />
             </div>
             <div className="flex flex-col gap-2 relative">
@@ -450,11 +543,11 @@ const AddStockModal = ({ show, onClose, getAllStocks }) => {
                 Length:
               </label>
               <input
-                  type="text"
-                  id="length"
-                  value={length}
-                  className="border border-gray-300 rounded-md px-2 py-1 bg-zinc-200"
-                  disabled
+                type="text"
+                id="length"
+                value={length}
+                className="border border-gray-300 rounded-md px-2 py-1 bg-zinc-200"
+                disabled
               />
             </div>
             <div className="flex flex-col gap-2 relative">
@@ -462,11 +555,11 @@ const AddStockModal = ({ show, onClose, getAllStocks }) => {
                 Sleeve:
               </label>
               <input
-                  type="text"
-                  id="sleeve"
-                  value={sleeve}
-                  className="border border-gray-300 rounded-md px-2 py-1 bg-zinc-200"
-                  disabled
+                type="text"
+                id="sleeve"
+                value={sleeve}
+                className="border border-gray-300 rounded-md px-2 py-1 bg-zinc-200"
+                disabled
               />
             </div>
             <div className="flex flex-col gap-2 relative">
@@ -474,11 +567,11 @@ const AddStockModal = ({ show, onClose, getAllStocks }) => {
                 Packing Method:
               </label>
               <input
-                  type="text"
-                  id="packing"
-                  value={packingMethod}
-                  className="border border-gray-300 rounded-md px-2 py-1 bg-zinc-200"
-                  disabled
+                type="text"
+                id="packing"
+                value={packingMethod}
+                className="border border-gray-300 rounded-md px-2 py-1 bg-zinc-200"
+                disabled
               />
             </div>
             <div className="flex flex-col gap-2 relative">
@@ -486,50 +579,89 @@ const AddStockModal = ({ show, onClose, getAllStocks }) => {
                 Measurement Chart:
               </label>
               <input
-                  type="text"
-                  id="measurement"
-                  value={measurementChart}
-                  className="border border-gray-300 rounded-md px-2 py-1 bg-zinc-200"
-                  disabled
+                type="text"
+                id="measurement"
+                value={measurementChart}
+                className="border border-gray-300 rounded-md px-2 py-1 bg-zinc-200"
+                disabled
               />
             </div>
 
+            <div className="flex flex-col gap-2 relative">
+                <label className="font-semibold" htmlFor="warehouse">
+                  Warehouse:
+                </label>
+                <input
+                  type="text"
+                  id="warehouse"
+                  value={warehouse}
+                  onChange={handleWarehouseChange}
+                  className="border border-gray-300 rounded-md px-2 py-1 bg-zinc-200"
+                  placeholder="Enter Warehouse"
+                />
+                {warehouseDropdown && warehouse && (
+                  <ul className="absolute top-full left-0 z-10 w-full bg-white border border-gray-300 rounded-md shadow-lg">
+                    {warehouseSuggestions.length > 0 ? (
+                      warehouseSuggestions.map((suggestion) => (
+                        <li
+                          key={suggestion.id}
+                          className="px-2 py-1 cursor-pointer hover:bg-gray-200"
+                          onClick={() => handleWarehouseSelect(suggestion)}
+                        >
+                          {suggestion.warehouse}
+                        </li>
+                      ))
+                    ) : (
+                      <li
+                        className="px-4 py-2 cursor-pointer text-sm text-blue-600 hover:bg-gray-200"
+                        onClick={handleAddNewWarehouse}
+                      >
+                        Add New Buyer: "{warehouse}"
+                      </li>
+                    )}
+                  </ul>
+                )}
+              </div>
+
           </div>
-          
-          <div className="flex items-center justify-center border border-gray-400 h-64 mt-10">
+
+          <div className="flex items-center justify-center border border-gray-400 h-64 mt-8">
             <img
-              src={imageUrl || 'https://img.freepik.com/free-vector/illustration-gallery-icon_53876-27002.jpg?t=st=1722163869~exp=1722167469~hmac=37361beb0ca1a1c652d36c9ca94818f793a54d21822edab80e80c6e43a9b7b37&w=740'}
-              alt='Stock'
+              src={
+                imageUrl ||
+                "https://img.freepik.com/free-vector/illustration-gallery-icon_53876-27002.jpg?t=st=1722163869~exp=1722167469~hmac=37361beb0ca1a1c652d36c9ca94818f793a54d21822edab80e80c6e43a9b7b37&w=740"
+              }
+              alt="Stock"
               className="h-64 w-60 object-cover rounded"
             />
           </div>
         </div>
 
         <div className="flex flex-col gap-2 mt-3 mx-20">
-              <label className="font-semibold" htmlFor="shortDescription">
-                Short Description:
-              </label>
-              <textarea
-                id="shortDescription"
-                value={shortDescription}
-                className="border border-gray-300 rounded-md px-2 py-2 bg-zinc-200"
-                rows="1"
-                disabled
-              />
-            </div>
+          <label className="font-semibold" htmlFor="shortDescription">
+            Short Description:
+          </label>
+          <textarea
+            id="shortDescription"
+            value={shortDescription}
+            className="border border-gray-300 rounded-md px-2 py-2 bg-zinc-200"
+            rows="1"
+            disabled
+          />
+        </div>
 
-            <div className="flex flex-col gap-2 mt-3 mx-20">
-              <label className="font-semibold" htmlFor="fullDescription">
-                Full Description:
-              </label>
-              <textarea
-                id="fullDescription"
-                value={fullDescription}
-                className="border border-gray-300 rounded-md px-2 py-2 bg-zinc-200"
-                rows="2"
-                disabled
-              />
-            </div>
+        <div className="flex flex-col gap-2 mt-3 mx-20">
+          <label className="font-semibold" htmlFor="fullDescription">
+            Full Description:
+          </label>
+          <textarea
+            id="fullDescription"
+            value={fullDescription}
+            className="border border-gray-300 rounded-md px-2 py-2 bg-zinc-200"
+            rows="2"
+            disabled
+          />
+        </div>
 
         <div className="px-20 my-4">
           <label className="font-semibold">Packaging Type:</label>
@@ -542,7 +674,7 @@ const AddStockModal = ({ show, onClose, getAllStocks }) => {
                 onChange={handleAssortmentTypeChange}
                 className="mx-1"
               />
-               Assorted
+              Assorted
             </label>
             <label>
               <input
@@ -552,7 +684,7 @@ const AddStockModal = ({ show, onClose, getAllStocks }) => {
                 onChange={handleAssortmentTypeChange}
                 className="mx-1"
               />
-               Solid
+              Solid
             </label>
           </div>
         </div>
@@ -565,41 +697,45 @@ const AddStockModal = ({ show, onClose, getAllStocks }) => {
             <div className="p-4 rounded-lg">
               <h4 className="text-sm font-medium mb-4">Quantity per size:</h4>
               <div className="flex flex-col gap-4">
-              {sizes.map((size, index) => (
-            <div key={index} className="flex items-center gap-4 mb-2">
-              <div className="w-16">{size}: </div>
-              <input
-                type="number"
-                value={innerPcs[size] || ''}
-                onChange={(e) => handleInnerPcsChange(size, e.target.value)}
-                placeholder="Inner Pcs"
-                className="border border-gray-300 rounded-md px-2 py-1 w-24"
-                disabled={assortmentType === "solid"}
-              />
-              <input
-                type="number"
-                value={outerPcs[size] || ''}
-                onChange={(e) => handleOuterPcsChange(size, e.target.value)}
-                placeholder="Outer Pcs"
-                className="border border-gray-300 rounded-md px-2 py-1 w-24"
-              />
-            </div>
-          ))}
+                {sizes.map((size, index) => (
+                  <div key={index} className="flex items-center gap-4 mb-2">
+                    <div className="w-16">{size}: </div>
+                    <input
+                      type="number"
+                      value={innerPcs[size] || ""}
+                      onChange={(e) =>
+                        handleInnerPcsChange(size, e.target.value)
+                      }
+                      placeholder="Inner Pcs"
+                      className="border border-gray-300 rounded-md px-2 py-1 w-24"
+                      disabled={assortmentType === "solid"}
+                    />
+                    <input
+                      type="number"
+                      value={outerPcs[size] || ""}
+                      onChange={(e) =>
+                        handleOuterPcsChange(size, e.target.value)
+                      }
+                      placeholder="Outer Pcs"
+                      className="border border-gray-300 rounded-md px-2 py-1 w-24"
+                    />
+                  </div>
+                ))}
               </div>
             </div>
 
             <div className="px-10 content-center">
-          <label className="font-semibold">Number of Bundles: </label>
-          <input
-            type="number"
-            value={bundles}
-            onChange={(e) => setBundles(Number(e.target.value))}
-            placeholder="Bundles"
-            className="border border-gray-300 rounded-md px-2 py-1 w-24"
-          />
-        </div>
+              <label className="font-semibold">Number of Bundles: </label>
+              <input
+                type="number"
+                value={bundles}
+                onChange={(e) => setBundles(Number(e.target.value))}
+                placeholder="Bundles"
+                className="border border-gray-300 rounded-md px-2 py-1 w-24"
+              />
+            </div>
 
-        <div className="p-4 bg-gray-100 flex items-center justify-center my-8">
+            <div className="p-4 bg-gray-100 flex items-center justify-center my-8">
               <div className="flex flex-col gap-4">
                 <div className="flex gap-5 justify-between">
                   <label className="block text-sm font-medium text-gray-700">
@@ -627,25 +763,25 @@ const AddStockModal = ({ show, onClose, getAllStocks }) => {
                 </div>
               </div>
             </div>
-
           </div>
         </div>
         {successMessage && (
-              <div className="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 my-4">
-                <p>{successMessage}</p>
-              </div>
-            )}
-            {errorMessage && (
-              <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 my-4">
-                <p>{errorMessage}</p>
-              </div>
-            )}
+          <div className="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 my-4">
+            <p>{successMessage}</p>
+          </div>
+        )}
+        {errorMessage && (
+          <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 my-4">
+            <p>{errorMessage}</p>
+          </div>
+        )}
         <div className="flex justify-end px-20 mt-4">
           <button
             onClick={handleSubmit}
             className="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded"
+            disabled={loading}
           >
-            CREATE STOCK INWARD
+         {loading ? "Creating..." : "Create Stock Inwart"}
           </button>
         </div>
       </div>

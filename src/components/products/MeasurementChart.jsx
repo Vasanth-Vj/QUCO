@@ -10,7 +10,7 @@ import rightArrowIcon from "../../assets/right-arrow-icon.svg";
 import tickIcon from "../../assets/tick-icon.svg";
 import MesasurementModal from "./Mesasurement-model";
 import closeIcon from "../../assets/close-modal-icon.svg";
-import apiService from "../../apiService";
+import apiService from "../../apiService"; 
 
 const MeasurementChart = ({ searchQuery, isModalOpen, onClose }) => {
   const [data, setData] = useState([]);
@@ -274,6 +274,15 @@ const MeasurementChart = ({ searchQuery, isModalOpen, onClose }) => {
     setImagePreview(null);
   };
 
+  const handleClose = () => {
+    setTypeName("");
+    setCategory("");
+    setImagePreview(null);
+    setSizes([{ key: '', value: '' }]);
+    onClose()
+  }
+
+
   const startIndex = (currentPage - 1) * recordsPerPage;
   const endIndex = startIndex + recordsPerPage;
   const currentData = filteredData.slice(startIndex, endIndex);
@@ -443,7 +452,7 @@ const MeasurementChart = ({ searchQuery, isModalOpen, onClose }) => {
       {isModalOpen && (
         <MesasurementModal
           isOpen={isModalOpen}
-          onClose={onClose}
+          onClose={handleClose}
           handleSubmit={handleSubmit}
           setTypeName={setTypeName}
           name={name}
@@ -462,7 +471,7 @@ const MeasurementChart = ({ searchQuery, isModalOpen, onClose }) => {
       {isSecondModalOpen && (
         <MesasurementModal
           isOpen={isSecondModalOpen}
-          onClose={() => setIsSecondModalOpen(false)}
+          handleClose={() => setIsSecondModalOpen(false)}
           handleSubmit={handleUpdateClick}
           setTypeName={setTypeName}
           name={name}

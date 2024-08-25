@@ -32,6 +32,8 @@ const EditStockOutModel = ({
   const [images, setImages] = useState([]);
   const [primaryImageIndex, setPrimaryImageIndex] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [bundles, setBundles] = useState("");
+  const [totalProducts, setTotalProducts] = useState(0);
 
   const [stockOutData, setStockOutData] = useState({
     PurchaseOrder: {
@@ -105,7 +107,9 @@ const EditStockOutModel = ({
       packing_type: "",
     },
 
-    stockOut_bundle: "",
+    stockOut_bundle: null,
+    stock_id: null,
+
   });
 
   // fetch styleNo
@@ -145,7 +149,7 @@ const EditStockOutModel = ({
 
       const totalOrderOuterPcs = calculateTotalOuterPcs(stockOutData.PurchaseOrder.purchase_by_size);
       setOrderOuterTotals(totalOrderOuterPcs);
-    }
+    } 
 
     if (stockOutData?.stockOut_by_size) {
       const totalStockOutInnerPcs = calculateTotalInnerPcs(stockOutData.stockOut_by_size);
@@ -216,59 +220,13 @@ const EditStockOutModel = ({
     }
   }, [stockOutId]);
 
-  const handleOrderChange = (e) => {
-    const orderInput = e.target.value;
-    if (orderInput.length > 0) {
-      setOrderNumber(orderInput);
-      setOrderDropdown(true);
-      fetchOrderSuggestions(orderInput);
-    } else {
-      setOrderNumber("");
-      setOrderDropdown(false);
-      setSelectedOrder(null);
-      setCheckSame(null);
-      setProductInfo(null);
-      setOrderInfo(null);
-
-      setStyleNumber("");
-      setSelectedProduct(null);
-      setCheckSame(null);
-      setProductInfo(null);
-      setOrderInfo(null);
-    }
-  };
-
-  const handleOrderSelect = (e) => {
-    setOrderNumber(e.purchase_order_number);
-    setSelectedOrder(e);
-    setOrderInfo(e);
-    setSelectedOrderId(e.id);
-    setOrderSuggestions([]);
-    setOrderDropdown(false);
-    setOrderSuggestions([]);
-    setOrderDropdown(false);
-    console.log("orderSelect: ", e);
-    const totalOrderInnerPcs = calculateTotalInnerPcs(e.purchase_by_size);
-    setOrderInnerTotals(totalOrderInnerPcs);
-    const totalOrderOuterPcs = calculateTotalOuterPcs(e.purchase_by_size);
-    setOrderOuterTotals(totalOrderOuterPcs);
-    setStyleNumber(e.product_style_number);
-    // fetchStyleSuggestions(e.product_style_number);
-  };
-
-  const handleAddNewOrderNo = () => {
-    // Implement the logic to add a new buyer here
-    console.log("Adding new purchase order no:", orderNumber);
-    // Close the dropdown after adding the buyer
-    setOrderDropdown(false);
-  };
 
   const handleBundleChange = async (e) => {
     try {
-      const bundleQty = e.target.value;
+      const bundleQty = Number(e.target.value);
       setStockOutBundle(bundleQty);
 
-      const totalPcs = productInfo?.stock_by_size.reduce((sum, item) => {
+      const totalPcs = stockOutData?.stockOut_by_size.reduce((sum, item) => {
         return sum + item.innerPcs * item.outerPcs * bundleQty;
       }, 0);
 
@@ -286,22 +244,21 @@ const EditStockOutModel = ({
     return data.reduce((total, item) => total + item.outerPcs, 0);
   };
 
+  //  const { id } = req.params;
+    // const { stock_id, updated_stockOut_bundle, updated_total_pcs } = req.body;
+
+
   const handleSubmit = async () => {
     try {
       const stockData = {
-        stock_id: productInfo.id,
-        stockOut_by_size: orderInfo.purchase_by_size,
-        stockOut_bundle: stockOutBundle,
-        total_stockOut_pcs: totalPcs,
-        product_style_number: productInfo.product_style_number,
-        product_id: productInfo.Product.id,
-        purchase_order_number: orderInfo.purchase_order_number,
-        purchase_order_id: orderInfo.id,
+        stock_id: stockOutData.stock_id,
+        updated_stockOut_bundle: stockOutBundle,
+        updated_total_pcs: totalPcs,
       };
 
       console.log("Stock out: ", stockData);
 
-      const response = await apiService.post("/stockOut/create", stockData);
+      const response = await apiService.put(`/stockOut/${stockOutId}`, stockData);
 
       if (response.status === 200) {
         console.log("Stock created:", response.data);
@@ -342,7 +299,6 @@ const EditStockOutModel = ({
                       type="text"
                       id="purchaseOrderNo"
                       value={stockOutData.PurchaseOrder.purchase_order_number}
-                      onChange={handleOrderChange}
                       className="border border-gray-300 rounded-md px-2 py-2 bg-zinc-200"
                       disabled
                     />
@@ -391,7 +347,7 @@ const EditStockOutModel = ({
                         "https://img.freepik.com/free-vector/illustration-gallery-icon_53876-27002.jpg?t=st=1722163869~exp=1722167469~hmac=37361beb0ca1a1c652d36c9ca94818f793a54d21822edab80e80c6e43a9b7b37&w=740"
                       }
                       alt="Product"
-                      className="object-cover h-40 rounded"
+                      className="object-cover h-40 rounded" 
                     />
                   </div>
                 </div>
@@ -750,7 +706,7 @@ const EditStockOutModel = ({
                 <input
                   type="text"
                   id="deliveryDate"
-                  value={stockOutData.PurchaseOrder.delivery_date || ""}
+                  value={ stockOutData.PurchaseOrder.delivery_date || ""}
                   className="px-2 py-2 border border-gray-300 rounded-md bg-zinc-200"
                   disabled
                 />
@@ -776,7 +732,7 @@ const EditStockOutModel = ({
               </label>
               <textarea
                 id="notes"
-                value={orderInfo?.notes || ""}
+                value={stockOutData?.PurchaseOrder.notes || ""}
                 className="px-2 py-2 border border-gray-300 rounded-md bg-zinc-200"
                 rows="3"
                 disabled
@@ -785,7 +741,7 @@ const EditStockOutModel = ({
 
             <div className="grid grid-cols-1 gap-10 mt-10 md:grid-cols-2">
               <div className="text-center">
-                <h3 className="text-lg font-semibold">Available Quantities:</h3>
+                <h3 className="text-lg font-semibold text-green-500">Available Quantities:</h3>
                 <div className="">
                   <table className="min-w-full bg-white border border-gray-300 rounded-md mt-6">
                     <thead>
@@ -824,7 +780,7 @@ const EditStockOutModel = ({
                       <p>{productInnerTotals}</p>
                     </div>
                     <div className="border p-2 rounded-lg">
-                      <h4 className="font-semibold">Total Outer:</h4>
+                      <h4 className="font-semibold">Total Outer Pcs:</h4>
                       <p>{productOuterTotals}</p>
                     </div>
                     <div className="border p-2 rounded-lg">
@@ -836,7 +792,7 @@ const EditStockOutModel = ({
               </div>
 
               <div className="text-center">
-                <h3 className="text-lg font-semibold">Ordered Quantities:</h3>
+                <h3 className="text-lg font-semibold text-green-500">Purchase Quantities:</h3>
                 <div className="">
                   <table className="min-w-full bg-white border border-gray-300 rounded-md mt-6">
                     <thead>
@@ -889,7 +845,7 @@ const EditStockOutModel = ({
           </div>
 
           <div className="text-center">
-            <h3 className="text-lg font-semibold">Stock Out Quantities:</h3>
+            <h3 className="text-lg font-semibold text-green-500">Stock Out Quantities:</h3>
             <div className="">
               <table className="min-w-full bg-white border border-gray-300 rounded-md mt-6">
                 <thead>
@@ -907,7 +863,7 @@ const EditStockOutModel = ({
                       <td className="py-2 px-4 border-b">{stock.outerPcs}</td>
                     </tr>
                   ))}
-                </tbody>
+                </tbody> 
               </table>
             </div>
             <div className="my-4">
@@ -915,48 +871,50 @@ const EditStockOutModel = ({
               <div className="grid grid-cols-4 gap-4 mt-4">
                 <div className="border p-2 rounded-lg">
                   <h4 className="font-semibold">Total Bundle:</h4>
-                  <p>{stockOutData?.Stock?.no_bundles}</p>
+                  <p>{stockOutData?.stockOut_bundle}</p>
                 </div>
                 <div className="border p-2 rounded-lg">
                   <h4 className="font-semibold">Total Inner Pcs:</h4>
                   <p>{stockOutInnerTotals}</p>
-                </div>
+                </div> 
                 <div className="border p-2 rounded-lg">
                   <h4 className="font-semibold">Total Outer Pcs:</h4>
                   <p>{stockOutOuterTotals}</p>
-                </div>
+                </div> 
                 <div className="border p-2 rounded-lg">
                   <h4 className="font-semibold">Total Pieces:</h4>
-                  <p>{stockOutData?.Stock?.total_pcs}</p>
-                </div>
+                  <p>{stockOutData?.total_stockOut_pcs}</p>
+                </div> 
               </div>
             </div>
           </div>
 
-          <div className="flex flex-col items-center justify-center my-10 ">
-            <label className="mb-2 font-semibold" htmlFor="StockOutBundle">
+          <div className="flex flex-col items-center justify-center p-5 mt-10 mb-5 rounded ">
+            <div className="grid justify-center grid-flow-row gap-3 p-10 bg-blue-100 rounded-xl">
+            <label className="mb-2 font-semibold text-gray-700" htmlFor="StockOutBundle">
               Update Stock Out Bundle:
             </label>
             <input
-              className="w-40 px-2 py-2 border border-gray-300 rounded-md hover:border-cyan-300 active:boder-cyan-300 focus:border-cyan-300 "
+              className="px-2 py-2 border border-gray-300 rounded-md w-44 hover:border-cyan-300 active:boder-cyan-300 focus:border-cyan-300 "
               type="number"
               value={stockOutBundle}
               onChange={handleBundleChange}
               placeholder="Enter Bundle Value"
             />
             {totalPcs !== null && (
-              <div className="flex justify-center my-2">
-                <p className="text-lg font-medium text-green-500">
+              <div className="flex justify-start my-2 mt-4">
+                <p className="text-xl font-medium text-black">
                   Total Pieces: {totalPcs}
                 </p>
               </div>
             )}
+            </div>
           </div>
 
-          <div className="flex justify-center px-20 mt-5">
+          <div className="flex justify-center px-20">
             <button
               onClick={handleSubmit}
-              className="px-4 py-2 font-semibold text-white bg-blue-500 rounded hover:bg-blue-600"
+              className="py-2 font-semibold text-white bg-blue-500 rounded px-14 hover:bg-blue-600"
             >
               Approve Stock Out
             </button>

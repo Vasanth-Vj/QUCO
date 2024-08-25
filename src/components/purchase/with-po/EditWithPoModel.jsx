@@ -43,12 +43,15 @@ const EditPoModal = ({ show, onClose, getAllPurchaseOrder, withPoId }) => {
   const [totalInnerPcs, setTotalInnerPcs] = useState(0);
   const [totalOuterPcs, setTotalOuterPcs] = useState(0);
   const [totalInnerPcsPerBundle, setTotalInnerPcsPerBundle] = useState(0);
-  const [totalProducts, setTotalProducts] = useState(0);
+  const [withPoBundle, setWithPoBundle] = useState(null);
+  const [totalPcs, setTotalPcs] = useState(null);
 
   const [previews, setPreviews] = useState([]);
   const [images, setImages] = useState([]);
   const [primaryImageIndex, setPrimaryImageIndex] = useState(0);
   const [loading, setLoading] = useState(true);
+
+  const [updatedWithPoData, setUpdatedwithPoData] = useState({});
 
   const [withPoData, setWithPoData] = useState({
     Product: {
@@ -131,9 +134,17 @@ const EditPoModal = ({ show, onClose, getAllPurchaseOrder, withPoId }) => {
 
         const response = await apiService.get(`/purchases/${withPoId}`);
         console.log("With Po data:", response.data);
+        console.log("With Po data:", response.data.packing_type);
         setWithPoData(response.data);
-
+        setAssortmentType(response.data.packing_type);
+        console.log(response.data);
         setLoading(false);
+
+        // Fill the input fields based on the fetched stock-in data
+        setSizes(response.data.Size.sizes);
+        setSelectedProductId(response.data.product_id);
+        setSelectedProduct(response.data);
+        setBundles(response.data.req_bundle || "");
 
         // Assuming response.data.images is an array of image URLs
         if (response.data.images) {
@@ -162,254 +173,182 @@ const EditPoModal = ({ show, onClose, getAllPurchaseOrder, withPoId }) => {
     setDeliveryDate(new Date(inputDate).toISOString());
   };
 
-  // Suggestion buyer states
-  const [buyerDropdown, setBuyerDropdown] = useState(false);
-  const [buyerSuggestions, setBuyerSuggestions] = useState([]);
-  const [selectedBuyerId, setSelectedBuyerId] = useState(null);
+  const handleStockBySizeChange = (size, innerPcs, outerPcs) => {
+    const updatedStockBySize = withPoData.purchase_by_size.map((item) =>
+      item.size === size
+        ? { ...item, innerPcs, outerPcs } // Update only the matching size
+        : item
+    );
 
-  // Fetch buyer suggestions
-  const fetchBuyerSuggestions = async (buyerInput) => {
-    try {
-      if (buyerInput.length > 0) {
-        const response = await apiService.get("/buyers/getall");
-        const filteredBuyers = response.data.filter((b) =>
-          b.name.toLowerCase().startsWith(buyerInput.toLowerCase())
-        );
-        console.log(filteredBuyers);
-        setBuyerSuggestions(filteredBuyers);
-      } else {
-        setBuyerSuggestions([]);
-      }
-    } catch (error) {
-      console.error("Error fetching buyers:", error);
-    }
-  };
+    setWithPoData((prevState) => ({
+      ...prevState,
+      purchase_by_size: updatedStockBySize,
+    }));
 
-  const handleBuyerChange = (e) => {
-    const buyerInput = e.target.value;
-    setBuyer(buyerInput);
-    setBuyerDropdown(true);
-    fetchBuyerSuggestions(buyerInput);
-    if (buyerInput === "") {
-      setBuyerLocation("");
-      setSelectedBuyerId(null);
-    }
-  };
-
-  const handleBuyerSelect = (buyer) => {
-    setBuyer(buyer.name);
-    setBuyerLocation(buyer.location);
-    setSelectedBuyerId(buyer.id);
-    setBuyerSuggestions([]);
-    setBuyerDropdown(false);
-  };
-
-  const handleAddNewBuyer = () => {
-    // Implement the logic to add a new buyer here
-    console.log("Adding new buyer:", buyer);
-    // Close the dropdown after adding the buyer
-    setBuyerDropdown(false);
-  };
-
-  // fetch styleNo
-  const fetchStyleSuggestions = async (styleInput) => {
-    try {
-      if (styleInput.length > 0) {
-        const response = await apiService.get("/products/getall");
-        const filteredProduct = response.data.filter((e) =>
-          e.style_no.toLowerCase().startsWith(styleInput.toLowerCase())
-        );
-        console.log(filteredProduct);
-        setStyleSuggestions(filteredProduct);
-      } else {
-        setStyleSuggestions([]);
-      }
-    } catch (error) {
-      console.error("Error fetching Product:", error);
-    }
-  };
-
-  const handleStyleChange = (e) => {
-    const styleInput = e.target.value;
-    if (styleInput.length > 0) {
-      setStyleNumber(styleInput);
-      setStyleDropdown(true);
-      fetchStyleSuggestions(styleInput);
-    } else {
-      setStyleNumber("");
-      setStyleDropdown(false);
-      setReferenceNo("");
-      setCategory("");
-      setProductType("");
-      setBrand("");
-      setFabric("");
-      setFabricFinish("");
-      setGsm("");
-      setKnitType("");
-      setColors("");
-      setSizes([]);
-      setDecoration("");
-      setPrintOrEmb("");
-      setStitch("");
-      setLength("");
-      setNeck("");
-      setSleeve("");
-      setMeasurementChart("");
-      setSelectedMeasurementImage("");
-      setPackingMethod("");
-      setShortDescription("");
-      setFullDescription("");
-      setSelectedProduct(null);
-    }
-  };
-
-  const handleStyleSelect = (e) => {
-    setStyleNumber(e.style_no);
-    setSelectedProduct(e);
-    setSelectedProductId(e.id);
-    setStyleSuggestions([]);
-    setStyleDropdown(false);
-    setReferenceNo(e.Reference.reference_no);
-    setCategory(e.Category.categoryName);
-    setProductType(e.ProductType.product);
-    setBrand(e.Brand.brandName);
-    setFabric(e.Fabric.fabricName);
-    setFabricFinish(e.FabricFinish.fabricFinishName);
-    setGsm(e.Gsm.gsmValue);
-    setKnitType(e.KnitType.knitType);
-    setColors(e.Color.colorName);
-    setDecoration(e.Decoration.decorationName);
-    setPrintOrEmb(e.PrintEmbName.printType);
-    setStitch(e.StitchDetail.stictchDetail);
-    setNeck(e.Neck.neckType);
-    setLength(e.Length.lengthType);
-    setSleeve(e.Sleeve.sleeveName);
-    setPackingMethod(e.PackingMethod.packingType);
-    setMeasurementChart(e.MeasurementChart.name);
-    setSelectedMeasurementImage(e.MeasurementChart.sample_size_file);
-    setShortDescription(e.short_description);
-    setFullDescription(e.full_description);
-    setSizes(e.Size.sizes);
-    setStyleSuggestions([]);
-    setStyleDropdown(false);
-  };
-
-  const handleAddNewStyleNo = () => {
-    // Implement the logic to add a new buyer here
-    console.log("Adding new style no:", styleNumber);
-    // Close the dropdown after adding the buyer
-    setStyleDropdown(false);
+    setUpdatedwithPoData((prevState) => ({
+      ...prevState,
+      purchase_by_size: updatedStockBySize,
+    }));
   };
 
   // handle size quantity change
   const handleAssortmentTypeChange = (e) => {
     setAssortmentType(e.target.value);
+    setUpdatedwithPoData((prevState) => ({
+     ...prevState,
+      packing_type: e.target.value,
+    }));
+
     if (e.target.value === "solid" && selectedProduct) {
-      const initialInnerPcs = selectedProduct.Size.sizes.reduce((acc, size) => {
-        acc[size] = selectedProduct.inner_pcs;
-        return acc;
-      }, {});
+      // Check if selectedProduct and selectedProduct.Size.sizes exist
+      const initialInnerPcs =
+        selectedProduct.Size && selectedProduct.Size.sizes
+          ? selectedProduct.Size.sizes.reduce((acc, size) => {
+              acc[size] = selectedProduct.inner_pcs;
+              return acc;
+            }, {})
+          : {};
+
       setInnerPcs(initialInnerPcs);
     } else {
       setInnerPcs({});
     }
   };
 
-  const handleInnerPcsChange = (size, value) => {
-    setInnerPcs((prev) => ({
-      ...prev,
-      [size]: Number(value),
-    }));
+  const handleInnerPcsChange = (e, size) => {
+    const newInnerPcs = parseInt(e.target.value, 10) || null; // Ensure the value is a number
+    const sizeData =
+      withPoData.purchase_by_size.find((item) => item.size === size) || {};
+
+    // Update the stock data with new inner pcs and existing outer pcs
+    handleStockBySizeChange(size, newInnerPcs, sizeData.outerPcs || null);
+
+    console.log("Inner pieces updated for size", size);
   };
 
-  const handleOuterPcsChange = (size, value) => {
-    setOuterPcs((prev) => ({
-      ...prev,
-      [size]: Number(value),
-    }));
+  const handleOuterPcsChange = (e, size) => {
+    const newOuterPcs = parseInt(e.target.value, 10) || null; // Ensure the value is a number
+    const sizeData =
+      withPoData.purchase_by_size.find((item) => item.size === size) || {};
+
+    // Update the stock data with new outer pcs and existing inner pcs
+    handleStockBySizeChange(size, sizeData.innerPcs || null, newOuterPcs);
+
+    console.log("Outer pieces updated for size", size);
   };
 
   useEffect(() => {
-    const totalInner = Object.values(innerPcs).reduce(
-      (sum, pcs) => sum + Number(pcs || 0),
-      0
-    );
-    const totalOuter = Object.values(outerPcs).reduce(
-      (sum, pcs) => sum + Number(pcs || 0),
-      0
-    );
-    setTotalInnerPcs(totalInner);
-    setTotalOuterPcs(totalOuter);
+    if (withPoData?.purchase_by_size) {
+      const totalwithPoInnerPcs = calculateTotalInnerPcs(
+        withPoData.purchase_by_size
+      );
+      setTotalInnerPcs(totalwithPoInnerPcs);
 
-    const totalInnerPerBundle = sizes.reduce((sum, size) => {
-      const inner = innerPcs[size] || 0;
-      const outer = outerPcs[size] || 0;
-      return sum + inner * outer;
-    }, 0);
+      const totalwithPoOuterPcs = calculateTotalOuterPcs(
+        withPoData.purchase_by_size
+      );
+      setTotalOuterPcs(totalwithPoOuterPcs);
 
-    setTotalInnerPcsPerBundle(totalInnerPerBundle);
-    const totalProducts = totalInnerPerBundle * bundles;
-    setTotalProducts(totalProducts);
-  }, [innerPcs, outerPcs, bundles, sizes]);
-
-  const handleSubmit = async () => {
-    const purchaseData = {
-      order_type: "With Purchase Order",
-      purchase_order_number: orderNumber,
-      buyer_id: selectedBuyerId,
-      delivery_date: deliveryDate,
-      product_style_number: styleNumber,
-      product_id: selectedProductId,
-      notes: notes,
-      packing_type: assortmentType,
-      purchase_by_size: sizes.map((size) => ({
-        size,
-        innerPcs: innerPcs[size],
-        outerPcs: outerPcs[size],
-      })),
-      req_bundle: bundles,
-      req_purchase_qty: totalProducts,
-    };
-
-    try {
-      console.log(purchaseData);
-      const response = await apiService.post("/purchases/create", purchaseData);
-
-      if (response.status === 201) {
-        getAllPurchaseOrder();
-        setStyleNumber("");
-        setStyleDropdown(false);
-        setReferenceNo("");
-        setCategory("");
-        setProductType("");
-        setBrand("");
-        setFabric("");
-        setFabricFinish("");
-        setGsm("");
-        setKnitType("");
-        setColors("");
-        setSizes([]);
-        setDecoration("");
-        setPrintOrEmb("");
-        setStitch("");
-        setLength("");
-        setNeck("");
-        setSleeve("");
-        setMeasurementChart("");
-        setSelectedMeasurementImage("");
-        setPackingMethod("");
-        setShortDescription("");
-        setFullDescription("");
-        setSelectedProduct(null);
-        onClose();
-      } else {
-        console.error("Error creating Purchase order:", response.data);
-      }
-    } catch (error) {
-      console.error("Error creating Purchase order:", error);
+      const totalInnerPerBundle = calculateTotalInnerPerBundle(
+        withPoData.purchase_by_size
+      );
+      setTotalInnerPcsPerBundle(totalInnerPerBundle);
     }
+  }, [withPoData, sizes]);
+
+  const calculateTotalInnerPcs = (data) => {
+    return data.reduce((total, item) => total + item.innerPcs, 0);
   };
 
+  const calculateTotalOuterPcs = (data) => {
+    return data.reduce((total, item) => total + item.outerPcs, 0);
+  };
+
+  const calculateTotalInnerPerBundle = (data) => {
+    return data.reduce((total, item) => {
+      const inner = item.innerPcs || 0;
+      const outer = item.outerPcs || 0;
+      return total + inner * outer;
+    }, 0);
+  };
+
+  useEffect(() => {
+    if (withPoData?.req_bundle !== undefined) {
+      setWithPoBundle(withPoData.req_bundle);
+    }
+  }, [withPoData]);
+
+  const handleBundleChange = (e) => {
+    const bundleQty = Number(e.target.value);
+    setWithPoBundle(bundleQty);
+    setUpdatedwithPoData((prevState) => ({
+      ...prevState,
+      req_bundle: bundleQty,
+    }));
+  };
+  
+  useEffect(() => {
+    if (withPoBundle > 0 && withPoData?.purchase_by_size) {
+      const totalPcs = withPoData.purchase_by_size.reduce((sum, item) => {
+        return sum + (item.innerPcs || 0) * (item.outerPcs || 0) * withPoBundle;
+      }, 0);
+  
+      setTotalPcs(totalPcs);
+      setUpdatedwithPoData((prevState) => ({
+        ...prevState,
+        totalPcs: totalPcs,
+      }));
+    } else {
+      setTotalPcs(0);
+   
+    }
+  }, [withPoBundle, withPoData]);
+  
+
+  const handleSubmit = async () => {
+    console.log(updatedWithPoData);
+  
+    // Create a new FormData object
+    const formData = new FormData();
+  
+    // Append the updated data to formData
+    formData.append("withPoData", JSON.stringify(withPoData));
+  
+    // Append the updatedWithPoData to formData
+    Object.entries(updatedWithPoData).forEach(([key, value]) => {
+      if (value instanceof File) {
+        formData.append(key, value);
+      } else {
+        formData.append(key, JSON.stringify(value));
+      }
+    });
+  
+    // Additional data to append to formData
+    formData.append("packing_type", assortmentType);
+    formData.append("req_bundle", withPoBundle);
+    formData.append("req_purchase_qty", totalPcs);
+
+  
+    
+  
+  //   try {
+  //     // Send formData to the server
+  //     const response = await apiService.post('endpoint', formData, {
+  //       headers: {
+  //         'Content-Type': 'multipart/form-data',
+  //       },
+  //     });
+  //     console.log("Submit response:", response.data);
+  
+  //     // Handle success (e.g., close the modal or show a success message)
+  //     onClose();
+  //   } catch (error) {
+  //     console.error("Error submitting data:", error.response || error.message);
+  //     // Handle error (e.g., show an error message)
+  //   }
+   };
+  
+  
   if (!show) return null;
 
   return (
@@ -454,32 +393,9 @@ const EditPoModal = ({ show, onClose, getAllPurchaseOrder, withPoId }) => {
                   type="text"
                   id="buyer"
                   value={withPoData.Buyer.name}
-                  onChange={handleBuyerChange}
                   className="border border-gray-300 rounded-md px-2 py-2 bg-zinc-200"
                   placeholder="Enter Buyer Name"
                 />
-                {buyerDropdown && buyer && (
-                  <ul className="absolute top-full left-0 z-10 w-full bg-white border border-gray-300 rounded-md shadow-lg">
-                    {buyerSuggestions.length > 0 ? (
-                      buyerSuggestions.map((suggestion) => (
-                        <li
-                          key={suggestion.id}
-                          className="px-4 py-2 cursor-pointer hover:bg-gray-200"
-                          onClick={() => handleBuyerSelect(suggestion)}
-                        >
-                          {suggestion.name}
-                        </li>
-                      ))
-                    ) : (
-                      <li
-                        className="px-4 py-2 cursor-pointer text-sm text-blue-600 hover:bg-gray-200"
-                        onClick={handleAddNewBuyer}
-                      >
-                        Add New Buyer: "{buyer}"
-                      </li>
-                    )}
-                  </ul>
-                )}
               </div>
 
               <div className="flex flex-col gap-2">
@@ -517,32 +433,9 @@ const EditPoModal = ({ show, onClose, getAllPurchaseOrder, withPoId }) => {
                   type="text"
                   id="styleNo"
                   value={withPoData.Product.style_no}
-                  onChange={handleStyleChange}
                   className="border border-gray-300 rounded-md px-2 py-2 bg-zinc-200"
                   placeholder="Enter Style No"
                 />
-                {styleDropdown && styleNumber && (
-                  <ul className="absolute top-full left-0 z-10 w-full bg-white border border-gray-300 rounded-md shadow-lg">
-                    {styleSuggestions.length > 0 ? (
-                      styleSuggestions.map((suggestion) => (
-                        <li
-                          key={suggestion.id}
-                          className="px-4 py-2 cursor-pointer hover:bg-gray-200"
-                          onClick={() => handleStyleSelect(suggestion)}
-                        >
-                          {suggestion.style_no}
-                        </li>
-                      ))
-                    ) : (
-                      <li
-                        className="px-4 py-2 cursor-pointer text-sm text-blue-600 hover:bg-gray-200"
-                        onClick={handleAddNewStyleNo}
-                      >
-                        Add New Style: "{styleNumber}"
-                      </li>
-                    )}
-                  </ul>
-                )}
               </div>
 
               <div className="flex flex-col gap-2 relative">
@@ -856,25 +749,21 @@ const EditPoModal = ({ show, onClose, getAllPurchaseOrder, withPoId }) => {
                     Quantity per size:
                   </h4>
                   <div className="flex flex-col gap-4">
-                    {sizes.map((size, index) => (
+                    {withPoData?.purchase_by_size?.map((stock, index) => (
                       <div key={index} className="flex items-center gap-4 mb-2">
-                        <div className="w-16">{size}: </div>
+                        <div className="w-16">{stock.size}: </div>
                         <input
                           type="number"
-                          value={innerPcs[size] || ""}
-                          onChange={(e) =>
-                            handleInnerPcsChange(size, e.target.value)
-                          }
+                          value={stock.innerPcs || null}
+                          onChange={(e) => handleInnerPcsChange(e, stock.size)}
                           placeholder="Inner Pcs"
                           className="border border-gray-300 rounded-md px-2 py-1 w-24"
                           disabled={assortmentType === "solid"}
                         />
                         <input
                           type="number"
-                          value={outerPcs[size] || ""}
-                          onChange={(e) =>
-                            handleOuterPcsChange(size, e.target.value)
-                          }
+                          value={stock.outerPcs || null}
+                          onChange={(e) => handleOuterPcsChange(e, stock.size)}
                           placeholder="Outer Pcs"
                           className="border border-gray-300 rounded-md px-2 py-1 w-24"
                         />
@@ -887,8 +776,8 @@ const EditPoModal = ({ show, onClose, getAllPurchaseOrder, withPoId }) => {
                   <label className="font-semibold">Number of Bundles: </label>
                   <input
                     type="number"
-                    value={withPoData.req_bundle}
-                    onChange={(e) => setBundles(Number(e.target.value))}
+                    value={withPoBundle}
+                    onChange={handleBundleChange}
                     placeholder="Bundles"
                     className="border border-gray-300 rounded-md px-2 py-1 w-24"
                   />
@@ -918,7 +807,7 @@ const EditPoModal = ({ show, onClose, getAllPurchaseOrder, withPoId }) => {
                       <label className="block text-sm font-medium text-gray-700">
                         Total Pcs
                       </label>
-                      <span>{withPoData.req_purchase_qty}</span>
+                      <span>{totalPcs}</span>
                     </div>
                   </div>
                 </div>

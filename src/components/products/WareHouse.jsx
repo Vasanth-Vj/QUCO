@@ -10,25 +10,26 @@ import closeIcon from "../../assets/close-modal-icon.svg";
 import excelIcon from "../../assets/excel-icon.svg";
 import apiService from "../../apiService";
 
-const Category = ({ searchQuery, isModalOpen, onClose }) => {
+const WareHouse = ({ searchQuery, isModalOpen, onClose }) => {
   const [data, setData] = useState([]);
-  const [editedCategoryName, setEditedcategoryName] = useState("");
+  const [editedWareHouseName, setEditedWareHouseName] = useState("");
   const [editIndex, setEditIndex] = useState(null);
   const [checkedIds, setCheckedIds] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [recordsPerPage, setRecordsPerPage] = useState(5);
+  const [inputValue, setInputValue] = useState("");
+  const [addedWareHouses, setAddedWareHouses] = useState([]);
+  const [singleWareHouses, setSingleWareHouses] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
 
-  const [singleCategory, setSingleCategory] = useState("");
-
   useEffect(() => {
-    fetchAllCategorys();
+    fetchAllWareHouses();
   }, []);
 
-  const fetchAllCategorys = async () => {
+  const fetchAllWareHouses = async () => {
     try {
-      const response = await apiService.get("/categories/getall", {
+      const response = await apiService.get("/warehouses/getall", {
         headers: {
           'Content-Type': 'application/json',
         },
@@ -36,14 +37,14 @@ const Category = ({ searchQuery, isModalOpen, onClose }) => {
       console.log(response.data);
       setData(response.data); 
     } catch (error) {
-      console.error("Error fetching Categorys:", error);
+      console.error("Error fetching warehouse:", error);
     }
   };
 
   // handle toggle button click
   const handleStatusToggle = async ({ id, isActive }) => {
     try {
-      const response = await apiService.put(`/categories/${id}`, {
+      const response = await apiService.put(`/warehouses/${id}`, {
         isActive: !isActive,
       }, {
         headers: {
@@ -51,41 +52,42 @@ const Category = ({ searchQuery, isModalOpen, onClose }) => {
         },
       });
       if (response.status === 200) {
-        fetchAllCategorys();
+        fetchAllWareHouses();
       }
     } catch (error) {
-      console.error(`Error toggling status for Category with ID ${id}:`, error);
+      console.error(`Error toggling status for warehouse with ID ${id}:`, error);
       // Handle error as needed
     }
   };
+  
 
   // handle edit button click
-  const handleEditClick = ({ id, categoryName }) => {
+  const handleEditClick = ({ id, warehouse}) => {
     setEditIndex(id);
-    setEditedcategoryName(categoryName);
+    setEditedWareHouseName(warehouse);
   };
 
   // handle input change
   const handleInputChange = (e) => {
-    setEditedcategoryName(e.target.value);
+    setEditedWareHouseName(e.target.value);
   };
 
   // handle save button click
   const handleSaveClick = async (index, id) => {
     try {
-      const response = await apiService.put(`/categories/${id}`, {
-        categoryName: editedCategoryName,
+      const response = await apiService.put(`/warehouses/${id}`, {
+        warehouse: editedWareHouseName,
       }, {
         headers: {
           'Content-Type': 'application/json',
         },
       });
       if (response.status === 200) {
-        fetchAllCategorys();
+        fetchAllWareHouses();
         setEditIndex(null);
       }
     } catch (error) {
-      console.error(`Error saving Caterogry with ID ${id}:`, error);
+      console.error(`Error saving warehouse with ID ${id}:`, error);
       // Handle error as needed
     }
   };
@@ -99,17 +101,17 @@ const Category = ({ searchQuery, isModalOpen, onClose }) => {
   // handle delete button click
   const handleDelete = async (id) => {
     try {
-      const response = await apiService.delete(`/categories/${id}`, {
+      const response = await apiService.delete(`/warehouses/${id}`, {
         headers: {
           'Content-Type': 'application/json',
         },
       });
       console.log(response);
       if (response.status === 202) {
-        fetchAllCategorys();
+        fetchAllWareHouses();
       }
     } catch (error) {
-      console.error("Error deleting category:", error);
+      console.error("Error deleting warehouse:", error);
       // Handle error as needed
     }
   };
@@ -130,10 +132,10 @@ const Category = ({ searchQuery, isModalOpen, onClose }) => {
     setCurrentPage(1);
   };
 
-  const handleSingleCategory = async () => {
+  const handleSingleWarehouse = async () => {
     try {
-      const response = await apiService.post("/categories/create", {
-        categoryName: singleCategory,
+      const response = await apiService.post("/warehouses/create", {
+        warehouse: singleWareHouses,
       }, {
         headers: {
           'Content-Type': 'application/json',
@@ -141,28 +143,28 @@ const Category = ({ searchQuery, isModalOpen, onClose }) => {
       });
 
       if (response.status === 201) {
-        setSingleCategory("");
-        setSuccessMessage("Category added successfully.");
+        setSingleWareHouses("");
+        setSuccessMessage("warehouse added successfully.");
         setErrorMessage("");
-        fetchAllCategorys();
+        fetchAllWareHouses();
 
-         // Clear messages after 5 seconds
-         setTimeout(() => {
+        // Clear messages after 5 seconds
+        setTimeout(() => {
           setSuccessMessage("");
           setErrorMessage("");
         }, 5000);
       }
     } catch (error) {
       if (error.response && error.response.status === 409) {
-        setErrorMessage("Category already exists.");
-        
+        setErrorMessage("warehouse already exists.");
+
         // Clear messages after 5 seconds
         setTimeout(() => {
           setSuccessMessage("");
           setErrorMessage("");
         }, 5000);
       } else {
-        setErrorMessage("Error adding category.");
+        setErrorMessage("Error adding warehouse.");
 
         // Clear messages after 5 seconds
         setTimeout(() => {
@@ -174,22 +176,24 @@ const Category = ({ searchQuery, isModalOpen, onClose }) => {
     }
   };
 
+
+
+  
   const handleClose = () => {
-    setSingleCategory("");
+    setSingleWareHouses("");
     onClose()
   }
 
- 
-
   const filteredData = data.filter(
     (item) =>
-      item.categoryName &&
-      item.categoryName.toLowerCase().includes(searchQuery.toLowerCase())
+      item.warehouse &&
+      item.warehouse.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const startIndex = (currentPage - 1) * recordsPerPage;
   const endIndex = startIndex + recordsPerPage;
   const currentData = filteredData.slice(startIndex, endIndex);
+
 
   return (
     <div className=" mx-auto p-4 bg-white">
@@ -201,7 +205,7 @@ const Category = ({ searchQuery, isModalOpen, onClose }) => {
                 Si No
               </th>
               <th className="px-2 py-3 text-center text-md font-bold text-black uppercase w-40">
-                Reference No
+              Warehouse
               </th>
               <th className="px-6 py-3 text-center text-md font-bold text-black uppercase flex-grow">
                 Status
@@ -238,12 +242,12 @@ const Category = ({ searchQuery, isModalOpen, onClose }) => {
                   {editIndex === row.id ? (
                     <input
                       type="text"
-                      value={editedCategoryName}
+                      value={editedWareHouseName}
                       onChange={handleInputChange}
                       className="border border-gray-300 rounded-md w-28 px-2 py-2"
                     />
                   ) : (
-                    row.categoryName
+                    row.warehouse
                   )}
                 </td>
                 <td className="px-6 py-3 whitespace-nowrap text-md text-center text-black flex-grow">
@@ -288,7 +292,7 @@ const Category = ({ searchQuery, isModalOpen, onClose }) => {
                       onClick={() =>
                         handleEditClick({
                           id: row.id,
-                          categoryName: row.categoryName,
+                          warehouse: row.warehouse,
                         })
                       }
                       className="text-blue-500 text-center"
@@ -358,10 +362,10 @@ const Category = ({ searchQuery, isModalOpen, onClose }) => {
             onClick={handleClose}
           ></div>
           <div className="relative bg-white rounded-lg shadow-lg w-full max-w-[35vw] h-screen max-h-[40vh] overflow-y-auto lg:overflow-hidden">
-            <div className="py-2 flex flex-col">
+            <div className="p-5 flex flex-col">
               <div>
                 <div className="flex justify-center">
-                  <h2 className="text-2xl font-bold">Add Category</h2>
+                  <h2 className="text-2xl font-bold">Add Warehouse</h2>
                   <button
                     className="absolute right-5 cursor-pointer"
                     onClick={handleClose}
@@ -372,15 +376,12 @@ const Category = ({ searchQuery, isModalOpen, onClose }) => {
                 <hr className="w-full mt-3" />
               </div>
               <div className="flex flex-col items-center">
-                {/* <p className="text-gray-400 font-bold mt-10">
-                  *For multiple category feed use enter after each values"
-                </p> */}
                 <input
                   className="bg-gray-200 rounded w-80 py-3 px-4 text-gray-700 focus:outline-none focus:shadow-outline mt-5 text-lg text-center"
                   type="text"
-                  placeholder="Enter Category name"
-                  value={singleCategory}
-                  onChange={(e) => setSingleCategory(e.target.value)}
+                  placeholder="Enter Warehouse name"
+                  value={singleWareHouses}
+                  onChange={(e) => setSingleWareHouses(e.target.value)}
                 />
                 {successMessage && (
               <div className="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 my-4">
@@ -394,7 +395,7 @@ const Category = ({ searchQuery, isModalOpen, onClose }) => {
             )}
                 <button
                   className="bg-sky-600 w-80 py-3 text-white rounded-lg font-bold text-lg mt-3"
-                  onClick={() => handleSingleCategory()}
+                  onClick={() => handleSingleWarehouse()}
                 >
                   Update
                 </button>
@@ -408,6 +409,7 @@ const Category = ({ searchQuery, isModalOpen, onClose }) => {
                     </span>
                   </p>
                 </div>
+ 
               </div>
             </div>
           </div>
@@ -417,4 +419,4 @@ const Category = ({ searchQuery, isModalOpen, onClose }) => {
   );
 };
 
-export default Category;
+export default WareHouse;
