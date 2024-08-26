@@ -2,30 +2,19 @@ import React, { useState, useEffect } from "react";
 import closeIcon from "../../../assets/close-modal-icon.svg";
 import apiService from "../../../apiService";
 
-const EditStockInModal = ({
-  showModal,
-  close,
-  getAllStocks,
-  stockInId,
-  editIndex,
-}) => {
-  const [selectedProductId, setSelectedProductId] = useState(null);
+const EditStockInModal = ({ showModal, close, editIndex }) => {
   const [sizes, setSizes] = useState([]);
   const [assortmentType, setAssortmentType] = useState("");
   const [innerPcs, setInnerPcs] = useState({});
-  const [outerPcs, setOuterPcs] = useState({});
-  const [bundles, setBundles] = useState("");
 
-  const [totalProducts, setTotalProducts] = useState(0);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [successMessage, setSuccessMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [stockInInnerTotals, setStockInInnerTotals] = useState(null);
   const [stockInOuterTotals, setStockInOuterTotals] = useState(null);
   const [totalInnerPcsPerBundle, setTotalInnerPcsPerBundle] = useState(null);
-  const [stockInBundle, setStockInBundle] = useState(0);
+  const [stockInBundle, setStockInBundle] = useState(null);
   const [totalPcs, setTotalPcs] = useState(0);
-  const [warehouse, setWarehouse] = useState("");
 
   // Suggestion warehouse states
   const [warehouseDropdown, setWarehouseDropdown] = useState(false);
@@ -105,9 +94,6 @@ const EditStockInModal = ({
       warehouse: "",
     },
   });
-  const [previews, setPreviews] = useState([]);
-  const [images, setImages] = useState([]);
-  const [loading, setLoading] = useState(true);
 
   // Fetch warehouse suggestions
   const fetchWarehouseSuggestions = async (warehouseInput) => {
@@ -157,11 +143,11 @@ const EditStockInModal = ({
       warehouse_id: warehouse.id,
     });
     setUpdatedStockInData({
-      ...updatedWarehouseData,
+      ...updatedStockInData,
       warehouse_id: warehouse.id,
     });
     console.log(warehouse.warehouse);
-    console.log(warehouse.id);
+    console.log(selectedWarehouseId);
   };
 
   const handleAddNewWarehouse = () => {
@@ -171,37 +157,23 @@ const EditStockInModal = ({
   };
 
   useEffect(() => {
-    console.log("stockInId", editIndex);
-
-    if (editIndex) {
-      const fetchStockInData = async () => {
-        try {
-          const response = await apiService.get(`/stocks/stockIn/${editIndex}`);
-          setStockInData(response.data);
-          setAssortmentType(response.data.packing_type);
-          console.log(response.data);
-          setLoading(false);
-
-          // Fill the input fields based on the fetched stock-in data
-          setSizes(response.data.Size.sizes);
-          setSelectedProductId(response.data.product_id);
-          setSelectedProduct(response.data);
-          setBundles(response.data.no_bundles || "");
-
-          // Assuming response.data.images is an array of image URLs
-          if (response.data.images) {
-            setPreviews(response.data.images);
-            setImages(response.data.images.map((image) => ({ url: image })));
-          }
-        } catch (error) {
-          console.error("Error fetching stock In data:", error);
-          setLoading(false);
-        }
-      };
-
-      fetchStockInData();
-    }
+      fetchStockInData(editIndex);
   }, [editIndex]);
+
+  const fetchStockInData = async (editIndex) => {
+    try {
+      const response = await apiService.get(`/stocks/stockIn/${editIndex}`);
+      setStockInData(response.data);
+      setAssortmentType(response.data.packing_type);
+      console.log(response.data);
+      // Fill the input fields based on the fetched stock-in data
+      setSizes(response.data.Size.sizes);
+      setSelectedProduct(response.data);
+    
+    } catch (error) {
+      console.error("Error fetching stock In data:", error);
+    }
+  };
 
   const handleStockBySizeChange = (size, innerPcs, outerPcs) => {
     const updatedStockBySize = stockInData.stock_by_size.map((item) =>
@@ -214,25 +186,25 @@ const EditStockInModal = ({
       ...prevState,
       stock_by_size: updatedStockBySize,
     }));
-    setUpdatedStockInData((prevState) => ({
-      ...prevState,
+    setUpdatedStockInData({
+      ...updatedStockInData,
       stock_by_size: updatedStockBySize,
-    }));
+    });
   };
 
   const handleAssortmentTypeChange = (e) => {
     setAssortmentType(e.target.value);
-    setAssortmentType(e.target.value);
-    setUpdatedStockInData((prevState) => ({
-     ...prevState,
+    setUpdatedStockInData({
+      ...updatedStockInData,
       packing_type: e.target.value,
-    }));
+    });
     if (e.target.value === "solid" && selectedProduct) {
       const initialInnerPcs = selectedProduct.Size.sizes.reduce((acc, size) => {
         acc[size] = selectedProduct.inner_pcs;
         return acc;
       }, {});
       setInnerPcs(initialInnerPcs);
+      console.log(innerPcs)
     } else {
       setInnerPcs({});
     }
@@ -240,60 +212,25 @@ const EditStockInModal = ({
 
   const handleInnerPcsChange = (e, size) => {
     const newInnerPcs = parseInt(e.target.value, 10) || null; // Ensure the value is a number
-    const sizeData = stockInData.stock_by_size.find((item) => item.size === size) || {};
-  
+    const sizeData =
+      stockInData.stock_by_size.find((item) => item.size === size) || {};
+
     // Update the stock data with new inner pcs and existing outer pcs
     handleStockBySizeChange(size, newInnerPcs, sizeData.outerPcs || null);
-  
+
     console.log("Inner pieces updated for size", size);
   };
-  
+
   const handleOuterPcsChange = (e, size) => {
     const newOuterPcs = parseInt(e.target.value, 10) || null; // Ensure the value is a number
-    const sizeData = stockInData.stock_by_size.find((item) => item.size === size) || {};
-  
+    const sizeData =
+      stockInData.stock_by_size.find((item) => item.size === size) || {};
+
     // Update the stock data with new outer pcs and existing inner pcs
     handleStockBySizeChange(size, sizeData.innerPcs || null, newOuterPcs);
-  
+
     console.log("Outer pieces updated for size", size);
   };
-  
-
-  // useEffect(() => {
-  //   // Extract innerPcs and outerPcs from stockInData.stock_by_size
-  //   const innerPcs = {};
-  //   const outerPcs = {};
-
-  //   stockInData.stock_by_size.forEach((item) => {
-  //     innerPcs[item.size] = item.inner || 0;
-  //     outerPcs[item.size] = item.outer || 0;
-  //   });
-
-  //   // Calculate total inner and total outer pieces
-  //   const totalInner = Object.values(innerPcs).reduce(
-  //     (sum, pcs) => sum + Number(pcs || 0),
-  //     0
-  //   );
-  //   const totalOuter = Object.values(outerPcs).reduce(
-  //     (sum, pcs) => sum + Number(pcs || 0),
-  //     0
-  //   );
-  //   setTotalInnerPcs(totalInner);
-  //   setTotalOuterPcs(totalOuter);
-
-  //   // Calculate total inner pieces per bundle
-  //   const totalInnerPerBundle = sizes.reduce((sum, size) => {
-  //     const inner = innerPcs[size] || 0;
-  //     const outer = outerPcs[size] || 0;
-  //     return sum + inner * outer;
-  //   }, 0);
-
-  //   setTotalInnerPcsPerBundle(totalInnerPerBundle);
-
-  //   // Calculate total products
-  //   const totalProducts = totalInnerPerBundle * bundles;
-  //   setTotalProducts(totalProducts);
-  // }, [stockInData, bundles, sizes]);
 
   useEffect(() => {
     if (stockInData?.stock_by_size) {
@@ -312,7 +249,24 @@ const EditStockInModal = ({
       );
       setTotalInnerPcsPerBundle(totalInnerPerBundle);
     }
-  }, [stockInData, sizes]);
+
+    if (stockInData?.no_bundles !== undefined) {
+      setStockInBundle(stockInData.no_bundles);
+    }
+
+    if (stockInBundle > 0 && stockInData?.stock_by_size) {
+      const totalPcs = stockInData.stock_by_size.reduce((sum, item) => {
+        return sum + item.innerPcs * item.outerPcs * stockInBundle;
+      }, 0);
+      setTotalPcs(totalPcs);
+      setUpdatedStockInData({
+        ...updatedStockInData,
+        totalPcs: totalPcs,
+      });
+    } else {
+      setTotalPcs(0);
+    }
+  }, [stockInData, sizes, stockInBundle]);
 
   const calculateTotalInnerPcs = (data) => {
     return data.reduce((total, item) => total + item.innerPcs, 0);
@@ -330,77 +284,47 @@ const EditStockInModal = ({
     }, 0);
   };
 
-  useEffect(() => {
-    if (stockInData?.no_bundles !== undefined) {
-      setStockInBundle(stockInData.no_bundles);
-    }
-  }, [stockInData]);
-
-
-
   const handleBundleChange = async (e) => {
     const bundleQty = Number(e.target.value);
     setStockInBundle(bundleQty);
-    setUpdatedStockInData((prevState) => ({
-      ...prevState,
+    setUpdatedStockInData({
+      ...updatedStockInData,
       no_bundles: bundleQty,
-    }));
+    });
   };
 
-  useEffect(() => {
-    if (stockInBundle > 0 && stockInData?.stock_by_size) {
-      const totalPcs = stockInData.stock_by_size.reduce((sum, item) => {
-        return sum + item.innerPcs * item.outerPcs * stockInBundle;
-      }, 0);
-      setTotalPcs(totalPcs);
-      setUpdatedStockInData((prevState) => ({
-        ...prevState,
-        totalPcs: totalPcs,
-      }));
-    } else {
-      setTotalPcs(0);
-    }
-  }, [stockInBundle, stockInData]);
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    console.log("updatedStockInData", updatedStockInData);
+    
+    try {
+      const response = await apiService.put(
+        `/stocks/stockIn/${editIndex}`,
+        updatedStockInData,
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
 
-  const handleSubmit = async () => {
-    console.log(updatedStockInData);
-  
-    // Create a new FormData object
-    const formData = new FormData();
-  
-    // Append the updated data to formData
-    formData.append("stockInData", JSON.stringify(stockInData));
-  
-    // Append the updatedWithPoData to formData
-    Object.entries(updatedStockInData).forEach(([key, value]) => {
-      if (value instanceof File) {
-        formData.append(key, value);
-      } else {
-        formData.append(key, JSON.stringify(value));
+      if (response.status === 200) {
+        console.log("Submit response:", response);
+        setSuccessMessage('Stock-In updated successfully');
+        setErrorMessage("");
+        setUpdatedStockInData({});
+        setTimeout(() => {
+          setSuccessMessage("");
+          close();
+        }, 3000);
       }
-    });
-  
-    // Additional data to append to formData
-    formData.append("packing_type", assortmentType);
-    formData.append("no_bundles", stockInBundle);
-    formData.append("total_pcs", totalPcs);
-    formData.append("warehouse_id", warehouse);
-
-    //   try {
-  //     // Send formData to the server
-  //     const response = await apiService.post('/endpoint', formData, {
-  //       headers: {
-  //         'Content-Type': 'multipart/form-data',
-  //       },
-  //     });
-  //     console.log("Submit response:", response.data);
-  
-  //     // Handle success (e.g., close the modal or show a success message)
-  //     onClose();
-  //   } catch (error) {
-  //     console.error("Error submitting data:", error.response || error.message);
-  //     // Handle error (e.g., show an error message)
-  //   }
+    } catch (error) {
+      if (error.response && error.response.status === 409) {
+        setErrorMessage(error.message);
+    } else {
+        setErrorMessage(error.message);
+    }
+    } 
   };
 
   if (!showModal) return null;
@@ -659,7 +583,7 @@ const EditStockInModal = ({
               <input
                 type="text"
                 id="warehouse"
-                value={stockInData.Warehouse.warehouse}
+                value={stockInData?.Warehouse.warehouse}
                 onChange={handleWarehouseChange}
                 className="border border-gray-300 rounded-md px-2 py-1 bg-zinc-200"
                 placeholder="Enter Warehouse"
@@ -758,7 +682,7 @@ const EditStockInModal = ({
             <h3 className="text-lg font-medium">Stock Info:</h3>
           </div>
           <div className="flex justify-between gap-4 px-5 border border-gray-400">
-            <div className="p-4 rounded-lg">  
+            <div className="p-4 rounded-lg">
               <h4 className="mb-4 text-sm font-medium">Quantity per size:</h4>
               <div className="flex flex-col gap-4">
                 {stockInData?.stock_by_size?.map((stock, index) => (
@@ -776,15 +700,15 @@ const EditStockInModal = ({
                         className="w-24 px-2 py-1 border border-gray-300 rounded-md"
                         disabled={assortmentType === "solid"}
                       />
-                    </div> 
+                    </div>
                     <div className="flex flex-col gap-2">
                       <label className="block text-sm font-medium text-gray-700">
                         Inner Boxes
                       </label>
                       <input
                         type="number"
-                        value={stock.outerPcs || null} 
-                        onChange={(e) => handleOuterPcsChange(e, stock.size)} 
+                        value={stock.outerPcs || null}
+                        onChange={(e) => handleOuterPcsChange(e, stock.size)}
                         placeholder="Outer Pcs"
                         className="w-24 px-2 py-1 border border-gray-300 rounded-md"
                       />

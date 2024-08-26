@@ -4,42 +4,13 @@ import apiService from "../../../apiService";
 import AddStockOutModel from "../../stocks/stock-out/AddStockOutModel";
 
 const EditWithoutPoModal = ({ show, onClose, withPoOutId }) => {
-  const [buyer, setBuyer] = useState("");
-  const [buyerLocation, setBuyerLocation] = useState("");
   const [deliveryDate, setDeliveryDate] = useState(new Date().toISOString());
-  const [styleNumber, setStyleNumber] = useState("");
-  const [styleDropdown, setStyleDropdown] = useState(false);
-  const [styleSuggestions, setStyleSuggestions] = useState([]);
   const [selectedProduct, setSelectedProduct] = useState({});
-  const [selectedProductId, setSelectedProductId] = useState(null);
-  const [ReferenceNo, setReferenceNo] = useState("");
-  const [category, setCategory] = useState("");
-  const [productType, setProductType] = useState("");
-  const [brand, setBrand] = useState("");
-  const [fabric, setFabric] = useState("");
-  const [fabricFinish, setFabricFinish] = useState("");
-  const [gsm, setGsm] = useState(null);
-  const [knitType, setKnitType] = useState("");
-  const [colors, setColors] = useState("");
-  const [sizes, setSizes] = useState([]);
-  const [decoration, setDecoration] = useState("");
-  const [printOrEmb, setPrintOrEmb] = useState("");
-  const [stitch, setStitch] = useState("");
-  const [neck, setNeck] = useState("");
-  const [sleeve, setSleeve] = useState("");
-  const [length, setLength] = useState("");
-  const [measurementChart, setMeasurementChart] = useState("");
-  const [selectedMeasurementImage, setSelectedMeasurementImage] =
-    useState(null);
-  const [packingMethod, setPackingMethod] = useState("");
-  const [shortDescription, setShortDescription] = useState("");
-  const [fullDescription, setFullDescription] = useState("");
 
-  const [notes, setNotes] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
   const [assortmentType, setAssortmentType] = useState("assorted");
   const [innerPcs, setInnerPcs] = useState({});
-  const [outerPcs, setOuterPcs] = useState({});
-  const [bundles, setBundles] = useState("");
   const [totalInnerPcs, setTotalInnerPcs] = useState(0);
   const [totalOuterPcs, setTotalOuterPcs] = useState(0);
   const [totalInnerPcsPerBundle, setTotalInnerPcsPerBundle] = useState(0);
@@ -48,13 +19,13 @@ const EditWithoutPoModal = ({ show, onClose, withPoOutId }) => {
   const [stockOutPoNo, setStockOutPoNo] = useState("");
   const [stockOutOrder, setStockOutOrder] = useState({});
   const [showStockOut, setShowStockOut] = useState(false);
-
-  const [previews, setPreviews] = useState([]);
-  const [images, setImages] = useState([]);
-  const [primaryImageIndex, setPrimaryImageIndex] = useState(0);
-  const [loading, setLoading] = useState(true);
-
   const [updatedWithOutPoData, setUpdatedwithOutPoData] = useState({});
+
+  // Suggestion buyer states
+  const [buyerDropdown, setBuyerDropdown] = useState(false);
+  const [buyerSuggestions, setBuyerSuggestions] = useState([]);
+  const [selectedBuyerId, setSelectedBuyerId] = useState(null);
+  const [updatedBuyerData, setUpdatedBuyerData] = useState({});
 
   const [withOutPoData, setWithOutPoData] = useState({
     Product: {
@@ -131,44 +102,86 @@ const EditWithoutPoModal = ({ show, onClose, withPoOutId }) => {
   });
 
   useEffect(() => {
-    const fetchWithPoData = async () => {
-      try {
-        console.log("WithPo ID:", withPoOutId);
-
-        const response = await apiService.get(`/purchases/${withPoOutId}`);
-        console.log("With Out Po data:", response.data);
-        setWithOutPoData(response.data);
-        setAssortmentType(response.data.packing_type);
-        console.log(response.data);
-        setLoading(false);
-
-        // Fill the input fields based on the fetched stock-in data
-        setSizes(response.data.Size.sizes);
-        setSelectedProductId(response.data.product_id);
-        setSelectedProduct(response.data);
-        setBundles(response.data.req_bundle || "");
-
-        // Assuming response.data.images is an array of image URLs
-        if (response.data.images) {
-          setPreviews(response.data.images);
-          setImages(response.data.images.map((image) => ({ url: image })));
-        }
-      } catch (error) {
-        console.error(
-          "Error fetching With Out Po data:",
-          error.response || error.message
-        );
-        setLoading(false);
-
-        // Optionally, set an error state to display an error message in the UI
-        // setError("Failed to fetch stock out data. Please try again later.");
-      }
-    };
-
-    if (withPoOutId) {
-      fetchWithPoData();
-    }
+    fetchWithPoData(withPoOutId);
   }, [withPoOutId]);
+
+  const fetchWithPoData = async (withPoOutId) => {
+    try {
+      const response = await apiService.get(`/purchases/${withPoOutId}`);
+      setWithOutPoData(response.data);
+      setAssortmentType(response.data.packing_type);
+      console.log(response.data);
+    } catch (error) {
+      console.error(
+        "Error fetching With Out Po data:",
+        error.response || error.message
+      );
+    }
+  };
+
+  // Fetch buyer suggestions
+  const fetchBuyerSuggestions = async (buyerInput) => {
+    try {
+      if (buyerInput.length > 0) {
+        const response = await apiService.get("/buyers/getall");
+        const filteredBuyers = response.data.filter((b) =>
+          b.name.toLowerCase().startsWith(buyerInput.toLowerCase())
+        );
+        console.log(filteredBuyers);
+        setBuyerSuggestions(filteredBuyers);
+      } else {
+        setBuyerSuggestions([]);
+      }
+    } catch (error) {
+      console.error("Error fetching buyers:", error);
+    }
+  };
+
+  const handleBuyerChange = (e) => {
+    const buyerInput = e.target.value;
+    setWithOutPoData({
+      ...withOutPoData,
+      Buyer: {
+        ...withOutPoData.Buyer,
+        name: buyerInput,
+        location: "",
+      },
+    });
+    setBuyerDropdown(true);
+    fetchBuyerSuggestions(buyerInput);
+  };
+
+  const handleBuyerSelect = (buyer) => {
+    setWithOutPoData({
+      ...withOutPoData,
+      Buyer: {
+        ...withOutPoData.Buyer,
+        name: buyer.name,
+        location: buyer.location,
+      },
+    });
+    setSelectedBuyerId(buyer.id);
+    setBuyerSuggestions([]);
+    setBuyerDropdown(false);
+    setUpdatedBuyerData({
+      ...updatedBuyerData,
+      buyer_id: buyer.id,
+    });
+    setUpdatedwithOutPoData({
+      ...updatedWithOutPoData,
+      buyer_id: buyer.id,
+    });
+    console.log(buyer.name);
+    console.log(buyer.location);
+  };
+
+  const handleAddNewBuyer = () => {
+    // Implement the logic to add a new buyer here
+    console.log("Adding new buyer:", withOutPoData.Buyer.name);
+    console.log("Adding new buyer:", withOutPoData.Buyer.location);
+    // Close the dropdown after adding the buyer
+    setBuyerDropdown(false);
+  };
 
   const handleDeliveryDateChange = (e) => {
     const inputDate = e.target.value;
@@ -187,19 +200,19 @@ const EditWithoutPoModal = ({ show, onClose, withPoOutId }) => {
       purchase_by_size: updatedStockBySize,
     }));
 
-    setUpdatedwithOutPoData((prevState) => ({
-      ...prevState,
+    setUpdatedwithOutPoData({
+      ...updatedWithOutPoData,
       purchase_by_size: updatedStockBySize,
-    }));
+    });
   };
 
   // handle size quantity change
   const handleAssortmentTypeChange = (e) => {
     setAssortmentType(e.target.value);
-    setUpdatedwithOutPoData((prevState) => ({
-      ...prevState,
-       packing_type: e.target.value,
-     }));
+    setUpdatedwithOutPoData({
+      ...updatedWithOutPoData,
+      packing_type: e.target.value,
+    });
 
     if (e.target.value === "solid" && selectedProduct) {
       // Check if selectedProduct and selectedProduct.Size.sizes exist
@@ -212,6 +225,7 @@ const EditWithoutPoModal = ({ show, onClose, withPoOutId }) => {
           : {};
 
       setInnerPcs(initialInnerPcs);
+      console.log(innerPcs);
     } else {
       setInnerPcs({});
     }
@@ -256,7 +270,24 @@ const EditWithoutPoModal = ({ show, onClose, withPoOutId }) => {
       );
       setTotalInnerPcsPerBundle(totalInnerPerBundle);
     }
-  }, [withOutPoData, sizes]);
+
+    if (withOutPoData?.req_bundle !== undefined) {
+      setWithOutPoBundle(withOutPoData.req_bundle);
+    }
+
+    if (withOutPoBundle > 0 && withOutPoData?.purchase_by_size) {
+      const totalPcs = withOutPoData.purchase_by_size.reduce((sum, item) => {
+        return sum + item.innerPcs * item.outerPcs * withOutPoBundle;
+      }, 0);
+      setTotalPcs(totalPcs);
+      setUpdatedwithOutPoData({
+        ...updatedWithOutPoData,
+        totalPcs: totalPcs,
+      });
+    } else {
+      setTotalPcs(0);
+    }
+  }, [withOutPoData, withOutPoBundle]);
 
   const calculateTotalInnerPcs = (data) => {
     return data.reduce((total, item) => total + item.innerPcs, 0);
@@ -274,89 +305,55 @@ const EditWithoutPoModal = ({ show, onClose, withPoOutId }) => {
     }, 0);
   };
 
-  useEffect(() => {
-    if (withOutPoData?.req_bundle !== undefined) {
-      setWithOutPoBundle(withOutPoData.req_bundle);
-    }
-  }, [withOutPoData]);
-
-
-
   const handleBundleChange = async (e) => {
     const bundleQty = Number(e.target.value);
     setWithOutPoBundle(bundleQty);
-    setUpdatedwithOutPoData((prevState) => ({
-      ...prevState,
+    setUpdatedwithOutPoData({
+      ...updatedWithOutPoData,
       req_bundle: bundleQty,
-    }));
-  };
-
-  useEffect(() => {
-    if (withOutPoBundle > 0 && withOutPoData?.purchase_by_size) {
-      const totalPcs = withOutPoData.purchase_by_size.reduce((sum, item) => {
-        return sum + item.innerPcs * item.outerPcs * withOutPoBundle;
-      }, 0);
-      setTotalPcs(totalPcs);
-      setUpdatedwithOutPoData((prevState) => ({
-        ...prevState,
-        totalPcs: totalPcs,
-      }));
-      
-    } else {
-      setTotalPcs(0);
-    }
-  }, [withOutPoBundle, withOutPoData]);
-
-  const handleSubmit = async () => {
-    console.log(updatedWithOutPoData);
-  
-    // Create a new FormData object
-    const formData = new FormData();
-  
-    // Append the updated data to formData
-    formData.append("withOutPoData", JSON.stringify(withOutPoData));
-  
-    // Append the updatedWithPoData to formData
-    Object.entries(updatedWithOutPoData).forEach(([key, value]) => {
-      if (value instanceof File) {
-        formData.append(key, value);
-      } else {
-        formData.append(key, JSON.stringify(value));
-      }
     });
-  
-    // Additional data to append to formData
-    formData.append("packing_type", assortmentType);
-    formData.append("req_bundle", withOutPoBundle);
-    formData.append("req_purchase_qty", totalPcs);
-
-   //   try {
-  //     // Send formData to the server
-  //     const response = await apiService.post('/endpoint', formData, {
-  //       headers: {
-  //         'Content-Type': 'multipart/form-data',
-  //       },
-  //     });
-  //     console.log("Submit response:", response.data);
-  
-  //     // Handle success (e.g., close the modal or show a success message)
-  //     onClose();
-  //   } catch (error) {
-  //     console.error("Error submitting data:", error.response || error.message);
-  //     // Handle error (e.g., show an error message)
-  //   }
   };
 
-  const handleStockOutModelShow = () => {
-    if (stockOutPoNo == null) {
-      setShowStockOut(false);
-    } else {
-      setShowStockOut(true);
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    console.log("updatedWithOutPoData", updatedWithOutPoData);
+    try {
+      const response = await apiService.put(
+        `/purchases/${withPoOutId}`,
+        updatedWithOutPoData,
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      if (response.status === 200) {
+        console.log("Submit response:", response);
+        setSuccessMessage("With Out-Po updated successfully");
+        setErrorMessage("");
+        setUpdatedwithOutPoData({});
+        setTimeout(() => {
+          setSuccessMessage("");
+          onClose();
+        }, 3000);
+      }
+    } catch (error) {
+      if (error.response && error.response.status === 409) {
+        setErrorMessage(error.message);
+      } else {
+        setErrorMessage(error.message);
+      }
     }
   };
 
   const handleStockOutModelClose = () => {
     setShowStockOut(false);
+  };
+
+  const handleClose = () => {
+    setUpdatedwithOutPoData({});
+    onClose();
   };
 
   if (!show) return null;
@@ -365,7 +362,7 @@ const EditWithoutPoModal = ({ show, onClose, withPoOutId }) => {
     <div className="fixed inset-0 z-50 flex items-center justify-center overflow-auto bg-black bg-opacity-50">
       <div
         className="fixed inset-0 bg-black opacity-50"
-        onClick={onClose}
+        onClick={handleClose}
       ></div>
       <div className="relative bg-white rounded-lg shadow-lg w-full max-w-[80vw] h-screen max-h-[90vh] overflow-auto">
         <div className="px-10 py-5">
@@ -373,7 +370,7 @@ const EditWithoutPoModal = ({ show, onClose, withPoOutId }) => {
             <h2 className="text-xl font-bold">Edit Without Purchase Order</h2>
             <button
               className="absolute right-5 cursor-pointer"
-              onClick={onClose}
+              onClick={handleClose}
             >
               <img src={closeIcon} alt="Close" />
             </button>
@@ -402,9 +399,32 @@ const EditWithoutPoModal = ({ show, onClose, withPoOutId }) => {
                   type="text"
                   id="buyer"
                   value={withOutPoData.Buyer.name}
+                  onChange={handleBuyerChange}
                   className="border border-gray-300 rounded-md px-2 py-2 bg-zinc-200"
                   placeholder="Enter Buyer Name"
                 />
+                {buyerDropdown && withOutPoData.Buyer.name && (
+                  <ul className="absolute top-full left-0 z-10 w-full bg-white border border-gray-300 rounded-md shadow-lg">
+                    {buyerSuggestions.length > 0 ? (
+                      buyerSuggestions.map((suggestion) => (
+                        <li
+                          key={suggestion.id}
+                          className="px-4 py-2 cursor-pointer hover:bg-gray-200"
+                          onClick={() => handleBuyerSelect(suggestion)}
+                        >
+                          {suggestion.name}
+                        </li>
+                      ))
+                    ) : (
+                      <li
+                        className="px-4 py-2 cursor-pointer text-sm text-blue-600 hover:bg-gray-200"
+                        onClick={handleAddNewBuyer}
+                      >
+                        Add New Buyer: "{withOutPoData.Buyer.name}"
+                      </li>
+                    )}
+                  </ul>
+                )}
               </div>
 
               <div className="flex flex-col gap-2">
@@ -715,7 +735,6 @@ const EditWithoutPoModal = ({ show, onClose, withPoOutId }) => {
               <textarea
                 id="notes"
                 value={withOutPoData.notes}
-                onChange={(e) => setNotes(e.target.value)}
                 className="border border-gray-300 rounded-md px-2 py-2 bg-zinc-200"
                 placeholder="Enter additional notes"
                 rows="3"
@@ -823,6 +842,16 @@ const EditWithoutPoModal = ({ show, onClose, withPoOutId }) => {
               </div>
             </div>
           </div>
+          {successMessage && (
+            <div className="p-4 my-4 text-green-700 bg-green-100 border-l-4 border-green-500">
+              <p>{successMessage}</p>
+            </div>
+          )}
+          {errorMessage && (
+            <div className="p-4 my-4 text-red-700 bg-red-100 border-l-4 border-red-500">
+              <p>{errorMessage}</p>
+            </div>
+          )}
           <div className="flex justify-center px-20 mt-5">
             <button
               onClick={handleSubmit}

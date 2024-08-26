@@ -2,56 +2,25 @@ import React, { useEffect, useState } from "react";
 import closeIcon from "../../../assets/close-modal-icon.svg";
 import apiService from "../../../apiService";
 
-const EditPoModal = ({ show, onClose, getAllPurchaseOrder, withPoId }) => {
-  const [buyer, setBuyer] = useState("");
-  const [buyerLocation, setBuyerLocation] = useState("");
-  const [orderNumber, setOrderNumber] = useState("");
+const EditPoModal = ({ show, onClose, withPoId }) => {
   const [deliveryDate, setDeliveryDate] = useState(new Date().toISOString());
-  const [styleNumber, setStyleNumber] = useState("");
-  const [styleDropdown, setStyleDropdown] = useState(false);
-  const [styleSuggestions, setStyleSuggestions] = useState([]);
   const [selectedProduct, setSelectedProduct] = useState({});
-  const [selectedProductId, setSelectedProductId] = useState(null);
-  const [ReferenceNo, setReferenceNo] = useState("");
-  const [category, setCategory] = useState("");
-  const [productType, setProductType] = useState("");
-  const [brand, setBrand] = useState("");
-  const [fabric, setFabric] = useState("");
-  const [fabricFinish, setFabricFinish] = useState("");
-  const [gsm, setGsm] = useState(null);
-  const [knitType, setKnitType] = useState("");
-  const [colors, setColors] = useState("");
-  const [sizes, setSizes] = useState([]);
-  const [decoration, setDecoration] = useState("");
-  const [printOrEmb, setPrintOrEmb] = useState("");
-  const [stitch, setStitch] = useState("");
-  const [neck, setNeck] = useState("");
-  const [sleeve, setSleeve] = useState("");
-  const [length, setLength] = useState("");
-  const [measurementChart, setMeasurementChart] = useState("");
-  const [selectedMeasurementImage, setSelectedMeasurementImage] =
-    useState(null);
-  const [packingMethod, setPackingMethod] = useState("");
-  const [shortDescription, setShortDescription] = useState("");
-  const [fullDescription, setFullDescription] = useState("");
-
-  const [notes, setNotes] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
   const [assortmentType, setAssortmentType] = useState("assorted");
   const [innerPcs, setInnerPcs] = useState({});
-  const [outerPcs, setOuterPcs] = useState({});
-  const [bundles, setBundles] = useState("");
   const [totalInnerPcs, setTotalInnerPcs] = useState(0);
   const [totalOuterPcs, setTotalOuterPcs] = useState(0);
   const [totalInnerPcsPerBundle, setTotalInnerPcsPerBundle] = useState(0);
   const [withPoBundle, setWithPoBundle] = useState(null);
   const [totalPcs, setTotalPcs] = useState(null);
-
-  const [previews, setPreviews] = useState([]);
-  const [images, setImages] = useState([]);
-  const [primaryImageIndex, setPrimaryImageIndex] = useState(0);
-  const [loading, setLoading] = useState(true);
-
   const [updatedWithPoData, setUpdatedwithPoData] = useState({});
+
+  // Suggestion buyer states
+  const [buyerDropdown, setBuyerDropdown] = useState(false);
+  const [buyerSuggestions, setBuyerSuggestions] = useState([]);
+  const [selectedBuyerId, setSelectedBuyerId] = useState(null);
+  const [updatedBuyerData, setUpdatedBuyerData] = useState({});
 
   const [withPoData, setWithPoData] = useState({
     Product: {
@@ -128,45 +97,107 @@ const EditPoModal = ({ show, onClose, getAllPurchaseOrder, withPoId }) => {
   });
 
   useEffect(() => {
-    const fetchWithPoData = async () => {
-      try {
-        console.log("WithPo ID:", withPoId);
-
-        const response = await apiService.get(`/purchases/${withPoId}`);
-        console.log("With Po data:", response.data);
-        console.log("With Po data:", response.data.packing_type);
-        setWithPoData(response.data);
-        setAssortmentType(response.data.packing_type);
-        console.log(response.data);
-        setLoading(false);
-
-        // Fill the input fields based on the fetched stock-in data
-        setSizes(response.data.Size.sizes);
-        setSelectedProductId(response.data.product_id);
-        setSelectedProduct(response.data);
-        setBundles(response.data.req_bundle || "");
-
-        // Assuming response.data.images is an array of image URLs
-        if (response.data.images) {
-          setPreviews(response.data.images);
-          setImages(response.data.images.map((image) => ({ url: image })));
-        }
-      } catch (error) {
-        console.error(
-          "Error fetching With Po  data:",
-          error.response || error.message
-        );
-        setLoading(false);
-
-        // Optionally, set an error state to display an error message in the UI
-        // setError("Failed to fetch stock out data. Please try again later.");
-      }
-    };
-
-    if (withPoId) {
-      fetchWithPoData();
-    }
+    fetchWithPoData(withPoId);
   }, [withPoId]);
+
+  const fetchWithPoData = async (withPoId) => {
+    try {
+      const response = await apiService.get(`/purchases/${withPoId}`);
+      setWithPoData(response.data);
+      setAssortmentType(response.data.packing_type);
+      console.log(response.data);
+      // Fill the input fields based on the fetched stock-in data
+    } catch (error) {
+      console.error(
+        "Error fetching With Po  data:",
+        error.response || error.message
+      );
+    }
+  };
+
+  // Fetch buyer suggestions
+  const fetchBuyerSuggestions = async (buyerInput) => {
+    try {
+      if (buyerInput.length > 0) {
+        const response = await apiService.get("/buyers/getall");
+        const filteredBuyers = response.data.filter((b) =>
+          b.name.toLowerCase().startsWith(buyerInput.toLowerCase())
+        );
+        console.log(filteredBuyers);
+        setBuyerSuggestions(filteredBuyers);
+      } else {
+        setBuyerSuggestions([]);
+      }
+    } catch (error) {
+      console.error("Error fetching buyers:", error);
+    }
+  };
+
+  const handlePurchaseOrderNoChange = (e) => {
+    const WithPoNo = e.target.value;
+    setWithPoData({
+      ...withPoData,
+      purchase_order_number: WithPoNo,
+    });
+    setUpdatedwithPoData({
+      ...updatedWithPoData,
+      purchase_order_number: WithPoNo,
+    });
+  };
+
+  const handleBuyerChange = (e) => {
+    const buyerInput = e.target.value;
+    setWithPoData({
+      ...withPoData,
+      Buyer: {
+        ...withPoData.Buyer,
+        name: buyerInput,
+        location: "",
+      },
+    });
+    setBuyerDropdown(true);
+    fetchBuyerSuggestions(buyerInput);
+  };
+
+  const handleBuyerSelect = (buyer) => {
+    setWithPoData({
+      ...withPoData,
+      Buyer: {
+        ...withPoData.Buyer,
+        name: buyer.name,
+        location: buyer.location,
+      },
+    });
+    setSelectedBuyerId(buyer.id);
+    setBuyerSuggestions([]);
+    setBuyerDropdown(false);
+    setUpdatedBuyerData({
+      ...updatedBuyerData,
+      buyer_id: buyer.id,
+    });
+    setUpdatedwithPoData({
+      ...updatedWithPoData,
+      buyer_id: buyer.id,
+    });
+    console.log(buyer.name);
+    console.log(buyer.location);
+  };
+
+  const handleAddNewBuyer = () => {
+    // Implement the logic to add a new buyer here
+    console.log("Adding new buyer:", withPoData.Buyer.name);
+    console.log("Adding new buyer:", withPoData.Buyer.location);
+    // Close the dropdown after adding the buyer
+    setBuyerDropdown(false);
+  };
+
+  // // handle PO number change
+  // const handlePurchaseOrderNoChange = (e) => {
+  //   setWithPoData((prevState) => ({
+  //     ...prevState,
+  //     purchase_order_number: e.target.value,
+  //   }));
+  // };
 
   const handleDeliveryDateChange = (e) => {
     const inputDate = e.target.value;
@@ -175,9 +206,7 @@ const EditPoModal = ({ show, onClose, getAllPurchaseOrder, withPoId }) => {
 
   const handleStockBySizeChange = (size, innerPcs, outerPcs) => {
     const updatedStockBySize = withPoData.purchase_by_size.map((item) =>
-      item.size === size
-        ? { ...item, innerPcs, outerPcs } // Update only the matching size
-        : item
+      item.size === size ? { ...item, innerPcs, outerPcs } : item
     );
 
     setWithPoData((prevState) => ({
@@ -185,19 +214,19 @@ const EditPoModal = ({ show, onClose, getAllPurchaseOrder, withPoId }) => {
       purchase_by_size: updatedStockBySize,
     }));
 
-    setUpdatedwithPoData((prevState) => ({
-      ...prevState,
+    setUpdatedwithPoData({
+      ...updatedWithPoData,
       purchase_by_size: updatedStockBySize,
-    }));
+    });
   };
 
   // handle size quantity change
   const handleAssortmentTypeChange = (e) => {
     setAssortmentType(e.target.value);
-    setUpdatedwithPoData((prevState) => ({
-     ...prevState,
+    setUpdatedwithPoData({
+      ...updatedWithPoData,
       packing_type: e.target.value,
-    }));
+    });
 
     if (e.target.value === "solid" && selectedProduct) {
       // Check if selectedProduct and selectedProduct.Size.sizes exist
@@ -210,6 +239,7 @@ const EditPoModal = ({ show, onClose, getAllPurchaseOrder, withPoId }) => {
           : {};
 
       setInnerPcs(initialInnerPcs);
+      console.log(innerPcs);
     } else {
       setInnerPcs({});
     }
@@ -254,7 +284,25 @@ const EditPoModal = ({ show, onClose, getAllPurchaseOrder, withPoId }) => {
       );
       setTotalInnerPcsPerBundle(totalInnerPerBundle);
     }
-  }, [withPoData, sizes]);
+
+    if (withPoData?.req_bundle !== undefined) {
+      setWithPoBundle(withPoData.req_bundle);
+    }
+
+    if (withPoBundle > 0 && withPoData?.purchase_by_size) {
+      const totalPcs = withPoData.purchase_by_size.reduce((sum, item) => {
+        return sum + (item.innerPcs || 0) * (item.outerPcs || 0) * withPoBundle;
+      }, 0);
+
+      setTotalPcs(totalPcs);
+
+      if (totalPcs) {
+        setUpdatedwithPoData({ ...updatedWithPoData, totalPcs: totalPcs });
+      }
+    } else {
+      setTotalPcs(0);
+    }
+  }, [withPoData, withPoBundle]);
 
   const calculateTotalInnerPcs = (data) => {
     return data.reduce((total, item) => total + item.innerPcs, 0);
@@ -272,105 +320,78 @@ const EditPoModal = ({ show, onClose, getAllPurchaseOrder, withPoId }) => {
     }, 0);
   };
 
-  useEffect(() => {
-    if (withPoData?.req_bundle !== undefined) {
-      setWithPoBundle(withPoData.req_bundle);
-    }
-  }, [withPoData]);
-
   const handleBundleChange = (e) => {
     const bundleQty = Number(e.target.value);
     setWithPoBundle(bundleQty);
-    setUpdatedwithPoData((prevState) => ({
-      ...prevState,
+    setUpdatedwithPoData({
+      ...updatedWithPoData,
       req_bundle: bundleQty,
-    }));
-  };
-  
-  useEffect(() => {
-    if (withPoBundle > 0 && withPoData?.purchase_by_size) {
-      const totalPcs = withPoData.purchase_by_size.reduce((sum, item) => {
-        return sum + (item.innerPcs || 0) * (item.outerPcs || 0) * withPoBundle;
-      }, 0);
-  
-      setTotalPcs(totalPcs);
-      setUpdatedwithPoData((prevState) => ({
-        ...prevState,
-        totalPcs: totalPcs,
-      }));
-    } else {
-      setTotalPcs(0);
-   
-    }
-  }, [withPoBundle, withPoData]);
-  
-
-  const handleSubmit = async () => {
-    console.log(updatedWithPoData);
-  
-    // Create a new FormData object
-    const formData = new FormData();
-  
-    // Append the updated data to formData
-    formData.append("withPoData", JSON.stringify(withPoData));
-  
-    // Append the updatedWithPoData to formData
-    Object.entries(updatedWithPoData).forEach(([key, value]) => {
-      if (value instanceof File) {
-        formData.append(key, value);
-      } else {
-        formData.append(key, JSON.stringify(value));
-      }
     });
-  
-    // Additional data to append to formData
-    formData.append("packing_type", assortmentType);
-    formData.append("req_bundle", withPoBundle);
-    formData.append("req_purchase_qty", totalPcs);
+  };
 
-  
-    
-  
-  //   try {
-  //     // Send formData to the server
-  //     const response = await apiService.post('endpoint', formData, {
-  //       headers: {
-  //         'Content-Type': 'multipart/form-data',
-  //       },
-  //     });
-  //     console.log("Submit response:", response.data);
-  
-  //     // Handle success (e.g., close the modal or show a success message)
-  //     onClose();
-  //   } catch (error) {
-  //     console.error("Error submitting data:", error.response || error.message);
-  //     // Handle error (e.g., show an error message)
-  //   }
-   };
-  
-  
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    console.log("updatedWithPoData", updatedWithPoData);
+
+    try {
+      const response = await apiService.put(
+        `/purchases/${withPoId}`,
+        updatedWithPoData,
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      if (response.status === 200) {
+        console.log("Submit response:", response);
+        setSuccessMessage("With-Po updated successfully");
+        setErrorMessage("");
+        setUpdatedwithPoData({});
+        setTimeout(() => {
+          setSuccessMessage("");
+          onClose();
+        }, 3000);
+      }
+    } catch (error) {
+      if (error.response && error.response.status === 409) {
+        setErrorMessage(error.message);
+      } else {
+        setErrorMessage(error.message);
+      }
+    }
+  };
+
+  const handleClose = () => {
+    setUpdatedwithPoData({});
+    setSuccessMessage("");
+    setErrorMessage("");
+    onClose();
+  };
+
   if (!show) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center overflow-auto bg-black bg-opacity-50">
       <div
         className="fixed inset-0 bg-black opacity-50"
-        onClick={onClose}
+        onClick={handleClose}
       ></div>
       <div className="relative bg-white rounded-lg shadow-lg w-full max-w-[80vw] h-screen max-h-[90vh] overflow-auto">
         <div className="px-10 py-5">
           <div className="flex justify-center">
             <h2 className="text-xl font-bold">Edit Purchase Order</h2>
             <button
-              className="absolute right-5 cursor-pointer"
-              onClick={onClose}
+              className="absolute cursor-pointer right-5"
+              onClick={handleClose}
             >
               <img src={closeIcon} alt="Close" />
             </button>
           </div>
           <hr className="my-2" />
           <div className="px-20">
-            <div className="mt-10 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5 gap-4">
+            <div className="grid grid-cols-2 gap-4 mt-10 md:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5">
               <div className="flex flex-col gap-2">
                 <label className="font-semibold" htmlFor="styleNo">
                   Purchase Order No:
@@ -379,13 +400,13 @@ const EditPoModal = ({ show, onClose, getAllPurchaseOrder, withPoId }) => {
                   type="text"
                   id="purchaseOrderNo"
                   value={withPoData.purchase_order_number}
-                  onChange={(e) => setOrderNumber(e.target.value)}
-                  className="border border-gray-300 rounded-md px-2 py-2 bg-zinc-200"
+                  onChange={handlePurchaseOrderNoChange}
+                  className="px-2 py-2 border border-gray-300 rounded-md bg-zinc-200"
                   placeholder="Enter po number"
                 />
               </div>
 
-              <div className="flex flex-col gap-2 relative">
+              <div className="relative flex flex-col gap-2">
                 <label className="font-semibold" htmlFor="buyer">
                   Buyer Name:
                 </label>
@@ -393,9 +414,32 @@ const EditPoModal = ({ show, onClose, getAllPurchaseOrder, withPoId }) => {
                   type="text"
                   id="buyer"
                   value={withPoData.Buyer.name}
-                  className="border border-gray-300 rounded-md px-2 py-2 bg-zinc-200"
+                  onChange={handleBuyerChange}
+                  className="px-2 py-2 border border-gray-300 rounded-md bg-zinc-200"
                   placeholder="Enter Buyer Name"
                 />
+                {buyerDropdown && withPoData.Buyer.name && (
+                  <ul className="absolute top-full left-0 z-10 w-full bg-white border border-gray-300 rounded-md shadow-lg">
+                    {buyerSuggestions.length > 0 ? (
+                      buyerSuggestions.map((suggestion) => (
+                        <li
+                          key={suggestion.id}
+                          className="px-4 py-2 cursor-pointer hover:bg-gray-200"
+                          onClick={() => handleBuyerSelect(suggestion)}
+                        >
+                          {suggestion.name}
+                        </li>
+                      ))
+                    ) : (
+                      <li
+                        className="px-4 py-2 cursor-pointer text-sm text-blue-600 hover:bg-gray-200"
+                        onClick={handleAddNewBuyer}
+                      >
+                        Add New Buyer: "{withPoData.Buyer.name}"
+                      </li>
+                    )}
+                  </ul>
+                )}
               </div>
 
               <div className="flex flex-col gap-2">
@@ -406,7 +450,7 @@ const EditPoModal = ({ show, onClose, getAllPurchaseOrder, withPoId }) => {
                   type="text"
                   id="location"
                   value={withPoData.Buyer.location}
-                  className="border border-gray-300 rounded-md px-2 py-2 bg-zinc-200"
+                  className="px-2 py-2 border border-gray-300 rounded-md bg-zinc-200"
                   disabled
                 />
               </div>
@@ -420,12 +464,12 @@ const EditPoModal = ({ show, onClose, getAllPurchaseOrder, withPoId }) => {
                   id="deliveryDate"
                   value={deliveryDate.split("T")[0]}
                   onChange={handleDeliveryDateChange}
-                  className="border border-gray-300 rounded-md px-2 py-2 bg-zinc-200"
+                  className="px-2 py-2 border border-gray-300 rounded-md bg-zinc-200"
                   placeholder="Enter delivery date"
                 />
               </div>
 
-              <div className="flex flex-col gap-2 relative">
+              <div className="relative flex flex-col gap-2">
                 <label className="font-semibold" htmlFor="styleNo">
                   Style No:
                 </label>
@@ -433,12 +477,12 @@ const EditPoModal = ({ show, onClose, getAllPurchaseOrder, withPoId }) => {
                   type="text"
                   id="styleNo"
                   value={withPoData.Product.style_no}
-                  className="border border-gray-300 rounded-md px-2 py-2 bg-zinc-200"
+                  className="px-2 py-2 border border-gray-300 rounded-md bg-zinc-200"
                   placeholder="Enter Style No"
                 />
               </div>
 
-              <div className="flex flex-col gap-2 relative">
+              <div className="relative flex flex-col gap-2">
                 <label className="font-semibold" htmlFor="referenceNumber">
                   Reference Number:
                 </label>
@@ -446,12 +490,12 @@ const EditPoModal = ({ show, onClose, getAllPurchaseOrder, withPoId }) => {
                   type="text"
                   id="referenceNumber"
                   value={withPoData.Product.Reference.reference_no}
-                  className="border border-gray-300 rounded-md px-2 py-2 bg-zinc-200"
+                  className="px-2 py-2 border border-gray-300 rounded-md bg-zinc-200"
                   disabled
                 />
               </div>
 
-              <div className="flex flex-col gap-2 relative">
+              <div className="relative flex flex-col gap-2">
                 <label className="font-semibold" htmlFor="brand">
                   Brand Name:
                 </label>
@@ -459,12 +503,12 @@ const EditPoModal = ({ show, onClose, getAllPurchaseOrder, withPoId }) => {
                   type="text"
                   id="brand"
                   value={withPoData.Product.Brand.brandName}
-                  className="border border-gray-300 rounded-md px-2 py-2 bg-zinc-200"
+                  className="px-2 py-2 border border-gray-300 rounded-md bg-zinc-200"
                   disabled
                 />
               </div>
 
-              <div className="flex flex-col gap-2 relative">
+              <div className="relative flex flex-col gap-2">
                 <label className="font-semibold" htmlFor="fabric">
                   Fabric:
                 </label>
@@ -472,12 +516,12 @@ const EditPoModal = ({ show, onClose, getAllPurchaseOrder, withPoId }) => {
                   type="text"
                   id="fabric"
                   value={withPoData.Product.Fabric.fabricName}
-                  className="border border-gray-300 rounded-md px-2 py-2 bg-zinc-200"
+                  className="px-2 py-2 border border-gray-300 rounded-md bg-zinc-200"
                   disabled
                 />
               </div>
 
-              <div className="flex flex-col gap-2 relative">
+              <div className="relative flex flex-col gap-2">
                 <label className="font-semibold" htmlFor="fabricFinish">
                   Fabric Finish:
                 </label>
@@ -485,12 +529,12 @@ const EditPoModal = ({ show, onClose, getAllPurchaseOrder, withPoId }) => {
                   type="text"
                   id="fabricFinish"
                   value={withPoData.Product.FabricFinish.fabricFinishName}
-                  className="border border-gray-300 rounded-md px-2 py-2 bg-zinc-200"
+                  className="px-2 py-2 border border-gray-300 rounded-md bg-zinc-200"
                   disabled
                 />
               </div>
 
-              <div className="flex flex-col gap-2 relative">
+              <div className="relative flex flex-col gap-2">
                 <label className="font-semibold" htmlFor="gsm">
                   GSM:
                 </label>
@@ -498,12 +542,12 @@ const EditPoModal = ({ show, onClose, getAllPurchaseOrder, withPoId }) => {
                   type="number"
                   id="gsm"
                   value={withPoData.Product.Gsm.gsmValue}
-                  className="border border-gray-300 rounded-md px-2 py-2 bg-zinc-200"
+                  className="px-2 py-2 border border-gray-300 rounded-md bg-zinc-200"
                   disabled
                 />
               </div>
 
-              <div className="flex flex-col gap-2 relative">
+              <div className="relative flex flex-col gap-2">
                 <label className="font-semibold" htmlFor="knitType">
                   Knit Type:
                 </label>
@@ -511,12 +555,12 @@ const EditPoModal = ({ show, onClose, getAllPurchaseOrder, withPoId }) => {
                   type="text"
                   id="knitType"
                   value={withPoData.Product.KnitType.knitType}
-                  className="border border-gray-300 rounded-md px-2 py-2 bg-zinc-200"
+                  className="px-2 py-2 border border-gray-300 rounded-md bg-zinc-200"
                   disabled
                 />
               </div>
 
-              <div className="flex flex-col gap-2 relative">
+              <div className="relative flex flex-col gap-2">
                 <label className="font-semibold" htmlFor="category">
                   Category:
                 </label>
@@ -524,12 +568,12 @@ const EditPoModal = ({ show, onClose, getAllPurchaseOrder, withPoId }) => {
                   type="text"
                   id="category"
                   value={withPoData.Product.Category.categoryName}
-                  className="border border-gray-300 rounded-md px-2 py-2 bg-zinc-200"
+                  className="px-2 py-2 border border-gray-300 rounded-md bg-zinc-200"
                   disabled
                 />
               </div>
 
-              <div className="flex flex-col gap-2 relative">
+              <div className="relative flex flex-col gap-2">
                 <label className="font-semibold" htmlFor="color">
                   Color:
                 </label>
@@ -537,12 +581,12 @@ const EditPoModal = ({ show, onClose, getAllPurchaseOrder, withPoId }) => {
                   type="text"
                   id="color"
                   value={withPoData.Product.Color.colorName}
-                  className="border border-gray-300 rounded-md px-2 py-2 bg-zinc-200"
+                  className="px-2 py-2 border border-gray-300 rounded-md bg-zinc-200"
                   disabled
                 />
               </div>
 
-              <div className="flex flex-col gap-2 relative">
+              <div className="relative flex flex-col gap-2">
                 <label className="font-semibold" htmlFor="size">
                   Size:
                 </label>
@@ -550,12 +594,12 @@ const EditPoModal = ({ show, onClose, getAllPurchaseOrder, withPoId }) => {
                   type="text"
                   id="size"
                   value={withPoData.Product.Size.sizes}
-                  className="border border-gray-300 rounded-md px-2 py-2 bg-zinc-200"
+                  className="px-2 py-2 border border-gray-300 rounded-md bg-zinc-200"
                   disabled
                 />
               </div>
 
-              <div className="flex flex-col gap-2 relative">
+              <div className="relative flex flex-col gap-2">
                 <label className="font-semibold" htmlFor="decoration">
                   Decorations:
                 </label>
@@ -563,12 +607,12 @@ const EditPoModal = ({ show, onClose, getAllPurchaseOrder, withPoId }) => {
                   type="text"
                   id="decoration"
                   value={withPoData.Product.Decoration.decorationName}
-                  className="border border-gray-300 rounded-md px-2 py-2 bg-zinc-200"
+                  className="px-2 py-2 border border-gray-300 rounded-md bg-zinc-200"
                   disabled
                 />
               </div>
 
-              <div className="flex flex-col gap-2 relative">
+              <div className="relative flex flex-col gap-2">
                 <label className="font-semibold" htmlFor="print">
                   Print or Embed:
                 </label>
@@ -576,12 +620,12 @@ const EditPoModal = ({ show, onClose, getAllPurchaseOrder, withPoId }) => {
                   type="text"
                   id="print"
                   value={withPoData.Product.PrintEmbName.printType}
-                  className="border border-gray-300 rounded-md px-2 py-2 bg-zinc-200"
+                  className="px-2 py-2 border border-gray-300 rounded-md bg-zinc-200"
                   disabled
                 />
               </div>
 
-              <div className="flex flex-col gap-2 relative">
+              <div className="relative flex flex-col gap-2">
                 <label className="font-semibold" htmlFor="stitch">
                   Stitch Details:
                 </label>
@@ -589,12 +633,12 @@ const EditPoModal = ({ show, onClose, getAllPurchaseOrder, withPoId }) => {
                   type="text"
                   id="stitch"
                   value={withPoData.Product.StitchDetail.stictchDetail}
-                  className="border border-gray-300 rounded-md px-2 py-2 bg-zinc-200"
+                  className="px-2 py-2 border border-gray-300 rounded-md bg-zinc-200"
                   disabled
                 />
               </div>
 
-              <div className="flex flex-col gap-2 relative">
+              <div className="relative flex flex-col gap-2">
                 <label className="font-semibold" htmlFor="neck">
                   Neck:
                 </label>
@@ -602,12 +646,12 @@ const EditPoModal = ({ show, onClose, getAllPurchaseOrder, withPoId }) => {
                   type="text"
                   id="neck"
                   value={withPoData.Product.Neck.neckType}
-                  className="border border-gray-300 rounded-md px-2 py-2 bg-zinc-200"
+                  className="px-2 py-2 border border-gray-300 rounded-md bg-zinc-200"
                   disabled
                 />
               </div>
 
-              <div className="flex flex-col gap-2 relative">
+              <div className="relative flex flex-col gap-2">
                 <label className="font-semibold" htmlFor="sleeve">
                   Sleeve:
                 </label>
@@ -615,12 +659,12 @@ const EditPoModal = ({ show, onClose, getAllPurchaseOrder, withPoId }) => {
                   type="text"
                   id="sleeve"
                   value={withPoData.Product.Sleeve.sleeveName}
-                  className="border border-gray-300 rounded-md px-2 py-2 bg-zinc-200"
+                  className="px-2 py-2 border border-gray-300 rounded-md bg-zinc-200"
                   disabled
                 />
               </div>
 
-              <div className="flex flex-col gap-2 relative">
+              <div className="relative flex flex-col gap-2">
                 <label className="font-semibold" htmlFor="length">
                   Length:
                 </label>
@@ -628,12 +672,12 @@ const EditPoModal = ({ show, onClose, getAllPurchaseOrder, withPoId }) => {
                   type="text"
                   id="length"
                   value={withPoData.Product.Length.lengthType}
-                  className="border border-gray-300 rounded-md px-2 py-2 bg-zinc-200"
+                  className="px-2 py-2 border border-gray-300 rounded-md bg-zinc-200"
                   disabled
                 />
               </div>
 
-              <div className="flex flex-col gap-2 relative">
+              <div className="relative flex flex-col gap-2">
                 <label className="font-semibold" htmlFor="packing">
                   Packing Method:
                 </label>
@@ -641,12 +685,12 @@ const EditPoModal = ({ show, onClose, getAllPurchaseOrder, withPoId }) => {
                   type="text"
                   id="packing"
                   value={withPoData.Product.PackingMethod.packingType}
-                  className="border border-gray-300 rounded-md px-2 py-2 bg-zinc-200"
+                  className="px-2 py-2 border border-gray-300 rounded-md bg-zinc-200"
                   disabled
                 />
               </div>
 
-              <div className="flex flex-col gap-2 relative">
+              <div className="relative flex flex-col gap-2">
                 <label className="font-semibold" htmlFor="product-type">
                   Product Type:
                 </label>
@@ -654,12 +698,12 @@ const EditPoModal = ({ show, onClose, getAllPurchaseOrder, withPoId }) => {
                   type="text"
                   id="product-type"
                   value={withPoData.Product.ProductType.product}
-                  className="border border-gray-300 rounded-md px-2 py-2 bg-zinc-200"
+                  className="px-2 py-2 border border-gray-300 rounded-md bg-zinc-200"
                   disabled
                 />
               </div>
 
-              <div className="flex flex-col gap-2 relative">
+              <div className="relative flex flex-col gap-2">
                 <label className="font-semibold" htmlFor="measurement-chart">
                   Measurement chart:
                 </label>
@@ -667,7 +711,7 @@ const EditPoModal = ({ show, onClose, getAllPurchaseOrder, withPoId }) => {
                   type="text"
                   id="measurement-chart"
                   value={withPoData.Product.MeasurementChart.name}
-                  className="border border-gray-300 rounded-md px-2 py-2 bg-zinc-200"
+                  className="px-2 py-2 border border-gray-300 rounded-md bg-zinc-200"
                   disabled
                 />
               </div>
@@ -680,7 +724,7 @@ const EditPoModal = ({ show, onClose, getAllPurchaseOrder, withPoId }) => {
               <textarea
                 id="shortDescription"
                 value={withPoData.Product.short_description}
-                className="border border-gray-300 rounded-md px-2 py-2 bg-zinc-200"
+                className="px-2 py-2 border border-gray-300 rounded-md bg-zinc-200"
                 rows="1"
                 disabled
               />
@@ -693,7 +737,7 @@ const EditPoModal = ({ show, onClose, getAllPurchaseOrder, withPoId }) => {
               <textarea
                 id="fullDescription"
                 value={withPoData.Product.full_description}
-                className="border border-gray-300 rounded-md px-2 py-2 bg-zinc-200"
+                className="px-2 py-2 border border-gray-300 rounded-md bg-zinc-200"
                 rows="2"
                 disabled
               />
@@ -706,8 +750,7 @@ const EditPoModal = ({ show, onClose, getAllPurchaseOrder, withPoId }) => {
               <textarea
                 id="notes"
                 value={withPoData.notes}
-                onChange={(e) => setNotes(e.target.value)}
-                className="border border-gray-300 rounded-md px-2 py-2 bg-zinc-200"
+                className="px-2 py-2 border border-gray-300 rounded-md bg-zinc-200"
                 placeholder="Enter additional notes"
                 rows="3"
               />
@@ -743,9 +786,9 @@ const EditPoModal = ({ show, onClose, getAllPurchaseOrder, withPoId }) => {
               <div className="flex items-center gap-2 mb-4">
                 <h3 className="text-lg font-medium">Order Info:</h3>
               </div>
-              <div className="flex gap-4 border border-gray-400 px-5 justify-between">
+              <div className="flex justify-between gap-4 px-5 border border-gray-400">
                 <div className="p-4 rounded-lg">
-                  <h4 className="text-sm font-medium mb-4">
+                  <h4 className="mb-4 text-sm font-medium">
                     Quantity per size:
                   </h4>
                   <div className="flex flex-col gap-4">
@@ -757,7 +800,7 @@ const EditPoModal = ({ show, onClose, getAllPurchaseOrder, withPoId }) => {
                           value={stock.innerPcs || null}
                           onChange={(e) => handleInnerPcsChange(e, stock.size)}
                           placeholder="Inner Pcs"
-                          className="border border-gray-300 rounded-md px-2 py-1 w-24"
+                          className="w-24 px-2 py-1 border border-gray-300 rounded-md"
                           disabled={assortmentType === "solid"}
                         />
                         <input
@@ -765,45 +808,45 @@ const EditPoModal = ({ show, onClose, getAllPurchaseOrder, withPoId }) => {
                           value={stock.outerPcs || null}
                           onChange={(e) => handleOuterPcsChange(e, stock.size)}
                           placeholder="Outer Pcs"
-                          className="border border-gray-300 rounded-md px-2 py-1 w-24"
+                          className="w-24 px-2 py-1 border border-gray-300 rounded-md"
                         />
                       </div>
                     ))}
                   </div>
                 </div>
 
-                <div className="px-20 content-center">
+                <div className="content-center px-20">
                   <label className="font-semibold">Number of Bundles: </label>
                   <input
                     type="number"
                     value={withPoBundle}
                     onChange={handleBundleChange}
                     placeholder="Bundles"
-                    className="border border-gray-300 rounded-md px-2 py-1 w-24"
+                    className="w-24 px-2 py-1 border border-gray-300 rounded-md"
                   />
                 </div>
 
-                <div className="p-4 bg-gray-100 flex items-center justify-center mt-8 mb-8">
+                <div className="flex items-center justify-center p-4 mt-8 mb-8 bg-gray-100">
                   <div className="flex flex-col gap-4">
-                    <div className="flex gap-5 justify-between">
+                    <div className="flex justify-between gap-5">
                       <label className="block text-sm font-medium text-gray-700">
                         Total Inner Pcs
                       </label>
                       <span>{totalInnerPcs}</span>
                     </div>
-                    <div className="flex gap-5 justify-between">
+                    <div className="flex justify-between gap-5">
                       <label className="block text-sm font-medium text-gray-700">
                         Total Outer Pcs
                       </label>
                       <span>{totalOuterPcs}</span>
                     </div>
-                    <div className="flex gap-5 justify-between">
+                    <div className="flex justify-between gap-5">
                       <label className="block text-sm font-medium text-gray-700">
                         Total Pcs per Bundle
                       </label>
                       <span>{totalInnerPcsPerBundle}</span>
                     </div>
-                    <div className="flex gap-5 justify-between">
+                    <div className="flex justify-between gap-5">
                       <label className="block text-sm font-medium text-gray-700">
                         Total Pcs
                       </label>
@@ -814,10 +857,20 @@ const EditPoModal = ({ show, onClose, getAllPurchaseOrder, withPoId }) => {
               </div>
             </div>
           </div>
+          {successMessage && (
+            <div className="p-4 my-4 text-green-700 bg-green-100 border-l-4 border-green-500">
+              <p>{successMessage}</p>
+            </div>
+          )}
+          {errorMessage && (
+            <div className="p-4 my-4 text-red-700 bg-red-100 border-l-4 border-red-500">
+              <p>{errorMessage}</p>
+            </div>
+          )}
           <div className="flex justify-center px-20 mt-5">
             <button
               onClick={handleSubmit}
-              className="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded"
+              className="px-4 py-2 font-semibold text-white bg-blue-500 rounded hover:bg-blue-600"
             >
               CREATE PURCHASE ORDER
             </button>

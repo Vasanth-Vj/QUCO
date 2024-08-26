@@ -109,7 +109,7 @@ const StockIn = ({ searchQuery }) => {
       currentPage < Math.ceil(filteredData.length / recordsPerPage)
     ) {
       setCurrentPage(currentPage + 1);
-    }
+    } 
   };
 
   const handleRecordsPerPageChange = (e) => {
