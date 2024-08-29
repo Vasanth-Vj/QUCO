@@ -342,7 +342,7 @@ const StockIn = ({ searchQuery }) => {
           </div>
         </div>
       </div>
-      <EditStockInModal showModal={showModal} close={handleCloseModal} editIndex={editIndex} stockInData={currentData.find((item) => item.id === editIndex)} />
+      <EditStockInModal showModal={showModal} close={handleCloseModal} editIndex={editIndex} getAllStocks={getAllStocks} />
       <AddStockModal show={showAddModal} onClose={handleAddModalClose} getAllStocks={getAllStocks} />
       <QRCodeOut show={showQr} stockId={selectedStock} close={handleQrModalClose}/>
     </>

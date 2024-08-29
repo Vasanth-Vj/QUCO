@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import closeIcon from "../../../assets/close-modal-icon.svg";
 import apiService from "../../../apiService";
 
-const EditPoModal = ({ show, onClose, withPoId }) => {
+const EditPoModal = ({ show, onClose, withPoId, getAllPurchaseOrder }) => {
   const [deliveryDate, setDeliveryDate] = useState(new Date().toISOString());
   const [selectedProduct, setSelectedProduct] = useState({});
   const [successMessage, setSuccessMessage] = useState("");
@@ -15,6 +15,7 @@ const EditPoModal = ({ show, onClose, withPoId }) => {
   const [withPoBundle, setWithPoBundle] = useState(null);
   const [totalPcs, setTotalPcs] = useState(null);
   const [updatedWithPoData, setUpdatedwithPoData] = useState({});
+
 
   // Suggestion buyer states
   const [buyerDropdown, setBuyerDropdown] = useState(false);
@@ -85,7 +86,7 @@ const EditPoModal = ({ show, onClose, withPoId }) => {
     },
     req_bundle: "",
     product_id: null,
-    stock_by_size: [],
+    purchase_by_size: [],
     req_purchase_qty: null,
     packing_type: "",
     notes: "",
@@ -264,7 +265,7 @@ const EditPoModal = ({ show, onClose, withPoId }) => {
     // Update the stock data with new outer pcs and existing inner pcs
     handleStockBySizeChange(size, sizeData.innerPcs || null, newOuterPcs);
 
-    console.log("Outer pieces updated for size", size);
+    console.log("Outer pieces updated for size", size); 
   };
 
   useEffect(() => {
@@ -295,14 +296,14 @@ const EditPoModal = ({ show, onClose, withPoId }) => {
       }, 0);
 
       setTotalPcs(totalPcs);
-
-      if (totalPcs) {
-        setUpdatedwithPoData({ ...updatedWithPoData, totalPcs: totalPcs });
-      }
+      setUpdatedwithPoData({
+        ...updatedWithPoData,
+        req_purchase_qty: totalPcs,
+      });
     } else {
       setTotalPcs(0);
     }
-  }, [withPoData, withPoBundle]);
+  }, [withPoData]);
 
   const calculateTotalInnerPcs = (data) => {
     return data.reduce((total, item) => total + item.innerPcs, 0);
@@ -323,10 +324,21 @@ const EditPoModal = ({ show, onClose, withPoId }) => {
   const handleBundleChange = (e) => {
     const bundleQty = Number(e.target.value);
     setWithPoBundle(bundleQty);
-    setUpdatedwithPoData({
-      ...updatedWithPoData,
+
+    // Recalculate total pieces when the bundle quantity changes
+    const newTotalPcs = withPoData.purchase_by_size.reduce((sum, item) => {
+      const innerPcs = item.innerPcs || 0;
+      const outerPcs = item.outerPcs || 0;
+      return sum + innerPcs * outerPcs * bundleQty;
+    }, 0);
+
+    setTotalPcs(newTotalPcs);
+
+    setUpdatedwithPoData((prevData) => ({
+      ...prevData,
       req_bundle: bundleQty,
-    });
+      req_purchase_qty: newTotalPcs,
+    }));
   };
 
   const handleSubmit = async (e) => {
@@ -351,8 +363,9 @@ const EditPoModal = ({ show, onClose, withPoId }) => {
         setUpdatedwithPoData({});
         setTimeout(() => {
           setSuccessMessage("");
+          getAllPurchaseOrder();
           onClose();
-        }, 3000);
+        }, 1500);
       }
     } catch (error) {
       if (error.response && error.response.status === 409) {
@@ -419,7 +432,7 @@ const EditPoModal = ({ show, onClose, withPoId }) => {
                   placeholder="Enter Buyer Name"
                 />
                 {buyerDropdown && withPoData.Buyer.name && (
-                  <ul className="absolute top-full left-0 z-10 w-full bg-white border border-gray-300 rounded-md shadow-lg">
+                  <ul className="absolute left-0 z-10 w-full bg-white border border-gray-300 rounded-md shadow-lg top-full">
                     {buyerSuggestions.length > 0 ? (
                       buyerSuggestions.map((suggestion) => (
                         <li
@@ -432,7 +445,7 @@ const EditPoModal = ({ show, onClose, withPoId }) => {
                       ))
                     ) : (
                       <li
-                        className="px-4 py-2 cursor-pointer text-sm text-blue-600 hover:bg-gray-200"
+                        className="px-4 py-2 text-sm text-blue-600 cursor-pointer hover:bg-gray-200"
                         onClick={handleAddNewBuyer}
                       >
                         Add New Buyer: "{withPoData.Buyer.name}"
@@ -819,7 +832,7 @@ const EditPoModal = ({ show, onClose, withPoId }) => {
                   <label className="font-semibold">Number of Bundles: </label>
                   <input
                     type="number"
-                    value={withPoBundle}
+                    value={withPoBundle || null}
                     onChange={handleBundleChange}
                     placeholder="Bundles"
                     className="w-24 px-2 py-1 border border-gray-300 rounded-md"

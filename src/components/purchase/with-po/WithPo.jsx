@@ -220,10 +220,10 @@ const WithPo = () => {
               </button>
             </div>
           </div>
-        </div>
+        </div> 
       </div>
       <CreatePoModal show={showAddModal} onClose={handleAddModalClose} getAllPurchaseOrder={getAllPurchaseOrder}/>
-      <EditPoModal show={showModal} onClose={handleCloseModal} withPoId={selectedWithPoId} />
+      <EditPoModal show={showModal} onClose={handleCloseModal} withPoId={selectedWithPoId} getAllPurchaseOrder={getAllPurchaseOrder} />
     </>
   );
 };

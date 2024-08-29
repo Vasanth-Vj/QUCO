@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import closeIcon from "../../../assets/close-modal-icon.svg";
 import apiService from "../../../apiService";
 
-const EditStockInModal = ({ showModal, close, editIndex }) => {
+const EditStockInModal = ({ showModal, close, editIndex, getAllStocks }) => {
   const [sizes, setSizes] = useState([]);
   const [assortmentType, setAssortmentType] = useState("");
   const [innerPcs, setInnerPcs] = useState({});
@@ -12,9 +12,9 @@ const EditStockInModal = ({ showModal, close, editIndex }) => {
   const [errorMessage, setErrorMessage] = useState("");
   const [stockInInnerTotals, setStockInInnerTotals] = useState(null);
   const [stockInOuterTotals, setStockInOuterTotals] = useState(null);
-  const [totalInnerPcsPerBundle, setTotalInnerPcsPerBundle] = useState(null);
+  const [totalInnerPcsPerBundle, setTotalInnerPcsPerBundle] = useState(null); 
   const [stockInBundle, setStockInBundle] = useState(null);
-  const [totalPcs, setTotalPcs] = useState(0);
+  const [totalPcs, setTotalPcs] = useState(null);
 
   // Suggestion warehouse states
   const [warehouseDropdown, setWarehouseDropdown] = useState(false);
@@ -157,7 +157,7 @@ const EditStockInModal = ({ showModal, close, editIndex }) => {
   };
 
   useEffect(() => {
-      fetchStockInData(editIndex);
+    fetchStockInData(editIndex);
   }, [editIndex]);
 
   const fetchStockInData = async (editIndex) => {
@@ -169,7 +169,6 @@ const EditStockInModal = ({ showModal, close, editIndex }) => {
       // Fill the input fields based on the fetched stock-in data
       setSizes(response.data.Size.sizes);
       setSelectedProduct(response.data);
-    
     } catch (error) {
       console.error("Error fetching stock In data:", error);
     }
@@ -204,7 +203,7 @@ const EditStockInModal = ({ showModal, close, editIndex }) => {
         return acc;
       }, {});
       setInnerPcs(initialInnerPcs);
-      console.log(innerPcs)
+      console.log(innerPcs);
     } else {
       setInnerPcs({});
     }
@@ -259,14 +258,16 @@ const EditStockInModal = ({ showModal, close, editIndex }) => {
         return sum + item.innerPcs * item.outerPcs * stockInBundle;
       }, 0);
       setTotalPcs(totalPcs);
+      console.log(totalPcs);
+
       setUpdatedStockInData({
         ...updatedStockInData,
-        totalPcs: totalPcs,
+        total_pcs: totalPcs,
       });
     } else {
       setTotalPcs(0);
     }
-  }, [stockInData, sizes, stockInBundle]);
+  }, [stockInData]);
 
   const calculateTotalInnerPcs = (data) => {
     return data.reduce((total, item) => total + item.innerPcs, 0);
@@ -284,19 +285,29 @@ const EditStockInModal = ({ showModal, close, editIndex }) => {
     }, 0);
   };
 
-  const handleBundleChange = async (e) => {
+  const handleBundleChange = (e) => {
     const bundleQty = Number(e.target.value);
     setStockInBundle(bundleQty);
-    setUpdatedStockInData({
-      ...updatedStockInData,
+
+    // Recalculate total pieces when the bundle quantity changes
+    const newTotalPcs = stockInData.stock_by_size.reduce((sum, item) => {
+      const innerPcs = item.innerPcs || 0;
+      const outerPcs = item.outerPcs || 0;
+      return sum + innerPcs * outerPcs * bundleQty;
+    }, 0);
+
+    setTotalPcs(newTotalPcs);
+    setUpdatedStockInData((prevData) => ({
+      ...prevData,
       no_bundles: bundleQty,
-    });
+      total_pcs: newTotalPcs,
+    }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     console.log("updatedStockInData", updatedStockInData);
-    
+
     try {
       const response = await apiService.put(
         `/stocks/stockIn/${editIndex}`,
@@ -310,21 +321,22 @@ const EditStockInModal = ({ showModal, close, editIndex }) => {
 
       if (response.status === 200) {
         console.log("Submit response:", response);
-        setSuccessMessage('Stock-In updated successfully');
+        setSuccessMessage("Stock-In updated successfully");
         setErrorMessage("");
         setUpdatedStockInData({});
         setTimeout(() => {
           setSuccessMessage("");
+          getAllStocks();
           close();
-        }, 3000);
+        }, 1500);
       }
     } catch (error) {
       if (error.response && error.response.status === 409) {
         setErrorMessage(error.message);
-    } else {
+      } else {
         setErrorMessage(error.message);
+      }
     }
-    } 
   };
 
   if (!showModal) return null;
@@ -722,7 +734,7 @@ const EditStockInModal = ({ showModal, close, editIndex }) => {
               <label className="font-semibold">Number of Bundles: </label>
               <input
                 type="number"
-                value={stockInBundle}
+                value={stockInBundle || null}
                 onChange={handleBundleChange}
                 placeholder="Bundles"
                 className="w-24 px-2 py-1 border border-gray-300 rounded-md"

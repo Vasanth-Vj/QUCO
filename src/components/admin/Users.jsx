@@ -10,10 +10,14 @@ import tickIcon from "../../assets/tick-icon.svg";
 import deleteIcon from "../../assets/delete-icon.svg";
 import { TbLockAccess } from "react-icons/tb";
 import { CiEdit } from "react-icons/ci";
+import EditUserProfileModal from "./EditUserProfileModal";
 
 const UsersTable = ({searchQuery}) => {
+  const [initialData, setInitialData] = useState([]);
+  const [filteredData, setFilteredData] = useState(initialData);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isUserEditOpen, setIsUserEditOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
   const [successMessage, setSuccessMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
@@ -21,19 +25,27 @@ const UsersTable = ({searchQuery}) => {
   const [users, setUsers] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [recordsPerPage, setRecordsPerPage] = useState(5);
+  const [selectedUsersId, setSelectedUsersId] = useState(null);
+  const [permissions, setPermissions] = useState([]);
+
 
   useEffect(() => {
     getAllUsers();
+    getPermissions();
   }, []);
 
-  const permissions = [
-    "ADMIN",
-    "PURCHASE ORDER",
-    "STOCK IN",
-    "STOCK OUT",
-    "PRODUCT MASTER",
-    "REPORTS",
-  ];
+  useEffect(() => {
+    handleSearch(searchQuery);
+  }, [searchQuery, users]);
+
+  // const permissions = [
+  //   "ADMIN",
+  //   "PURCHASE ORDER",
+  //   "STOCK IN",
+  //   "STOCK OUT",
+  //   "PRODUCT MASTER",
+  //   "REPORTS",
+  // ];
 
   const getAllUsers = async () => {
     try {
@@ -44,10 +56,25 @@ const UsersTable = ({searchQuery}) => {
       });
       console.log(response.data);
       setUsers(response.data);
+      setFilteredData(response.data);
     } catch (error) {
       console.error("Error fetching users:", error);
     }
   };
+
+    // Fetch permissions data
+    const getPermissions = async () => {
+      try {
+        const response = await apiService.get(`/users/depart/getall`, {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
+        setPermissions(response.data);
+      } catch (error) {
+        console.error("Error fetching permissions:", error);
+      }
+    };
   
   // Function to open the add user modal
   const openModal = () => {
@@ -80,9 +107,25 @@ const UsersTable = ({searchQuery}) => {
   const openEditModal = async (user) => {
     try {
       const response = await apiService.get(`/users/${user.id}`);
-      console.log(response.data); // Log the response data to verify
-      setSelectedUser(response.data); // Update selectedUser state with fetched user data
-      setIsEditModalOpen(true); // Open edit modal
+      console.log(response.data); 
+      setSelectedUser(response.data);
+      setSelectedUsersId(user.id);
+      setIsEditModalOpen(true);
+    } catch (error) {
+      console.error(`Error fetching user ${user.id}:`, error);
+    }
+  };
+
+  
+
+   // Function to open the edit user modal and fetch user data
+   const openEditUserModal = async (user) => {
+    try {
+      const response = await apiService.get(`/users/${user.id}`);
+      console.log(response.data); 
+        setSelectedUser(response.data);
+        setSelectedUsersId(user.id);
+      setIsUserEditOpen(true);
     } catch (error) {
       console.error(`Error fetching user ${user.id}:`, error);
     }
@@ -127,22 +170,32 @@ const UsersTable = ({searchQuery}) => {
     }
   };
 
-  // const filteredData = users.filter(
-  //   (item) =>
-  //     item.full_name &&
-  //     item.full_name.toLowerCase().includes(searchQuery.toLowerCase())
-  // );
+  const handleSearch = (searchValue) => {
+    if (searchValue) {
+      const filtered = users.filter(item =>
+        item.full_name.toLowerCase().includes(searchValue.toLowerCase())
+      );
+      setFilteredData(filtered);
+    } else {
+      setFilteredData(users);
+    }
+    setCurrentPage(1); // Reset to first page on new search
+  };
+
+ 
 
   const startIndex = (currentPage - 1) * recordsPerPage;
   const endIndex = startIndex + recordsPerPage;
-  // const currentData = filteredData.slice(startIndex, endIndex);
+  const currentData = filteredData.slice(startIndex, endIndex);
 
   return (
     <>
       <TopLayer
+        isSearch={true}
+        onSearch={handleSearch}
         isAddButton={true}
         addButtonIcon={addusersIcon}
-        addButtonText="Add User"
+        addButtonText="Add User "
         arrangeIconRight={true}
         onAddButtonClick={openModal}
       />
@@ -160,50 +213,61 @@ const UsersTable = ({searchQuery}) => {
           onClose={() => setIsEditModalOpen(false)}
           permissions={permissions}
           onUpdate={handleEditUser}
+          selectedUsersId={selectedUsersId}
+        />
+      )}
+      {isUserEditOpen && (
+        <EditUserProfileModal
+          // user={users[0]}
+          user={selectedUser}
+          onClose={() => setIsUserEditOpen(false)}
+          permissions={permissions}
+          onUpdate={handleEditUser}
+          userId={selectedUsersId}
         />
       )}
       <div className="mt-3 overflow-y-auto max-h-[70vh] pb-5">
       <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50 w-full">
+          <thead className="w-full bg-gray-50">
             <tr>
-              <th className="px-6 py-2 text-center text-md font-medium text-black uppercase w-20">
+              <th className="w-20 px-6 py-2 font-medium text-center text-black uppercase text-md">
                 Si No
               </th>
-              <th className="px-6 py-2 text-left text-md font-medium text-black uppercase w-28">
+              <th className="px-6 py-2 font-medium text-left text-black uppercase text-md w-28">
                 Profile
               </th>
-              <th className="px-6 py-2 text-left text-md font-medium text-black uppercase w-64">
+              <th className="w-64 px-6 py-2 font-medium text-left text-black uppercase text-md">
                 User Name
               </th>
-              <th className="px-6 py-2 text-left text-md font-medium text-black uppercase">
+              <th className="px-6 py-2 font-medium text-left text-black uppercase text-md">
                 Module Access
               </th>
-              <th className="px-6 py-2 text-center text-md font-medium text-black uppercase w-40">
+              <th className="w-40 px-6 py-2 font-medium text-center text-black uppercase text-md">
                 Permission
               </th>
-              <th className="px-6 py-2 text-center text-md font-medium text-black uppercase w-40">
+              <th className="w-40 px-6 py-2 font-medium text-center text-black uppercase text-md">
                 Action
               </th>
-              <th className="px-2 py-2 text-center text-md font-bold text-black uppercase w-32">
+              <th className="w-32 px-2 py-2 font-bold text-center text-black uppercase text-md">
                 <button onClick={handleDelete} className="text-red-500">
-                  <img src={deleteIcon} alt="Delete" className="h-5 w-5" />
+                  <img src={deleteIcon} alt="Delete" className="w-5 h-5" />
                 </button>
               </th>
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {users?.map((row, index) => (
+            {currentData?.map((row, index) => (
               <tr key={row.id} style={{ maxHeight: "50px" }}>
-                <td className="px-2 py-2 whitespace-nowrap text-md text-center text-black w-20">
+                <td className="w-20 px-2 py-2 text-center text-black whitespace-nowrap text-md">
                   {startIndex + index + 1}
                 </td>
-                <td className="px-2 py-2 whitespace-nowrap text-md text-center text-black w-28">
-                      <div className="flex justify-center items-center">
+                <td className="px-2 py-2 text-center text-black whitespace-nowrap text-md w-28">
+                      <div className="flex items-center justify-center">
                       {row.profile ? (
                                 <img
                                     src={row.profile}
                                     alt={row.full_name}
-                                    className="w-16 h-16 rounded-full object-cover mr-4"
+                                    className="object-cover w-16 h-16 mr-4 rounded-full"
                                 />
                             ) : (
                                 <div
@@ -212,23 +276,23 @@ const UsersTable = ({searchQuery}) => {
                                     {row.full_name.charAt(0).toUpperCase()}
                                 </div>
                             )}
-                      </div> 
+                      </div>
                     </td>
-                <td className="px-6 py-2 whitespace-nowrap text-md text-left text-black w-64">
+                <td className="w-64 px-6 py-2 text-left text-black whitespace-nowrap text-md">
                     {row.full_name}
                 </td>
-                <td className="px-6 py-6 text-left text-lg font-medium text-black content-center uppercase flex items-center gap-2">
+                <td className="flex items-center content-center gap-2 px-6 py-6 text-lg font-medium text-left text-black uppercase">
                   {row.is_admin ? 
-                    <span className="p-2 bg-blue-200 text-black rounded-md font-semibold text-xs">
+                    <span className="p-2 text-xs font-semibold text-black bg-blue-200 rounded-md">
                       Admin
                     </span>
                     : ''}
                 </td>
-                <td className="px-2 py-2 whitespace-nowrap text-md text-center text-black w-40">
+                <td className="w-40 px-2 py-2 text-center text-black whitespace-nowrap text-md">
                   {editIndex === row.id ? (
                     <button
                       onClick={() => handleSaveClick(index, row.id)}
-                      className="bg-green-200 border border-green-500 px-2 py-1 rounded-lg flex"
+                      className="flex px-2 py-1 bg-green-200 border border-green-500 rounded-lg"
                     >
                       <img src={tickIcon} alt="" className="mt-1 mr-2" />
                       <span className="text-xs">Update</span>
@@ -238,20 +302,19 @@ const UsersTable = ({searchQuery}) => {
                       onClick={() =>
                         openEditModal({
                           id: row.id,
-                          brandName: row.brandName,
                         })
                       }
-                      className="text-blue-500 text-center"
+                      className="text-center text-blue-500"
                     >
                     <TbLockAccess color="black" className="h-6 w-7"/>
                     </button>
                   )}
                 </td>
-                <td className="px-2 py-2 whitespace-nowrap text-md text-center text-black w-40">
+                <td className="w-40 px-2 py-2 text-center text-black whitespace-nowrap text-md">
                   {editIndex === row.id ? (
                     <button
                       onClick={() => handleSaveClick(index, row.id)}
-                      className="bg-green-200 border border-green-500 px-2 py-1 rounded-lg flex"
+                      className="flex px-2 py-1 bg-green-200 border border-green-500 rounded-lg"
                     >
                       <img src={tickIcon} alt="" className="mt-1 mr-2" />
                       <span className="text-xs">Update</span>
@@ -259,23 +322,22 @@ const UsersTable = ({searchQuery}) => {
                   ) : (
                     <button
                       onClick={() =>
-                        openEditModal({
+                        openEditUserModal({
                           id: row.id,
-                          brandName: row.brandName,
                         })
                       }
-                      className="text-blue-500 text-center"
+                      className="text-center text-blue-500"
                     >
                     <CiEdit color="black" className="h-6 w-7"/>
                     </button>
                   )}
                 </td>
-                <td className="px-2 py-2 whitespace-nowrap text-md text-center text-black w-32">
+                <td className="w-32 px-2 py-2 text-center text-black whitespace-nowrap text-md">
                   <button
                     onClick={() => handleDelete(row.id)}
                     className="text-red-500"
                   >
-                    <img src={deleteIcon} alt="Delete" className="h-5 w-5" />
+                    <img src={deleteIcon} alt="Delete" className="w-5 h-5" />
                   </button>
                 </td>
               </tr>

@@ -301,14 +301,10 @@ const StockOutWPO = ({ show, onClose, fetchStockOut }) => {
         product_style_number: productInfo.product_style_number,
         product_id: productInfo.Product.id,
         notes,
-        packing_type: assortmentType,
-        purchase_by_size: sizes.map((size) => ({
-          size,
-          innerPcs: innerPcs[size],
-          outerPcs: outerPcs[size],
-        })),
+        packing_type: packingInfo,
+        purchase_by_size: productInfo.stock_by_size,
         req_bundle: stockOutBundle,
-        req_purchase_qty: totalProducts,
+        req_purchase_qty: totalPcs,
       };
 
       console.log("Stock out: ", stockData);
@@ -340,7 +336,6 @@ const StockOutWPO = ({ show, onClose, fetchStockOut }) => {
     setGsm("");
     setKnitType("");
     setColors("");
-    setSizes([]);
     setDecoration("");
     setPrintOrEmb("");
     setStitch("");
@@ -873,7 +868,7 @@ const StockOutWPO = ({ show, onClose, fetchStockOut }) => {
                 )}
               </div>
 
-              <div className="text-center">
+              {/* <div className="text-center">
                 <h3 className="text-lg font-semibold">Order Quantities:</h3>
                 {sizes ? (
                   <>
@@ -943,48 +938,40 @@ const StockOutWPO = ({ show, onClose, fetchStockOut }) => {
                     No order information available.
                   </p>
                 )}
-              </div>
-            </div>
-          </div>
+              </div> */}
+              <div>
+                <div className="flex flex-col items-center justify-center my-10 ">
+                  <label
+                    className="mb-2 font-semibold"
+                    htmlFor="StockOutBundle"
+                  >
+                    Enter Stock Out Bundle:
+                  </label>
+                  <input
+                    className="w-40 px-2 py-2 border border-gray-300 rounded-md hover:border-cyan-300 active:boder-cyan-300 focus:border-cyan-300 "
+                    type="number"
+                    value={stockOutBundle}
+                    onChange={handleBundleChange}
+                    placeholder="Enter Bundle Value"
+                  />
+                </div>
 
-          <div className="flex flex-col items-center justify-center my-10 ">
-            <label className="mb-2 font-semibold" htmlFor="StockOutBundle">
-              Enter Stock Out Bundle:
-            </label>
-            <input
-              className="w-40 px-2 py-2 border border-gray-300 rounded-md hover:border-cyan-300 active:boder-cyan-300 focus:border-cyan-300 "
-              type="number"
-              value={stockOutBundle}
-              onChange={handleBundleChange}
-              placeholder="Enter Bundle Value"
-            />
-          </div>
-
-          <div className="flex items-center justify-center my-8">
-            <div className="flex flex-col gap-4 p-5 bg-gray-100 w-fit">
-              <div className="flex justify-between gap-5">
-                <label className="block text-sm font-medium text-gray-700">
-                  Total Inner Pcs
-                </label>
-                <span>{totalInnerPcs}</span>
-              </div>
-              <div className="flex justify-between gap-5">
-                <label className="block text-sm font-medium text-gray-700">
-                  Total Outer Pcs
-                </label>
-                <span>{totalOuterPcs}</span>
-              </div>
-              <div className="flex justify-between gap-5">
-                <label className="block text-sm font-medium text-gray-700">
-                  Total Pcs per Bundle
-                </label>
-                <span>{totalInnerPcsPerBundle}</span>
-              </div>
-              <div className="flex justify-between gap-5">
-                <label className="block font-bold text-gray-700 text-md">
-                  Total Pcs
-                </label>
-                <span className="font-bold text-md">{totalProducts}</span>
+                <div className="flex items-center justify-center my-8">
+                  <div className="flex flex-col gap-4 p-5 bg-gray-100 w-fit">
+                    <div className="flex justify-between gap-5">
+                      <label className="block text-sm font-medium text-gray-700">
+                        Total Pcs per Bundle
+                      </label>
+                      <span>{totalInnerPcsPerBundle}</span>
+                    </div>
+                    <div className="flex justify-between gap-5">
+                      <label className="block font-bold text-gray-700 text-md">
+                        Total Pcs
+                      </label>
+                      <span className="font-bold text-md">{totalPcs}</span>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>

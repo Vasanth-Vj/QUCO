@@ -3,10 +3,9 @@ import closeIcon from "../../../assets/close-modal-icon.svg";
 import apiService from "../../../apiService";
 import AddStockOutModel from "../../stocks/stock-out/AddStockOutModel";
 
-const EditWithoutPoModal = ({ show, onClose, withPoOutId }) => {
+const EditWithoutPoModal = ({ show, onClose, withPoOutId, getAllPurchaseOrder }) => {
   const [deliveryDate, setDeliveryDate] = useState(new Date().toISOString());
   const [selectedProduct, setSelectedProduct] = useState({});
-
   const [successMessage, setSuccessMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [assortmentType, setAssortmentType] = useState("assorted");
@@ -14,12 +13,9 @@ const EditWithoutPoModal = ({ show, onClose, withPoOutId }) => {
   const [totalInnerPcs, setTotalInnerPcs] = useState(0);
   const [totalOuterPcs, setTotalOuterPcs] = useState(0);
   const [totalInnerPcsPerBundle, setTotalInnerPcsPerBundle] = useState(0);
-  const [withOutPoBundle, setWithOutPoBundle] = useState(0);
-  const [totalPcs, setTotalPcs] = useState(0);
-  const [stockOutPoNo, setStockOutPoNo] = useState("");
-  const [stockOutOrder, setStockOutOrder] = useState({});
-  const [showStockOut, setShowStockOut] = useState(false);
-  const [updatedWithOutPoData, setUpdatedwithOutPoData] = useState({});
+  const [withPoBundle, setWithPoBundle] = useState(null);
+  const [totalPcs, setTotalPcs] = useState(null);
+  const [updatedWithPoData, setUpdatedwithPoData] = useState({});
 
   // Suggestion buyer states
   const [buyerDropdown, setBuyerDropdown] = useState(false);
@@ -27,7 +23,7 @@ const EditWithoutPoModal = ({ show, onClose, withPoOutId }) => {
   const [selectedBuyerId, setSelectedBuyerId] = useState(null);
   const [updatedBuyerData, setUpdatedBuyerData] = useState({});
 
-  const [withOutPoData, setWithOutPoData] = useState({
+  const [withPoData, setWithPoData] = useState({
     Product: {
       style_no: "",
       Reference: {
@@ -90,7 +86,7 @@ const EditWithoutPoModal = ({ show, onClose, withPoOutId }) => {
     },
     req_bundle: "",
     product_id: null,
-    stock_by_size: [],
+    purchase_by_size: [],
     req_purchase_qty: null,
     packing_type: "",
     notes: "",
@@ -108,12 +104,13 @@ const EditWithoutPoModal = ({ show, onClose, withPoOutId }) => {
   const fetchWithPoData = async (withPoOutId) => {
     try {
       const response = await apiService.get(`/purchases/${withPoOutId}`);
-      setWithOutPoData(response.data);
+      setWithPoData(response.data);
       setAssortmentType(response.data.packing_type);
       console.log(response.data);
+      // Fill the input fields based on the fetched stock-in data
     } catch (error) {
       console.error(
-        "Error fetching With Out Po data:",
+        "Error fetching With Po  data:",
         error.response || error.message
       );
     }
@@ -139,10 +136,10 @@ const EditWithoutPoModal = ({ show, onClose, withPoOutId }) => {
 
   const handleBuyerChange = (e) => {
     const buyerInput = e.target.value;
-    setWithOutPoData({
-      ...withOutPoData,
+    setWithPoData({
+      ...withPoData,
       Buyer: {
-        ...withOutPoData.Buyer,
+        ...withPoData.Buyer,
         name: buyerInput,
         location: "",
       },
@@ -152,10 +149,10 @@ const EditWithoutPoModal = ({ show, onClose, withPoOutId }) => {
   };
 
   const handleBuyerSelect = (buyer) => {
-    setWithOutPoData({
-      ...withOutPoData,
+    setWithPoData({
+      ...withPoData,
       Buyer: {
-        ...withOutPoData.Buyer,
+        ...withPoData.Buyer,
         name: buyer.name,
         location: buyer.location,
       },
@@ -167,8 +164,8 @@ const EditWithoutPoModal = ({ show, onClose, withPoOutId }) => {
       ...updatedBuyerData,
       buyer_id: buyer.id,
     });
-    setUpdatedwithOutPoData({
-      ...updatedWithOutPoData,
+    setUpdatedwithPoData({
+      ...updatedWithPoData,
       buyer_id: buyer.id,
     });
     console.log(buyer.name);
@@ -177,11 +174,19 @@ const EditWithoutPoModal = ({ show, onClose, withPoOutId }) => {
 
   const handleAddNewBuyer = () => {
     // Implement the logic to add a new buyer here
-    console.log("Adding new buyer:", withOutPoData.Buyer.name);
-    console.log("Adding new buyer:", withOutPoData.Buyer.location);
+    console.log("Adding new buyer:", withPoData.Buyer.name);
+    console.log("Adding new buyer:", withPoData.Buyer.location);
     // Close the dropdown after adding the buyer
     setBuyerDropdown(false);
   };
+
+  // // handle PO number change
+  // const handlePurchaseOrderNoChange = (e) => {
+  //   setWithPoData((prevState) => ({
+  //     ...prevState,
+  //     purchase_order_number: e.target.value,
+  //   }));
+  // };
 
   const handleDeliveryDateChange = (e) => {
     const inputDate = e.target.value;
@@ -189,19 +194,17 @@ const EditWithoutPoModal = ({ show, onClose, withPoOutId }) => {
   };
 
   const handleStockBySizeChange = (size, innerPcs, outerPcs) => {
-    const updatedStockBySize = withOutPoData.purchase_by_size.map((item) =>
-      item.size === size
-        ? { ...item, innerPcs, outerPcs } // Update only the matching size
-        : item
+    const updatedStockBySize = withPoData.purchase_by_size.map((item) =>
+      item.size === size ? { ...item, innerPcs, outerPcs } : item
     );
 
-    setWithOutPoData((prevState) => ({
+    setWithPoData((prevState) => ({
       ...prevState,
       purchase_by_size: updatedStockBySize,
     }));
 
-    setUpdatedwithOutPoData({
-      ...updatedWithOutPoData,
+    setUpdatedwithPoData({
+      ...updatedWithPoData,
       purchase_by_size: updatedStockBySize,
     });
   };
@@ -209,8 +212,8 @@ const EditWithoutPoModal = ({ show, onClose, withPoOutId }) => {
   // handle size quantity change
   const handleAssortmentTypeChange = (e) => {
     setAssortmentType(e.target.value);
-    setUpdatedwithOutPoData({
-      ...updatedWithOutPoData,
+    setUpdatedwithPoData({
+      ...updatedWithPoData,
       packing_type: e.target.value,
     });
 
@@ -234,7 +237,7 @@ const EditWithoutPoModal = ({ show, onClose, withPoOutId }) => {
   const handleInnerPcsChange = (e, size) => {
     const newInnerPcs = parseInt(e.target.value, 10) || null; // Ensure the value is a number
     const sizeData =
-      withOutPoData.purchase_by_size.find((item) => item.size === size) || {};
+      withPoData.purchase_by_size.find((item) => item.size === size) || {};
 
     // Update the stock data with new inner pcs and existing outer pcs
     handleStockBySizeChange(size, newInnerPcs, sizeData.outerPcs || null);
@@ -245,7 +248,7 @@ const EditWithoutPoModal = ({ show, onClose, withPoOutId }) => {
   const handleOuterPcsChange = (e, size) => {
     const newOuterPcs = parseInt(e.target.value, 10) || null; // Ensure the value is a number
     const sizeData =
-      withOutPoData.purchase_by_size.find((item) => item.size === size) || {};
+      withPoData.purchase_by_size.find((item) => item.size === size) || {};
 
     // Update the stock data with new outer pcs and existing inner pcs
     handleStockBySizeChange(size, sizeData.innerPcs || null, newOuterPcs);
@@ -254,40 +257,43 @@ const EditWithoutPoModal = ({ show, onClose, withPoOutId }) => {
   };
 
   useEffect(() => {
-    if (withOutPoData?.purchase_by_size) {
-      const totalwithOutPoInnerPcs = calculateTotalInnerPcs(
-        withOutPoData.purchase_by_size
+    if (withPoData?.purchase_by_size) {
+      const totalwithPoInnerPcs = calculateTotalInnerPcs(
+        withPoData.purchase_by_size
       );
-      setTotalInnerPcs(totalwithOutPoInnerPcs);
+      setTotalInnerPcs(totalwithPoInnerPcs);
 
-      const totalwithOutPoOuterPcs = calculateTotalOuterPcs(
-        withOutPoData.purchase_by_size
+      const totalwithPoOuterPcs = calculateTotalOuterPcs(
+        withPoData.purchase_by_size
       );
-      setTotalOuterPcs(totalwithOutPoOuterPcs);
+      setTotalOuterPcs(totalwithPoOuterPcs);
 
       const totalInnerPerBundle = calculateTotalInnerPerBundle(
-        withOutPoData.purchase_by_size
+        withPoData.purchase_by_size
       );
       setTotalInnerPcsPerBundle(totalInnerPerBundle);
     }
 
-    if (withOutPoData?.req_bundle !== undefined) {
-      setWithOutPoBundle(withOutPoData.req_bundle);
+    if (withPoData?.req_bundle !== undefined) {
+      setWithPoBundle(withPoData.req_bundle);
     }
 
-    if (withOutPoBundle > 0 && withOutPoData?.purchase_by_size) {
-      const totalPcs = withOutPoData.purchase_by_size.reduce((sum, item) => {
-        return sum + item.innerPcs * item.outerPcs * withOutPoBundle;
+    if (withPoBundle > 0 && withPoData?.purchase_by_size) {
+      const totalPcs = withPoData.purchase_by_size.reduce((sum, item) => {
+        return sum + (item.innerPcs || 0) * (item.outerPcs || 0) * withPoBundle;
       }, 0);
+
       setTotalPcs(totalPcs);
-      setUpdatedwithOutPoData({
-        ...updatedWithOutPoData,
-        totalPcs: totalPcs,
+
+      setUpdatedwithPoData({
+        ...updatedWithPoData,
+        req_purchase_qty: totalPcs,
       });
+
     } else {
       setTotalPcs(0);
     }
-  }, [withOutPoData, withOutPoBundle]);
+  }, [withPoData]);
 
   const calculateTotalInnerPcs = (data) => {
     return data.reduce((total, item) => total + item.innerPcs, 0);
@@ -305,22 +311,34 @@ const EditWithoutPoModal = ({ show, onClose, withPoOutId }) => {
     }, 0);
   };
 
-  const handleBundleChange = async (e) => {
+  const handleBundleChange = (e) => {
     const bundleQty = Number(e.target.value);
-    setWithOutPoBundle(bundleQty);
-    setUpdatedwithOutPoData({
-      ...updatedWithOutPoData,
+    setWithPoBundle(bundleQty);
+
+    // Recalculate total pieces when the bundle quantity changes
+    const newTotalPcs = withPoData.purchase_by_size.reduce((sum, item) => {
+      const innerPcs = item.innerPcs || 0;
+      const outerPcs = item.outerPcs || 0;
+      return sum + innerPcs * outerPcs * bundleQty;
+    }, 0);
+
+    setTotalPcs(newTotalPcs);
+
+    setUpdatedwithPoData((prevData) => ({
+      ...prevData,
       req_bundle: bundleQty,
-    });
+      req_purchase_qty: newTotalPcs,
+    }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("updatedWithOutPoData", updatedWithOutPoData);
+    console.log("updatedWithPoData", updatedWithPoData);
+
     try {
       const response = await apiService.put(
         `/purchases/${withPoOutId}`,
-        updatedWithOutPoData,
+        updatedWithPoData,
         {
           headers: {
             "Content-Type": "application/json",
@@ -330,13 +348,14 @@ const EditWithoutPoModal = ({ show, onClose, withPoOutId }) => {
 
       if (response.status === 200) {
         console.log("Submit response:", response);
-        setSuccessMessage("With Out-Po updated successfully");
+        setSuccessMessage("With-Po updated successfully");
         setErrorMessage("");
-        setUpdatedwithOutPoData({});
+        setUpdatedwithPoData({});
         setTimeout(() => {
           setSuccessMessage("");
+          getAllPurchaseOrder();
           onClose();
-        }, 3000);
+        }, 1500);
       }
     } catch (error) {
       if (error.response && error.response.status === 409) {
@@ -347,12 +366,10 @@ const EditWithoutPoModal = ({ show, onClose, withPoOutId }) => {
     }
   };
 
-  const handleStockOutModelClose = () => {
-    setShowStockOut(false);
-  };
-
   const handleClose = () => {
-    setUpdatedwithOutPoData({});
+    setUpdatedwithPoData({});
+    setSuccessMessage("");
+    setErrorMessage("");
     onClose();
   };
 
@@ -367,9 +384,9 @@ const EditWithoutPoModal = ({ show, onClose, withPoOutId }) => {
       <div className="relative bg-white rounded-lg shadow-lg w-full max-w-[80vw] h-screen max-h-[90vh] overflow-auto">
         <div className="px-10 py-5">
           <div className="flex justify-center">
-            <h2 className="text-xl font-bold">Edit Without Purchase Order</h2>
+            <h2 className="text-xl font-bold">Edit With Out Purchase Order</h2>
             <button
-              className="absolute right-5 cursor-pointer"
+              className="absolute cursor-pointer right-5"
               onClick={handleClose}
             >
               <img src={closeIcon} alt="Close" />
@@ -377,7 +394,7 @@ const EditWithoutPoModal = ({ show, onClose, withPoOutId }) => {
           </div>
           <hr className="my-2" />
           <div className="px-20">
-            <div className="mt-10 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5 gap-4">
+            <div className="grid grid-cols-2 gap-4 mt-10 md:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5">
               <div className="flex flex-col gap-2">
                 <label className="font-semibold" htmlFor="styleNo">
                   Purchase Order No:
@@ -385,26 +402,27 @@ const EditWithoutPoModal = ({ show, onClose, withPoOutId }) => {
                 <input
                   type="text"
                   id="purchaseOrderNo"
-                  value={withOutPoData.purchase_order_number}
-                  className="border border-gray-300 rounded-md px-2 py-2 bg-zinc-200"
+                  value={withPoData.purchase_order_number}
+                  className="px-2 py-2 border border-gray-300 rounded-md bg-zinc-200"
+                  placeholder="Enter po number"
                   disabled
                 />
               </div>
 
-              <div className="flex flex-col gap-2 relative">
+              <div className="relative flex flex-col gap-2">
                 <label className="font-semibold" htmlFor="buyer">
                   Buyer Name:
                 </label>
                 <input
                   type="text"
                   id="buyer"
-                  value={withOutPoData.Buyer.name}
+                  value={withPoData.Buyer.name}
                   onChange={handleBuyerChange}
-                  className="border border-gray-300 rounded-md px-2 py-2 bg-zinc-200"
+                  className="px-2 py-2 border border-gray-300 rounded-md bg-zinc-200"
                   placeholder="Enter Buyer Name"
                 />
-                {buyerDropdown && withOutPoData.Buyer.name && (
-                  <ul className="absolute top-full left-0 z-10 w-full bg-white border border-gray-300 rounded-md shadow-lg">
+                {buyerDropdown && withPoData.Buyer.name && (
+                  <ul className="absolute left-0 z-10 w-full bg-white border border-gray-300 rounded-md shadow-lg top-full">
                     {buyerSuggestions.length > 0 ? (
                       buyerSuggestions.map((suggestion) => (
                         <li
@@ -417,10 +435,10 @@ const EditWithoutPoModal = ({ show, onClose, withPoOutId }) => {
                       ))
                     ) : (
                       <li
-                        className="px-4 py-2 cursor-pointer text-sm text-blue-600 hover:bg-gray-200"
+                        className="px-4 py-2 text-sm text-blue-600 cursor-pointer hover:bg-gray-200"
                         onClick={handleAddNewBuyer}
                       >
-                        Add New Buyer: "{withOutPoData.Buyer.name}"
+                        Add New Buyer: "{withPoData.Buyer.name}"
                       </li>
                     )}
                   </ul>
@@ -434,8 +452,8 @@ const EditWithoutPoModal = ({ show, onClose, withPoOutId }) => {
                 <input
                   type="text"
                   id="location"
-                  value={withOutPoData.Buyer.location}
-                  className="border border-gray-300 rounded-md px-2 py-2 bg-zinc-200"
+                  value={withPoData.Buyer.location}
+                  className="px-2 py-2 border border-gray-300 rounded-md bg-zinc-200"
                   disabled
                 />
               </div>
@@ -449,254 +467,254 @@ const EditWithoutPoModal = ({ show, onClose, withPoOutId }) => {
                   id="deliveryDate"
                   value={deliveryDate.split("T")[0]}
                   onChange={handleDeliveryDateChange}
-                  className="border border-gray-300 rounded-md px-2 py-2 bg-zinc-200"
+                  className="px-2 py-2 border border-gray-300 rounded-md bg-zinc-200"
                   placeholder="Enter delivery date"
                 />
               </div>
 
-              <div className="flex flex-col gap-2 relative">
+              <div className="relative flex flex-col gap-2">
                 <label className="font-semibold" htmlFor="styleNo">
                   Style No:
                 </label>
                 <input
                   type="text"
                   id="styleNo"
-                  value={withOutPoData.Product.style_no}
-                  className="border border-gray-300 rounded-md px-2 py-2 bg-zinc-200"
+                  value={withPoData.Product.style_no}
+                  className="px-2 py-2 border border-gray-300 rounded-md bg-zinc-200"
                   placeholder="Enter Style No"
                 />
               </div>
 
-              <div className="flex flex-col gap-2 relative">
-                <label className="font-semibold" htmlFor="referenceNo">
-                  Reference No:
+              <div className="relative flex flex-col gap-2">
+                <label className="font-semibold" htmlFor="referenceNumber">
+                  Reference Number:
                 </label>
                 <input
                   type="text"
-                  id="referenceNo"
-                  value={withOutPoData.Product.Reference.reference_no}
-                  className="border border-gray-300 rounded-md px-2 py-2 bg-zinc-200"
+                  id="referenceNumber"
+                  value={withPoData.Product.Reference.reference_no}
+                  className="px-2 py-2 border border-gray-300 rounded-md bg-zinc-200"
                   disabled
                 />
               </div>
 
-              <div className="flex flex-col gap-2 relative">
+              <div className="relative flex flex-col gap-2">
                 <label className="font-semibold" htmlFor="brand">
                   Brand Name:
                 </label>
                 <input
                   type="text"
                   id="brand"
-                  value={withOutPoData.Product.Brand.brandName}
-                  className="border border-gray-300 rounded-md px-2 py-2 bg-zinc-200"
+                  value={withPoData.Product.Brand.brandName}
+                  className="px-2 py-2 border border-gray-300 rounded-md bg-zinc-200"
                   disabled
                 />
               </div>
 
-              <div className="flex flex-col gap-2 relative">
+              <div className="relative flex flex-col gap-2">
                 <label className="font-semibold" htmlFor="fabric">
                   Fabric:
                 </label>
                 <input
                   type="text"
                   id="fabric"
-                  value={withOutPoData.Product.Fabric.fabricName}
-                  className="border border-gray-300 rounded-md px-2 py-2 bg-zinc-200"
+                  value={withPoData.Product.Fabric.fabricName}
+                  className="px-2 py-2 border border-gray-300 rounded-md bg-zinc-200"
                   disabled
                 />
               </div>
 
-              <div className="flex flex-col gap-2 relative">
+              <div className="relative flex flex-col gap-2">
                 <label className="font-semibold" htmlFor="fabricFinish">
                   Fabric Finish:
                 </label>
                 <input
                   type="text"
                   id="fabricFinish"
-                  value={withOutPoData.Product.FabricFinish.fabricFinishName}
-                  className="border border-gray-300 rounded-md px-2 py-2 bg-zinc-200"
+                  value={withPoData.Product.FabricFinish.fabricFinishName}
+                  className="px-2 py-2 border border-gray-300 rounded-md bg-zinc-200"
                   disabled
                 />
               </div>
 
-              <div className="flex flex-col gap-2 relative">
+              <div className="relative flex flex-col gap-2">
                 <label className="font-semibold" htmlFor="gsm">
                   GSM:
                 </label>
                 <input
                   type="number"
                   id="gsm"
-                  value={withOutPoData.Product.Gsm.gsmValue}
-                  className="border border-gray-300 rounded-md px-2 py-2 bg-zinc-200"
+                  value={withPoData.Product.Gsm.gsmValue}
+                  className="px-2 py-2 border border-gray-300 rounded-md bg-zinc-200"
                   disabled
                 />
               </div>
 
-              <div className="flex flex-col gap-2 relative">
+              <div className="relative flex flex-col gap-2">
                 <label className="font-semibold" htmlFor="knitType">
                   Knit Type:
                 </label>
                 <input
                   type="text"
                   id="knitType"
-                  value={withOutPoData.Product.KnitType.knitType}
-                  className="border border-gray-300 rounded-md px-2 py-2 bg-zinc-200"
+                  value={withPoData.Product.KnitType.knitType}
+                  className="px-2 py-2 border border-gray-300 rounded-md bg-zinc-200"
                   disabled
                 />
               </div>
 
-              <div className="flex flex-col gap-2 relative">
+              <div className="relative flex flex-col gap-2">
                 <label className="font-semibold" htmlFor="category">
                   Category:
                 </label>
                 <input
                   type="text"
                   id="category"
-                  value={withOutPoData.Product.Category.categoryName}
-                  className="border border-gray-300 rounded-md px-2 py-2 bg-zinc-200"
+                  value={withPoData.Product.Category.categoryName}
+                  className="px-2 py-2 border border-gray-300 rounded-md bg-zinc-200"
                   disabled
                 />
               </div>
 
-              <div className="flex flex-col gap-2 relative">
+              <div className="relative flex flex-col gap-2">
                 <label className="font-semibold" htmlFor="color">
                   Color:
                 </label>
                 <input
                   type="text"
                   id="color"
-                  value={withOutPoData.Product.Color.colorName}
-                  className="border border-gray-300 rounded-md px-2 py-2 bg-zinc-200"
+                  value={withPoData.Product.Color.colorName}
+                  className="px-2 py-2 border border-gray-300 rounded-md bg-zinc-200"
                   disabled
                 />
               </div>
 
-              <div className="flex flex-col gap-2 relative">
+              <div className="relative flex flex-col gap-2">
                 <label className="font-semibold" htmlFor="size">
                   Size:
                 </label>
                 <input
                   type="text"
                   id="size"
-                  value={withOutPoData.Product.Size.sizes}
-                  className="border border-gray-300 rounded-md px-2 py-2 bg-zinc-200"
+                  value={withPoData.Product.Size.sizes}
+                  className="px-2 py-2 border border-gray-300 rounded-md bg-zinc-200"
                   disabled
                 />
               </div>
 
-              <div className="flex flex-col gap-2 relative">
+              <div className="relative flex flex-col gap-2">
                 <label className="font-semibold" htmlFor="decoration">
                   Decorations:
                 </label>
                 <input
                   type="text"
                   id="decoration"
-                  value={withOutPoData.Product.Decoration.decorationName}
-                  className="border border-gray-300 rounded-md px-2 py-2 bg-zinc-200"
+                  value={withPoData.Product.Decoration.decorationName}
+                  className="px-2 py-2 border border-gray-300 rounded-md bg-zinc-200"
                   disabled
                 />
               </div>
 
-              <div className="flex flex-col gap-2 relative">
+              <div className="relative flex flex-col gap-2">
                 <label className="font-semibold" htmlFor="print">
                   Print or Embed:
                 </label>
                 <input
                   type="text"
                   id="print"
-                  value={withOutPoData.Product.PrintEmbName.printType}
-                  className="border border-gray-300 rounded-md px-2 py-2 bg-zinc-200"
+                  value={withPoData.Product.PrintEmbName.printType}
+                  className="px-2 py-2 border border-gray-300 rounded-md bg-zinc-200"
                   disabled
                 />
               </div>
 
-              <div className="flex flex-col gap-2 relative">
+              <div className="relative flex flex-col gap-2">
                 <label className="font-semibold" htmlFor="stitch">
                   Stitch Details:
                 </label>
                 <input
                   type="text"
                   id="stitch"
-                  value={withOutPoData.Product.StitchDetail.stictchDetail}
-                  className="border border-gray-300 rounded-md px-2 py-2 bg-zinc-200"
+                  value={withPoData.Product.StitchDetail.stictchDetail}
+                  className="px-2 py-2 border border-gray-300 rounded-md bg-zinc-200"
                   disabled
                 />
               </div>
 
-              <div className="flex flex-col gap-2 relative">
+              <div className="relative flex flex-col gap-2">
                 <label className="font-semibold" htmlFor="neck">
                   Neck:
                 </label>
                 <input
                   type="text"
                   id="neck"
-                  value={withOutPoData.Product.Neck.neckType}
-                  className="border border-gray-300 rounded-md px-2 py-2 bg-zinc-200"
+                  value={withPoData.Product.Neck.neckType}
+                  className="px-2 py-2 border border-gray-300 rounded-md bg-zinc-200"
                   disabled
                 />
               </div>
 
-              <div className="flex flex-col gap-2 relative">
+              <div className="relative flex flex-col gap-2">
                 <label className="font-semibold" htmlFor="sleeve">
                   Sleeve:
                 </label>
                 <input
                   type="text"
                   id="sleeve"
-                  value={withOutPoData.Product.Sleeve.sleeveName}
-                  className="border border-gray-300 rounded-md px-2 py-2 bg-zinc-200"
+                  value={withPoData.Product.Sleeve.sleeveName}
+                  className="px-2 py-2 border border-gray-300 rounded-md bg-zinc-200"
                   disabled
                 />
               </div>
 
-              <div className="flex flex-col gap-2 relative">
+              <div className="relative flex flex-col gap-2">
                 <label className="font-semibold" htmlFor="length">
                   Length:
                 </label>
                 <input
                   type="text"
                   id="length"
-                  value={withOutPoData.Product.Length.lengthType}
-                  className="border border-gray-300 rounded-md px-2 py-2 bg-zinc-200"
+                  value={withPoData.Product.Length.lengthType}
+                  className="px-2 py-2 border border-gray-300 rounded-md bg-zinc-200"
                   disabled
                 />
               </div>
 
-              <div className="flex flex-col gap-2 relative">
+              <div className="relative flex flex-col gap-2">
                 <label className="font-semibold" htmlFor="packing">
                   Packing Method:
                 </label>
                 <input
                   type="text"
                   id="packing"
-                  value={withOutPoData.Product.PackingMethod.packingType}
-                  className="border border-gray-300 rounded-md px-2 py-2 bg-zinc-200"
+                  value={withPoData.Product.PackingMethod.packingType}
+                  className="px-2 py-2 border border-gray-300 rounded-md bg-zinc-200"
                   disabled
                 />
               </div>
 
-              <div className="flex flex-col gap-2 relative">
+              <div className="relative flex flex-col gap-2">
                 <label className="font-semibold" htmlFor="product-type">
                   Product Type:
                 </label>
                 <input
                   type="text"
                   id="product-type"
-                  value={withOutPoData.Product.ProductType.product}
-                  className="border border-gray-300 rounded-md px-2 py-2 bg-zinc-200"
+                  value={withPoData.Product.ProductType.product}
+                  className="px-2 py-2 border border-gray-300 rounded-md bg-zinc-200"
                   disabled
                 />
               </div>
 
-              <div className="flex flex-col gap-2 relative">
+              <div className="relative flex flex-col gap-2">
                 <label className="font-semibold" htmlFor="measurement-chart">
                   Measurement chart:
                 </label>
                 <input
                   type="text"
                   id="measurement-chart"
-                  value={withOutPoData.Product.MeasurementChart.name}
-                  className="border border-gray-300 rounded-md px-2 py-2 bg-zinc-200"
+                  value={withPoData.Product.MeasurementChart.name}
+                  className="px-2 py-2 border border-gray-300 rounded-md bg-zinc-200"
                   disabled
                 />
               </div>
@@ -708,8 +726,8 @@ const EditWithoutPoModal = ({ show, onClose, withPoOutId }) => {
               </label>
               <textarea
                 id="shortDescription"
-                value={withOutPoData.Product.short_description}
-                className="border border-gray-300 rounded-md px-2 py-2 bg-zinc-200"
+                value={withPoData.Product.short_description}
+                className="px-2 py-2 border border-gray-300 rounded-md bg-zinc-200"
                 rows="1"
                 disabled
               />
@@ -721,8 +739,8 @@ const EditWithoutPoModal = ({ show, onClose, withPoOutId }) => {
               </label>
               <textarea
                 id="fullDescription"
-                value={withOutPoData.Product.full_description}
-                className="border border-gray-300 rounded-md px-2 py-2 bg-zinc-200"
+                value={withPoData.Product.full_description}
+                className="px-2 py-2 border border-gray-300 rounded-md bg-zinc-200"
                 rows="2"
                 disabled
               />
@@ -734,8 +752,8 @@ const EditWithoutPoModal = ({ show, onClose, withPoOutId }) => {
               </label>
               <textarea
                 id="notes"
-                value={withOutPoData.notes}
-                className="border border-gray-300 rounded-md px-2 py-2 bg-zinc-200"
+                value={withPoData.notes}
+                className="px-2 py-2 border border-gray-300 rounded-md bg-zinc-200"
                 placeholder="Enter additional notes"
                 rows="3"
               />
@@ -771,13 +789,13 @@ const EditWithoutPoModal = ({ show, onClose, withPoOutId }) => {
               <div className="flex items-center gap-2 mb-4">
                 <h3 className="text-lg font-medium">Order Info:</h3>
               </div>
-              <div className="flex gap-4 border border-gray-400 px-5 justify-between">
+              <div className="flex justify-between gap-4 px-5 border border-gray-400">
                 <div className="p-4 rounded-lg">
-                  <h4 className="text-sm font-medium mb-4">
+                  <h4 className="mb-4 text-sm font-medium">
                     Quantity per size:
                   </h4>
                   <div className="flex flex-col gap-4">
-                    {withOutPoData?.purchase_by_size?.map((stock, index) => (
+                    {withPoData?.purchase_by_size?.map((stock, index) => (
                       <div key={index} className="flex items-center gap-4 mb-2">
                         <div className="w-16">{stock.size}: </div>
                         <input
@@ -785,7 +803,7 @@ const EditWithoutPoModal = ({ show, onClose, withPoOutId }) => {
                           value={stock.innerPcs || null}
                           onChange={(e) => handleInnerPcsChange(e, stock.size)}
                           placeholder="Inner Pcs"
-                          className="border border-gray-300 rounded-md px-2 py-1 w-24"
+                          className="w-24 px-2 py-1 border border-gray-300 rounded-md"
                           disabled={assortmentType === "solid"}
                         />
                         <input
@@ -793,45 +811,45 @@ const EditWithoutPoModal = ({ show, onClose, withPoOutId }) => {
                           value={stock.outerPcs || null}
                           onChange={(e) => handleOuterPcsChange(e, stock.size)}
                           placeholder="Outer Pcs"
-                          className="border border-gray-300 rounded-md px-2 py-1 w-24"
+                          className="w-24 px-2 py-1 border border-gray-300 rounded-md"
                         />
                       </div>
                     ))}
                   </div>
                 </div>
 
-                <div className="px-20 content-center">
+                <div className="content-center px-20">
                   <label className="font-semibold">Number of Bundles: </label>
                   <input
                     type="number"
-                    value={withOutPoBundle}
+                    value={withPoBundle || null}
                     onChange={handleBundleChange}
                     placeholder="Bundles"
-                    className="border border-gray-300 rounded-md px-2 py-1 w-24"
+                    className="w-24 px-2 py-1 border border-gray-300 rounded-md"
                   />
                 </div>
 
-                <div className="p-4 bg-gray-100 flex items-center justify-center mt-8 mb-8">
+                <div className="flex items-center justify-center p-4 mt-8 mb-8 bg-gray-100">
                   <div className="flex flex-col gap-4">
-                    <div className="flex gap-5 justify-between">
+                    <div className="flex justify-between gap-5">
                       <label className="block text-sm font-medium text-gray-700">
                         Total Inner Pcs
                       </label>
                       <span>{totalInnerPcs}</span>
                     </div>
-                    <div className="flex gap-5 justify-between">
+                    <div className="flex justify-between gap-5">
                       <label className="block text-sm font-medium text-gray-700">
                         Total Outer Pcs
                       </label>
                       <span>{totalOuterPcs}</span>
                     </div>
-                    <div className="flex gap-5 justify-between">
+                    <div className="flex justify-between gap-5">
                       <label className="block text-sm font-medium text-gray-700">
                         Total Pcs per Bundle
                       </label>
                       <span>{totalInnerPcsPerBundle}</span>
                     </div>
-                    <div className="flex gap-5 justify-between">
+                    <div className="flex justify-between gap-5">
                       <label className="block text-sm font-medium text-gray-700">
                         Total Pcs
                       </label>
@@ -855,20 +873,15 @@ const EditWithoutPoModal = ({ show, onClose, withPoOutId }) => {
           <div className="flex justify-center px-20 mt-5">
             <button
               onClick={handleSubmit}
-              className="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded"
+              className="px-4 py-2 font-semibold text-white bg-blue-500 rounded hover:bg-blue-600"
             >
-              CREATE WITHOUT PURCHASE ORDER
+              CREATE PURCHASE ORDER
             </button>
           </div>
         </div>
       </div>
-      <AddStockOutModel
-        show={showStockOut}
-        onClose={handleStockOutModelClose}
-        stockOutPoNo={stockOutPoNo}
-        stockOutOrder={stockOutOrder}
-      />
     </div>
   );
 };
+
 export default EditWithoutPoModal;

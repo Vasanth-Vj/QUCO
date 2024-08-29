@@ -78,7 +78,7 @@ const Permission = () => {
   // Fetch all departments
   const fetchDepartments = async () => {
     try {
-      const response = await apiService.get(`/users/depart/${1}`);
+      const response = await apiService.get(`/users/depart/getall`);
       if (response.status === 200) {
         setDepartment(response.data);
         console.log(response.data);

@@ -258,7 +258,7 @@ const AddStockModal = ({ show, onClose, getAllStocks }) => {
     try {
         const response = await apiService.post("/stocks/create", stockData);
 
-        if (response.status === 200) {
+        if (response.status === 201) {
             console.log("Stock created:", response.data);
             setErrorMessage("");
             // Trigger parent component to refresh the stock list

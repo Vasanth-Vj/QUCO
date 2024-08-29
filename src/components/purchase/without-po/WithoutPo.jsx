@@ -221,7 +221,7 @@ const WithoutPo = () => {
         </div>
       </div>
       <CreateWithoutPoModal show={showAddModal} onClose={handleAddModalClose} getAllPurchaseOrder={getAllPurchaseOrder} />
-      <EditWithoutPoModal show={showModal} onClose={handleCloseModal} withPoOutId={selectedWithOutPoId} />
+      <EditWithoutPoModal show={showModal} onClose={handleCloseModal} withPoOutId={selectedWithOutPoId} getAllPurchaseOrder={getAllPurchaseOrder} />
     </>
   );
 };

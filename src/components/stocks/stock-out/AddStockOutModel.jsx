@@ -9,7 +9,7 @@ const AddStockOutModel = ({ show, onClose }) => {
   const [orderNumber, setOrderNumber] = useState("");
   const [orderDropdown, setOrderDropdown] = useState(false);
   const [orderSuggestions, setOrderSuggestions] = useState([]);
-  const [selectedOrder, setSelectedOrder] = useState(null);
+  const [selectedOrder, setSelectedOrder] = useState(null); 
   const [selectedOrderId, setSelectedOrderId] = useState(null);
   const [checkSame, setCheckSame] = useState(null);
   const [orderInfo, setOrderInfo] = useState(null);
@@ -27,7 +27,7 @@ const AddStockOutModel = ({ show, onClose }) => {
       const response = await apiService.get(`/stocks/${style_no}`);
 
       setProductInfo(response.data);
-      const totalStockInnerPcs = calculateTotalInnerPcs(
+      const totalStockInnerPcs = calculateTotalInnerPcs( 
         response.data.stock_by_size
       );
       setProductInnerTotals(totalStockInnerPcs);
